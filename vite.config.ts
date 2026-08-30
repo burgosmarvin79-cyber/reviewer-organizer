@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  base: '/reviewer-organizer/',
   plugins: [
     react(),
     VitePWA({
@@ -15,8 +16,9 @@ export default defineConfig({
         theme_color: '#10233f',
         background_color: '#f7f4ec',
         display: 'standalone',
-        start_url: '/',
-        icons: [{ src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
+        start_url: '/reviewer-organizer/',
+        scope: '/reviewer-organizer/',
+        icons: [{ src: '/reviewer-organizer/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
       },
       workbox: { globPatterns: ['**/*.{js,css,html,svg}'] },
     }),
