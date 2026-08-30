@@ -1,10 +1,20 @@
 :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #14233a; background: #f6f3eb; font-synthesis: none; --navy: #10233f; --blue: #246bfd; --cream: #f6f3eb; --muted: #697386; --border: #e2dfd7; }
-.auth-screen { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; background: var(--cream); }
+.auth-screen { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; background: #fff4f4; }
 .auth-card { width: min(100%, 420px); padding: 2rem; background: white; border: 1px solid var(--border); border-radius: 1.25rem; box-shadow: 0 18px 55px #1e2b481a; }
 .auth-brand { margin-bottom: 2rem; }
 .auth-card h1 { margin: .35rem 0 .5rem; }
 .auth-card > p:not(.eyebrow) { color: var(--muted); margin-bottom: 1.5rem; }
 .account-button { position: fixed; right: 1.5rem; bottom: 1rem; z-index: 2; background: white; border-radius: .5rem; padding: .45rem .7rem; }
+.google-button { background: white; color: var(--navy); border: 1px solid var(--border); justify-content: center; }
+.google-button:hover { background: #fafafa; border-color: #b9c2d0; }
+.google-g { font-weight: 800; color: #4285f4; font-size: 1.1rem; }
+.auth-divider { display: flex; align-items: center; gap: .7rem; color: #98a1af; font-size: .75rem; margin: 1.2rem 0; }
+.auth-divider::before, .auth-divider::after { content: ''; height: 1px; background: var(--border); flex: 1; }
+.auth-screen .brand-mark { background: #c62828; color: white; }
+.auth-screen .eyebrow { color: #c62828; }
+.auth-screen .button.primary { background: #c62828; border-color: #c62828; }
+.auth-screen .button.primary:hover { background: #a91f1f; border-color: #a91f1f; }
+.auth-screen .text-button { color: #c62828; }
 * { box-sizing: border-box; }
 html { min-width: 320px; overflow-x: hidden; }
 body { margin: 0; min-width: 320px; min-height: 100vh; overflow-x: hidden; }
