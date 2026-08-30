@@ -27,3 +27,16 @@ Purpose: Append-only compact summaries of closed tasks.
 - Delivery State: deployed
 - Verification Evidence: lint passed; 4 mastery tests passed; repository-path PWA build passed; GitHub Actions run 33322288775 succeeded; live app, manifest, and service worker returned HTTPS 200
 - Closed At: 2026-08-30T16:26:22Z
+
+## 2026-08-30 improve-responsive-preview
+
+<!-- pmm-task-id: improve-responsive-preview -->
+
+- Status: done
+- Parent Task: none
+- Title: Improve responsive mobile preview
+- Execution State: done
+- Verification State: passed
+- Delivery State: ready
+- Verification Evidence: lint passed; 4 mastery tests passed; TypeScript and production PWA build passed; responsive breakpoints and overflow guards inspected
+- Closed At: 2026-08-30T16:38:48Z
