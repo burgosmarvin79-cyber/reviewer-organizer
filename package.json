@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.4",
     "dexie": "^4.0.11",
     "dexie-react-hooks": "^1.1.7",
     "lucide-react": "^0.468.0",
@@ -32,6 +33,7 @@
     "fake-indexeddb": "^6.0.0",
     "globals": "^15.14.0",
     "jsdom": "^25.0.1",
+    "supabase": "^2.116.0",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.18.2",
     "vite": "^6.0.5",

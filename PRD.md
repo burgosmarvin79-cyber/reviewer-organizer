@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Reviewer Organizer is an installable, offline-first web application that helps students keep study materials together and turn questions into a progressive mastery routine.
+Reviewer Organizer is an installable, offline-first web application that helps students keep study materials together and turn questions into a progressive mastery routine across their devices.
 
 ## Version 1 Scope
 
@@ -17,6 +17,9 @@ Reviewer Organizer is an installable, offline-first web application that helps s
 - Display dashboard totals, mastery distribution, recent tests, and suggested next steps.
 - Export and restore a complete local backup, including PDFs.
 - Work offline after the first successful load and support installation as a Progressive Web App.
+- Let students sign up, verify their email, sign in, sign out, and recover a forgotten password.
+- Synchronize each authenticated student's records and PDFs through Supabase while preserving a per-user offline cache.
+- Enforce database and file-storage policies that prevent students from accessing one another's data.
 
 ## Mastery Levels
 
@@ -35,10 +38,10 @@ Level changes are manual. Correct and incorrect answers update statistics but ne
 - Typed answers lock after the student chooses **Check answer**. The correct answer and explanation appear immediately, followed by the manual level controls.
 - Deleting a subject requires typing its name and removes its related content and history.
 - PDFs above 25 MB show a warning; PDFs above 100 MB are rejected.
-- Version 1 has no account or cloud synchronization.
-- Do not add sign-up, sign-in, user accounts, or authentication unless Marvin explicitly reverses this decision in a future request.
-- Student data stays in the browser database and is not committed to GitHub.
+- Authentication uses email and password first; social sign-in may be added in a later version.
+- Public sign-up is enabled, with email confirmation required before normal authenticated use.
+- Student data belongs to the authenticated owner, synchronizes with Supabase, and is never committed to GitHub.
 
 ## Main Limitation
 
-Local browser data can be lost if site data is cleared. Backup and restore are therefore core safety features, not optional extras.
+Supabase provides the cloud source of truth, while IndexedDB provides a per-user offline working copy. Backup and restore remain important safeguards against accidental deletion or account-access problems.

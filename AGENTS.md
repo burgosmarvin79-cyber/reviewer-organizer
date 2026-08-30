@@ -88,7 +88,7 @@ Reuse content already present in the current context; do not reopen an unchanged
 - Do not store secrets in files, docs, logs, or chat.
 - This is Marvin's workspace. Before any GitHub read or write, verify that GitHub CLI is using `burgosmarvin79-cyber`; switch to that account if needed. Never publish Marvin's work through `morkmork26`.
 - Keep this repository's local Git author identity set to Marvin's GitHub username and GitHub-provided no-reply email.
-- Product boundary: Reviewer Organizer is a personal standalone app. Do not add sign-up, sign-in, authentication, Supabase, or other account infrastructure unless Marvin explicitly requests a new direction.
+- Product boundary: Reviewer Organizer is becoming a multi-user Supabase application. Implement sign-up, sign-in, sign-out, email verification, password recovery, per-user cloud records, private PDF storage, and per-user offline caching. Never weaken Row Level Security or allow one user to access another user's data.
 - Do not delete, migrate, overwrite, publish, charge, message, or change production data without confirmation.
 - Do not modify payment, user, order, permission, billing, credential, or external publication behavior without confirmation.
 - Do not use mock data as proof of real integration.

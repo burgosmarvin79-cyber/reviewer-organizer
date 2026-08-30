@@ -4,6 +4,14 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-08-31 — Adopt multi-user Supabase authentication
+
+- Change: Reversed the earlier account-free boundary and approved public email/password sign-up, sign-in, sign-out, email verification, and password recovery.
+- Change: Each cloud table and PDF object must belong to an authenticated user and be protected by Row Level Security and private storage policies.
+- Change: IndexedDB remains as a per-user offline cache rather than the only data source.
+- Evidence: Marvin explicitly requested that different people use the application without sharing data.
+- Remaining risk: Supabase project configuration, SMTP readiness, security policies, synchronization conflicts, and existing local-data ownership migration require implementation and verification before live release.
+
 ## 2026-08-31 — Identification tests with manual mastery levels
 
 - Change: Replaced multiple-choice questions with typed identification answers supporting multiple accepted variants and normalized case/spacing.
