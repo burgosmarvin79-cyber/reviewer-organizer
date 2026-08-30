@@ -35,6 +35,7 @@ Promotion requires three consecutive correct answers at the current level. Promo
 - Deleting a subject requires typing its name and removes its related content and history.
 - PDFs above 25 MB show a warning; PDFs above 100 MB are rejected.
 - Version 1 has no account or cloud synchronization.
+- Do not add sign-up, sign-in, user accounts, or authentication unless Marvin explicitly reverses this decision in a future request.
 - Student data stays in the browser database and is not committed to GitHub.
 
 ## Main Limitation

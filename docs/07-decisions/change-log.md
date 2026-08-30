@@ -4,6 +4,12 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-08-31 — Keep the application account-free
+
+- Change: Confirmed that Reviewer Organizer remains a personal standalone application without sign-up, sign-in, authentication, Supabase, or cloud synchronization.
+- Evidence: Marvin explicitly rejected adding the sign-up feature after discussing an account-based architecture.
+- Remaining risk: study data remains device-specific and must be moved using backup and restore.
+
 ## 2026-08-31 — GitHub Pages deployment
 
 - Change: Published the application at `https://burgosmarvin79-cyber.github.io/reviewer-organizer/` using an automated GitHub Actions workflow.
