@@ -101,3 +101,14 @@ Reuse content already present in the current context; do not reopen an unchanged
 - `active-task.md`, `current-state.md`, `change-log.md`, and source docs updated only when durable state changed.
 - Remaining risk is explicit.
 - Every child work item is merged, explicitly integrated, and followed by fresh primary-task verification.
+
+## Portfolio-Quality Git History
+
+- Treat every commit, push, pull request, release, and public repository page as part of Marvin's professional developer portfolio.
+- Create focused commits that represent one coherent outcome. Do not mix unrelated work merely to reduce the number of commits.
+- Write concise, specific, professional commit subjects in imperative style that explain the meaningful outcome; never use vague messages such as `update`, `changes`, `work`, or `fix stuff`.
+- Before committing application changes, run the relevant linting, tests, type-checking, build, or focused verification. Do not present unverified or broken work on `main` as portfolio-ready.
+- Keep README files, product documentation, learning notes, release descriptions, and user-facing text polished, truthful, beginner-readable, and suitable for recruiters or future collaborators.
+- When a change has an important reason, tradeoff, limitation, or verification method, record it in the appropriate project documentation without adding noisy command logs.
+- Never fabricate activity, authorship, features, test results, dates, or engineering experience. Professional presentation must reflect real work and real verification.
+- Preserve Marvin's Git author identity and verify that GitHub CLI is using `burgosmarvin79-cyber` before any GitHub write from this workspace.
