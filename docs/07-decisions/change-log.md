@@ -4,6 +4,13 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-08-31 — Responsive laptop-to-mobile preview
+
+- Change: Expanded the compact-layout breakpoint to 850 CSS pixels and strengthened phone layouts for navigation, cards, files, forms, history, tests, and modals.
+- Change: Added a dismissible backdrop for the slide-out navigation and short-screen handling for landscape or highly zoomed windows.
+- Evidence: lint, four mastery tests, TypeScript checking, production build, and CSS breakpoint inspection passed.
+- Remaining risk: final visual acceptance depends on Marvin's laptop scaling and target phone/browser.
+
 ## 2026-08-31 — Keep the application account-free
 
 - Change: Confirmed that Reviewer Organizer remains a personal standalone application without sign-up, sign-in, authentication, Supabase, or cloud synchronization.

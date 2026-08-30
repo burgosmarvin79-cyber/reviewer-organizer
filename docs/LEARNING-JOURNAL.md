@@ -37,3 +37,9 @@ Pushing files to a GitHub repository stores and versions them, but it does not a
 The deployment workflow is an automated recipe. Whenever verified code reaches the `main` branch, GitHub installs the exact dependencies, runs checks, builds the application, and publishes the `dist` production folder.
 
 Because a project Pages site lives below `/reviewer-organizer/` rather than at the domain root, the build must include that base path. Hash-based navigation keeps screens such as `#/subjects` inside the already-loaded application and avoids static-host 404 errors.
+
+## 2026-08-31 — Responsive design uses effective width
+
+A responsive layout reacts to CSS viewport width, not whether the physical device is a laptop or phone. Narrowing the laptop window or increasing browser zoom reduces the effective width. At 850 CSS pixels, Reviewer Organizer switches from its permanent desktop sidebar to the compact mobile navigation.
+
+Responsive work includes more than shrinking text. Actions must stack, long filenames must wrap, dialogs must fit the visible height, navigation must remain dismissible, and horizontal scrolling must be prevented without hiding useful content.

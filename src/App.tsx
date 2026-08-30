@@ -47,13 +47,14 @@ function Layout() {
   ]
   return (
     <div className="app-shell">
+      {menuOpen && <button className="mobile-overlay" onClick={() => setMenuOpen(false)} aria-label="Close navigation menu" />}
       <aside className={menuOpen ? 'sidebar open' : 'sidebar'}>
         <div className="brand"><span className="brand-mark"><Check /></span><div><strong>Reviewer</strong><small>Organizer</small></div></div>
         <nav>{links.map((link) => <NavLink key={link.to} to={link.to} end={link.to === '/'} onClick={() => setMenuOpen(false)}>{link.icon}<span>{link.label}</span></NavLink>)}</nav>
         <div className="offline-badge"><ShieldCheck /><span><strong>Stored locally</strong><small>Your study data stays here.</small></span></div>
       </aside>
       <main className="main-content">
-        <button className="menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-label="Open navigation"><Menu /></button>
+        <button className="menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-expanded={menuOpen}><Menu /></button>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/subjects" element={<SubjectsPage />} />
