@@ -13,6 +13,7 @@ import type { MasteryLevel, Note, Question, Subject, TestAnswer, TestSession } f
 import { supabase } from './lib/supabase'
 import { enableUserSync, syncUserData } from './sync'
 import type { Session } from '@supabase/supabase-js'
+import { deleteSubject, saveSubject } from './remote'
 
 const COLORS = ['#246bfd', '#16a085', '#7c5ce7', '#e67e22', '#d64f6c', '#1f8a99']
 
@@ -160,7 +161,9 @@ function SubjectForm({ subject, onClose }: { subject?: Subject; onClose: () => v
     const trimmed = name.trim()
     if (!trimmed) return
     const now = new Date().toISOString()
-    await db.subjects.put({ id: subject?.id ?? id(), name: trimmed, description: description.trim(), color, createdAt: subject?.createdAt ?? now, updatedAt: now })
+    const savedSubject = { id: subject?.id ?? id(), name: trimmed, description: description.trim(), color, createdAt: subject?.createdAt ?? now, updatedAt: now }
+    await db.subjects.put(savedSubject)
+    await saveSubject(savedSubject)
     onClose()
   }
   return <form className="form" onSubmit={submit}><label>Subject name<input autoFocus value={name} onChange={(event) => setName(event.target.value)} maxLength={80} required placeholder="e.g. General Biology" /></label><label>Description<textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={240} placeholder="What are you studying?" /></label><fieldset><legend>Color</legend><div className="color-picker">{COLORS.map((item) => <button key={item} type="button" className={color === item ? 'selected' : ''} style={{ background: item }} onClick={() => setColor(item)} aria-label={`Choose ${item}`} />)}</div></fieldset><div className="form-actions"><button type="button" className="button ghost" onClick={onClose}>Cancel</button><button className="button primary">{subject ? 'Save changes' : 'Create subject'}</button></div></form>
@@ -190,6 +193,7 @@ function SubjectPage() {
     const confirmation = window.prompt(`Deleting this subject also deletes all of its PDFs, notes, questions, and test history. Type “${currentSubject.name}” to continue.`)
     if (confirmation !== currentSubject.name) return
     await deleteSubjectCascade(currentSubject.id)
+    await deleteSubject(currentSubject.id)
     navigate('/subjects')
   }
   return <div className="page"><Link className="back-link" to="/subjects"><ArrowLeft /> All subjects</Link><header className="subject-hero" style={{ '--subject-color': subject.color } as React.CSSProperties}><span><BookOpen /></span><div><p className="eyebrow">Subject workspace</p><h1>{subject.name}</h1><p>{subject.description || 'Add a description to explain this subject.'}</p></div><div className="hero-actions"><button className="button ghost" onClick={() => setEditing(true)}><Pencil /> Edit</button><button className="button danger" onClick={remove}><Trash2 /> Delete</button></div></header><div className="tabs" role="tablist"><button className={tab === 'pdfs' ? 'active' : ''} onClick={() => setTab('pdfs')}><FileText /> PDF reviewers</button><button className={tab === 'notes' ? 'active' : ''} onClick={() => setTab('notes')}><NotebookPen /> Notes</button><button className={tab === 'questions' ? 'active' : ''} onClick={() => setTab('questions')}><CircleHelp /> Question bank</button></div>{tab === 'pdfs' && <PdfPanel subjectId={subject.id} />}{tab === 'notes' && <NotesPanel subjectId={subject.id} />}{tab === 'questions' && <QuestionsPanel subjectId={subject.id} />}{editing && <Modal title="Edit subject" onClose={() => setEditing(false)}><SubjectForm subject={subject} onClose={() => setEditing(false)} /></Modal>}</div>
