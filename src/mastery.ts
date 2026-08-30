@@ -7,27 +7,28 @@ export const LEVEL_NAMES: Record<MasteryLevel, string> = {
   4: 'Final Test Reviewer',
 }
 
-export function applyAnswer(question: Question, wasCorrect: boolean): Question {
+export function normalizeAnswer(answer: string): string {
+  return answer.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
+}
+
+export function isAcceptedAnswer(answer: string, acceptedAnswers: string[]): boolean {
+  const normalized = normalizeAnswer(answer)
+  return normalized.length > 0 && acceptedAnswers.some((accepted) => normalizeAnswer(accepted) === normalized)
+}
+
+export function recordAnswer(question: Question, wasCorrect: boolean): Question {
   const now = new Date().toISOString()
-  let level = question.level
-  let correctStreak = wasCorrect ? question.correctStreak + 1 : 0
-
-  if (wasCorrect && correctStreak >= 3 && level < 4) {
-    level = (level + 1) as MasteryLevel
-    correctStreak = 0
-  } else if (!wasCorrect && level > 1) {
-    level = (level - 1) as MasteryLevel
-  }
-
   return {
     ...question,
-    level,
-    correctStreak,
     totalAttempts: question.totalAttempts + 1,
     totalCorrect: question.totalCorrect + (wasCorrect ? 1 : 0),
     lastAnsweredAt: now,
     updatedAt: now,
   }
+}
+
+export function moveQuestion(question: Question, level: MasteryLevel): Question {
+  return { ...question, level, updatedAt: new Date().toISOString() }
 }
 
 export function randomSelection<T>(items: T[], count: number): T[] {

@@ -37,11 +37,9 @@ export interface Question {
   id: string
   subjectId: string
   prompt: string
-  choices: Choice[]
-  correctChoiceId: string
+  acceptedAnswers: string[]
   explanation: string
   level: MasteryLevel
-  correctStreak: number
   totalAttempts: number
   totalCorrect: number
   lastAnsweredAt?: string
@@ -52,14 +50,18 @@ export interface Question {
 export interface TestAnswer {
   questionId: string
   prompt: string
-  choices: Choice[]
-  selectedChoiceId: string
-  correctChoiceId: string
+  selectedAnswer: string
+  correctAnswer: string
+  acceptedAnswers: string[]
   explanation: string
   wasCorrect: boolean
+  wasSkipped?: boolean
   levelBefore: MasteryLevel
   levelAfter: MasteryLevel
   answeredAt: string
+  choices?: Choice[]
+  selectedChoiceId?: string
+  correctChoiceId?: string
 }
 
 export interface TestSession {
@@ -71,6 +73,7 @@ export interface TestSession {
   completedAt: string
   questionCount: number
   correctCount: number
+  skippedCount?: number
   percentage: number
   answers: TestAnswer[]
 }
@@ -83,7 +86,7 @@ export interface AppSettings {
 
 export interface BackupFile {
   format: 'reviewer-organizer-backup'
-  version: 1
+  version: 1 | 2
   exportedAt: string
   subjects: Subject[]
   pdfs: Array<Omit<PdfReviewer, 'fileData'> & { fileDataBase64: string }>

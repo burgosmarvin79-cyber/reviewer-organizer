@@ -1,6 +1,6 @@
 # Reviewer Organizer
 
-An offline-first study organizer for subjects, PDF reviewers, notes, mastery-based question banks, and test history.
+An offline-first study organizer for subjects, PDF reviewers, notes, identification question banks, manual mastery levels, and test history.
 
 ## Live application
 

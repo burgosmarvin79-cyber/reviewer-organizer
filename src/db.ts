@@ -1,5 +1,12 @@
 import Dexie, { type EntityTable } from 'dexie'
-import type { AppSettings, Note, PdfReviewer, Question, Subject, TestSession } from './types'
+import type { AppSettings, Choice, Note, PdfReviewer, Question, Subject, TestSession } from './types'
+
+type LegacyQuestion = Omit<Question, 'acceptedAnswers'> & {
+  choices?: Choice[]
+  correctChoiceId?: string
+  correctStreak?: number
+  acceptedAnswers?: string[]
+}
 
 class ReviewerDatabase extends Dexie {
   subjects!: EntityTable<Subject, 'id'>
@@ -18,6 +25,24 @@ class ReviewerDatabase extends Dexie {
       questions: 'id, subjectId, level, [subjectId+level], updatedAt',
       testSessions: 'id, subjectId, level, completedAt',
       settings: 'id',
+    })
+    this.version(2).stores({
+      subjects: 'id, name, updatedAt',
+      pdfs: 'id, subjectId, createdAt',
+      notes: 'id, subjectId, title, updatedAt',
+      questions: 'id, subjectId, level, [subjectId+level], updatedAt',
+      testSessions: 'id, subjectId, level, completedAt',
+      settings: 'id',
+    }).upgrade(async (transaction) => {
+      await transaction.table<LegacyQuestion>('questions').toCollection().modify((question) => {
+        if (!question.acceptedAnswers?.length) {
+          const previousCorrectAnswer = question.choices?.find((choice) => choice.id === question.correctChoiceId)?.text
+          question.acceptedAnswers = previousCorrectAnswer ? [previousCorrectAnswer] : ['Review this answer']
+        }
+        delete question.choices
+        delete question.correctChoiceId
+        delete question.correctStreak
+      })
     })
   }
 }

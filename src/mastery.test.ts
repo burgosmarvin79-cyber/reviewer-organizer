@@ -1,31 +1,33 @@
 import { describe, expect, it, vi } from 'vitest'
-import { applyAnswer, randomSelection } from './mastery'
+import { isAcceptedAnswer, moveQuestion, normalizeAnswer, randomSelection, recordAnswer } from './mastery'
 import type { Question } from './types'
 
 function question(overrides: Partial<Question> = {}): Question {
   return {
-    id: 'q1', subjectId: 's1', prompt: 'Question?', choices: [], correctChoiceId: 'c1', explanation: '',
-    level: 1, correctStreak: 0, totalAttempts: 0, totalCorrect: 0,
+    id: 'q1', subjectId: 's1', prompt: 'Question?', acceptedAnswers: ['Manila'], explanation: '',
+    level: 1, totalAttempts: 0, totalCorrect: 0,
     createdAt: '2026-01-01', updatedAt: '2026-01-01', ...overrides,
   }
 }
 
-describe('mastery rules', () => {
-  it('promotes after three consecutive correct answers', () => {
-    const result = applyAnswer(question({ level: 2, correctStreak: 2 }), true)
-    expect(result.level).toBe(3)
-    expect(result.correctStreak).toBe(0)
+describe('identification answer rules', () => {
+  it('ignores capitalization and repeated whitespace', () => {
+    expect(normalizeAnswer('  José   Rizal ')).toBe('josé rizal')
+    expect(isAcceptedAnswer('JOSE RIZAL', ['José Rizal', 'Jose Rizal'])).toBe(true)
   })
 
-  it('demotes one level and resets the streak after an incorrect answer', () => {
-    const result = applyAnswer(question({ level: 3, correctStreak: 2 }), false)
-    expect(result.level).toBe(2)
-    expect(result.correctStreak).toBe(0)
+  it('accepts any configured answer and rejects a different answer', () => {
+    expect(isAcceptedAnswer('Rizal', ['José Rizal', 'Rizal'])).toBe(true)
+    expect(isAcceptedAnswer('Bonifacio', ['José Rizal', 'Rizal'])).toBe(false)
   })
 
-  it('never demotes below level one or promotes above level four', () => {
-    expect(applyAnswer(question({ level: 1 }), false).level).toBe(1)
-    expect(applyAnswer(question({ level: 4, correctStreak: 2 }), true).level).toBe(4)
+  it('records correctness without automatically changing levels', () => {
+    expect(recordAnswer(question({ level: 3 }), false).level).toBe(3)
+    expect(recordAnswer(question({ level: 2 }), true).level).toBe(2)
+  })
+
+  it('changes levels only through an explicit manual move', () => {
+    expect(moveQuestion(question({ level: 2 }), 3).level).toBe(3)
   })
 })
 

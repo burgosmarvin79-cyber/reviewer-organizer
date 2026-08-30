@@ -8,8 +8,8 @@ import {
 import { Link, NavLink, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { createBackup, restoreBackup, validateBackup } from './backup'
 import { db, deleteSubjectCascade } from './db'
-import { applyAnswer, LEVEL_NAMES, randomSelection } from './mastery'
-import type { Choice, MasteryLevel, Note, Question, Subject, TestAnswer, TestSession } from './types'
+import { isAcceptedAnswer, LEVEL_NAMES, moveQuestion, randomSelection, recordAnswer } from './mastery'
+import type { MasteryLevel, Note, Question, Subject, TestAnswer, TestSession } from './types'
 
 const COLORS = ['#246bfd', '#16a085', '#7c5ce7', '#e67e22', '#d64f6c', '#1f8a99']
 
@@ -41,7 +41,6 @@ function Layout() {
   const links = [
     { to: '/', label: 'Dashboard', icon: <Home /> },
     { to: '/subjects', label: 'Subjects', icon: <BookOpen /> },
-    { to: '/test', label: 'Practice test', icon: <GraduationCap /> },
     { to: '/history', label: 'Test history', icon: <History /> },
     { to: '/settings', label: 'Settings & backup', icon: <Settings /> },
   ]
@@ -80,7 +79,7 @@ function Dashboard() {
   const average = data.sessions.length ? Math.round(data.sessions.reduce((sum, session) => sum + session.percentage, 0) / data.sessions.length) : 0
   return (
     <div className="page">
-      <header className="page-header"><div><p className="eyebrow">Your study command center</p><h1>Ready for a focused session?</h1><p>Keep your reviewers organized and turn practice into measurable progress.</p></div><Link className="button primary" to="/test"><GraduationCap /> Start a test</Link></header>
+      <header className="page-header"><div><p className="eyebrow">Your study command center</p><h1>Ready for a focused session?</h1><p>Keep your reviewers organized and turn practice into measurable progress.</p></div><Link className="button primary" to="/subjects"><BookOpen /> Open subjects</Link></header>
       <section className="stats-grid">
         <article><span className="stat-icon blue"><BookOpen /></span><div><strong>{data.subjects.length}</strong><small>Subjects</small></div></article>
         <article><span className="stat-icon gold"><FileText /></span><div><strong>{data.pdfs.length}</strong><small>PDF reviewers</small></div></article>
@@ -88,7 +87,7 @@ function Dashboard() {
         <article><span className="stat-icon green"><BarChart3 /></span><div><strong>{average}%</strong><small>Average score</small></div></article>
       </section>
       <div className="dashboard-grid">
-        <section className="panel"><div className="section-heading"><div><p className="eyebrow">Mastery ladder</p><h2>Question progress</h2></div><Link to="/test">Practice <ChevronRight /></Link></div>
+        <section className="panel"><div className="section-heading"><div><p className="eyebrow">Mastery ladder</p><h2>Question progress</h2></div><Link to="/subjects">Choose subject <ChevronRight /></Link></div>
           {data.questions.length === 0 ? <EmptyState icon={<CircleHelp />} title="Your question bank is empty" text="Add questions inside a subject to begin building mastery." /> :
             <div className="mastery-bars">{levelCounts.map((count, index) => <div key={index}><div><span>{LEVEL_NAMES[(index + 1) as MasteryLevel]}</span><strong>{count}</strong></div><div className="bar"><i style={{ width: `${data.questions.length ? (count / data.questions.length) * 100 : 0}%` }} /></div></div>)}</div>}
         </section>
@@ -141,8 +140,9 @@ type SubjectTab = 'pdfs' | 'notes' | 'questions'
 
 function SubjectPage() {
   const { subjectId = '' } = useParams()
+  const [subjectParams] = useSearchParams()
   const navigate = useNavigate()
-  const [tab, setTab] = useState<SubjectTab>('pdfs')
+  const [tab, setTab] = useState<SubjectTab>(subjectParams.get('tab') === 'questions' ? 'questions' : 'pdfs')
   const [editing, setEditing] = useState(false)
   const subject = useLiveQuery(() => db.subjects.get(subjectId), [subjectId])
   if (subject === undefined) return <p>Loading subject…</p>
@@ -194,23 +194,21 @@ function NotesPanel({ subjectId }: { subjectId: string }) {
   return <section className="panel"><div className="section-heading"><div><p className="eyebrow">Your own words</p><h2>Notes</h2></div><button className="button primary" onClick={() => setEditing('new')}><Plus /> New note</button></div>{notes.length > 0 && <label className="search"><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search notes" /></label>}{filtered.length ? <div className="note-grid">{filtered.map((note) => <article key={note.id}><div><h3>{note.title}</h3><small>Edited {dateLabel(note.updatedAt)}</small></div><p>{note.content}</p><footer><button className="button ghost" onClick={() => setEditing(note)}><Pencil /> Edit</button><button className="icon-button danger-text" onClick={() => window.confirm(`Delete “${note.title}”?`) && void db.notes.delete(note.id)}><Trash2 /></button></footer></article>)}</div> : <EmptyState icon={<NotebookPen />} title={notes.length ? 'No matching notes' : 'No notes yet'} text={notes.length ? 'Try another search.' : 'Write summaries in your own words to strengthen memory.'} />}{editing && <Modal title={editing === 'new' ? 'New note' : 'Edit note'} onClose={() => setEditing(null)}><NoteForm subjectId={subjectId} note={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} /></Modal>}</section>
 }
 
-function blankChoices(): Choice[] { return [{ id: id(), text: '' }, { id: id(), text: '' }, { id: id(), text: '' }, { id: id(), text: '' }] }
-
 function QuestionForm({ subjectId, question, onClose }: { subjectId: string; question?: Question; onClose: () => void }) {
   const [prompt, setPrompt] = useState(question?.prompt ?? '')
   const [explanation, setExplanation] = useState(question?.explanation ?? '')
-  const [choices, setChoices] = useState<Choice[]>(question?.choices ?? blankChoices())
-  const [correctChoiceId, setCorrectChoiceId] = useState(question?.correctChoiceId ?? '')
+  const [acceptedAnswers, setAcceptedAnswers] = useState<string[]>(question?.acceptedAnswers?.length ? question.acceptedAnswers : [''])
   const [error, setError] = useState('')
-  function updateChoice(choiceId: string, text: string) { setChoices((current) => current.map((choice) => choice.id === choiceId ? { ...choice, text } : choice)) }
+  function updateAnswer(index: number, value: string) { setAcceptedAnswers((current) => current.map((answer, answerIndex) => answerIndex === index ? value : answer)) }
   async function submit(event: FormEvent) {
-    event.preventDefault(); const cleaned = choices.map((choice) => ({ ...choice, text: choice.text.trim() })).filter((choice) => choice.text)
-    if (cleaned.length < 2) return setError('Add at least two answer choices.')
-    if (!cleaned.some((choice) => choice.id === correctChoiceId)) return setError('Choose the correct answer.')
-    const now = new Date().toISOString(); const answerChanged = question && question.correctChoiceId !== correctChoiceId
-    await db.questions.put({ id: question?.id ?? id(), subjectId, prompt: prompt.trim(), choices: cleaned, correctChoiceId, explanation: explanation.trim(), level: answerChanged ? 1 : question?.level ?? 1, correctStreak: answerChanged ? 0 : question?.correctStreak ?? 0, totalAttempts: answerChanged ? 0 : question?.totalAttempts ?? 0, totalCorrect: answerChanged ? 0 : question?.totalCorrect ?? 0, lastAnsweredAt: answerChanged ? undefined : question?.lastAnsweredAt, createdAt: question?.createdAt ?? now, updatedAt: now }); onClose()
+    event.preventDefault()
+    const cleaned = [...new Set(acceptedAnswers.map((answer) => answer.trim()).filter(Boolean))]
+    if (!cleaned.length) return setError('Add at least one accepted answer.')
+    const now = new Date().toISOString()
+    await db.questions.put({ id: question?.id ?? id(), subjectId, prompt: prompt.trim(), acceptedAnswers: cleaned, explanation: explanation.trim(), level: question?.level ?? 1, totalAttempts: question?.totalAttempts ?? 0, totalCorrect: question?.totalCorrect ?? 0, lastAnsweredAt: question?.lastAnsweredAt, createdAt: question?.createdAt ?? now, updatedAt: now })
+    onClose()
   }
-  return <form className="form" onSubmit={submit}><label>Question<textarea autoFocus required value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="What do you want to remember?" /></label><fieldset><legend>Answer choices</legend><div className="choice-editor">{choices.map((choice, index) => <div key={choice.id}><input type="radio" name="correct" checked={correctChoiceId === choice.id} onChange={() => setCorrectChoiceId(choice.id)} aria-label={`Mark choice ${index + 1} correct`} /><input value={choice.text} onChange={(event) => updateChoice(choice.id, event.target.value)} placeholder={`Choice ${index + 1}`} /><button type="button" className="icon-button" disabled={choices.length <= 2} onClick={() => { setChoices((current) => current.filter((item) => item.id !== choice.id)); if (correctChoiceId === choice.id) setCorrectChoiceId('') }}><X /></button></div>)}</div>{choices.length < 6 && <button type="button" className="text-button" onClick={() => setChoices([...choices, { id: id(), text: '' }])}><Plus /> Add choice</button>}<small>Select the circle beside the correct answer.</small></fieldset><label>Explanation<textarea required value={explanation} onChange={(event) => setExplanation(event.target.value)} placeholder="Explain why the correct answer is right." /></label>{error && <p className="form-error">{error}</p>}<div className="form-actions"><button type="button" className="button ghost" onClick={onClose}>Cancel</button><button className="button primary">Save question</button></div></form>
+  return <form className="form" onSubmit={submit}><label>Identification question<textarea autoFocus required value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="e.g. Who wrote Noli Me Tangere?" /></label><fieldset><legend>Accepted answers</legend><div className="answer-editor">{acceptedAnswers.map((answer, index) => <div key={index}><input value={answer} onChange={(event) => updateAnswer(index, event.target.value)} placeholder={index === 0 ? 'Primary correct answer' : 'Alternative accepted answer'} /><button type="button" className="icon-button" disabled={acceptedAnswers.length === 1} onClick={() => setAcceptedAnswers((current) => current.filter((_, answerIndex) => answerIndex !== index))}><X /></button></div>)}</div>{acceptedAnswers.length < 8 && <button type="button" className="text-button" onClick={() => setAcceptedAnswers([...acceptedAnswers, ''])}><Plus /> Add accepted answer</button>}<small>Capitalization and extra spaces are ignored. Add spelling variants when needed.</small></fieldset><label>Explanation<textarea required value={explanation} onChange={(event) => setExplanation(event.target.value)} placeholder="Explain the answer so the student can review it after checking." /></label>{error && <p className="form-error">{error}</p>}<div className="form-actions"><button type="button" className="button ghost" onClick={onClose}>Cancel</button><button className="button primary">Save question</button></div></form>
 }
 
 function QuestionsPanel({ subjectId }: { subjectId: string }) {
@@ -219,18 +217,19 @@ function QuestionsPanel({ subjectId }: { subjectId: string }) {
   const [editing, setEditing] = useState<Question | 'new' | null>(null)
   const questions = useLiveQuery(() => db.questions.where('subjectId').equals(subjectId).reverse().sortBy('updatedAt'), [subjectId]) ?? []
   const filtered = questions.filter((question) => (!level || question.level === level) && `${question.prompt} ${question.explanation}`.toLowerCase().includes(search.toLowerCase()))
-  return <section className="panel"><div className="section-heading"><div><p className="eyebrow">Mastery practice</p><h2>Question bank</h2></div><div className="heading-actions"><Link className="button ghost" to={`/test?subject=${subjectId}`}><GraduationCap /> Practice</Link><button className="button primary" onClick={() => setEditing('new')}><Plus /> Add question</button></div></div>{questions.length > 0 && <div className="toolbar"><label className="search"><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search questions" /></label><select value={level} onChange={(event) => setLevel(Number(event.target.value) as MasteryLevel | 0)}><option value={0}>All levels</option>{[1, 2, 3, 4].map((item) => <option key={item} value={item}>{LEVEL_NAMES[item as MasteryLevel]}</option>)}</select></div>}{filtered.length ? <div className="question-list">{filtered.map((question) => <article key={question.id}><div className={`level-pill level-${question.level}`}>{LEVEL_NAMES[question.level]}</div><h3>{question.prompt}</h3><p>{question.choices.length} choices · {question.correctStreak}/3 correct streak · {question.totalAttempts} attempts</p><footer><button className="button ghost" onClick={() => setEditing(question)}><Pencil /> Edit</button><button className="icon-button danger-text" onClick={() => window.confirm('Delete this question? Its snapshots remain in test history.') && void db.questions.delete(question.id)}><Trash2 /></button></footer></article>)}</div> : <EmptyState icon={<CircleHelp />} title={questions.length ? 'No matching questions' : 'No questions yet'} text={questions.length ? 'Adjust your search or level filter.' : 'Add multiple-choice questions to begin your mastery ladder.'} />}{editing && <Modal title={editing === 'new' ? 'New question' : 'Edit question'} onClose={() => setEditing(null)}><QuestionForm subjectId={subjectId} question={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} /></Modal>}</section>
+  return <section className="panel"><div className="section-heading"><div><p className="eyebrow">Manual mastery practice</p><h2>Question bank</h2></div><button className="button primary" onClick={() => setEditing('new')}><Plus /> Add question</button></div><div className="test-level-grid">{([1, 2, 3, 4] as MasteryLevel[]).map((item) => { const count = questions.filter((question) => question.level === item).length; return <article key={item} className={`test-level-card level-card-${item}`}><div className={`level-pill level-${item}`}>{LEVEL_NAMES[item]}</div><strong>{count}</strong><span>{count === 1 ? 'question' : 'questions'}</span><Link className="button primary" aria-disabled={!count} to={count ? `/test?subject=${subjectId}&level=${item}` : '#'} onClick={(event) => { if (!count) event.preventDefault() }}><GraduationCap /> Start test</Link></article> })}</div>{questions.length > 0 && <div className="toolbar"><label className="search"><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search questions" /></label><select value={level} onChange={(event) => setLevel(Number(event.target.value) as MasteryLevel | 0)}><option value={0}>All levels</option>{[1, 2, 3, 4].map((item) => <option key={item} value={item}>{LEVEL_NAMES[item as MasteryLevel]}</option>)}</select></div>}{filtered.length ? <div className="question-list">{filtered.map((question) => <article key={question.id}><div className={`level-pill level-${question.level}`}>{LEVEL_NAMES[question.level]}</div><h3>{question.prompt}</h3><p>{question.acceptedAnswers.length} accepted answer{question.acceptedAnswers.length === 1 ? '' : 's'} · {question.totalAttempts} attempts</p><footer><button className="button ghost" onClick={() => setEditing(question)}><Pencil /> Edit</button><button className="icon-button danger-text" onClick={() => window.confirm('Delete this question? Its snapshots remain in test history.') && void db.questions.delete(question.id)}><Trash2 /></button></footer></article>)}</div> : <EmptyState icon={<CircleHelp />} title={questions.length ? 'No matching questions' : 'No questions yet'} text={questions.length ? 'Adjust your search or level filter.' : 'Add identification questions to begin your manual mastery ladder.'} />}{editing && <Modal title={editing === 'new' ? 'New identification question' : 'Edit identification question'} onClose={() => setEditing(null)}><QuestionForm subjectId={subjectId} question={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} /></Modal>}</section>
 }
 
 function TestPage() {
   const [params] = useSearchParams()
-  const subjects = useLiveQuery(() => db.subjects.orderBy('name').toArray(), []) ?? []
-  const [subjectId, setSubjectId] = useState(params.get('subject') ?? '')
-  const [level, setLevel] = useState<MasteryLevel>(1)
+  const subjectId = params.get('subject') ?? ''
+  const requestedLevel = Number(params.get('level'))
+  const level = ([1, 2, 3, 4].includes(requestedLevel) ? requestedLevel : 1) as MasteryLevel
+  const subject = useLiveQuery(async () => subjectId ? await db.subjects.get(subjectId) : undefined, [subjectId])
   const [size, setSize] = useState(10)
   const [questions, setQuestions] = useState<Question[]>([])
   const [index, setIndex] = useState(0)
-  const [selected, setSelected] = useState('')
+  const [typedAnswer, setTypedAnswer] = useState('')
   const [checked, setChecked] = useState(false)
   const [answers, setAnswers] = useState<TestAnswer[]>([])
   const [startedAt, setStartedAt] = useState('')
@@ -239,35 +238,50 @@ function TestPage() {
   const current = questions[index]
   async function start() {
     const pool = await db.questions.where('[subjectId+level]').equals([subjectId, level]).toArray()
-    setQuestions(randomSelection(pool, size)); setIndex(0); setSelected(''); setChecked(false); setAnswers([]); setCompleted(null); setStartedAt(new Date().toISOString())
+    setQuestions(randomSelection(pool, size)); setIndex(0); setTypedAnswer(''); setChecked(false); setAnswers([]); setCompleted(null); setStartedAt(new Date().toISOString())
   }
   async function checkAnswer() {
-    if (!current || !selected || checked) return
-    const wasCorrect = selected === current.correctChoiceId
-    const updated = applyAnswer(current, wasCorrect)
+    if (!current || !typedAnswer.trim() || checked) return
+    const wasCorrect = isAcceptedAnswer(typedAnswer, current.acceptedAnswers)
+    const updated = recordAnswer(current, wasCorrect)
     await db.questions.put(updated)
-    const answer: TestAnswer = { questionId: current.id, prompt: current.prompt, choices: current.choices, selectedChoiceId: selected, correctChoiceId: current.correctChoiceId, explanation: current.explanation, wasCorrect, levelBefore: current.level, levelAfter: updated.level, answeredAt: new Date().toISOString() }
+    const answer: TestAnswer = { questionId: current.id, prompt: current.prompt, selectedAnswer: typedAnswer.trim(), correctAnswer: current.acceptedAnswers[0], acceptedAnswers: current.acceptedAnswers, explanation: current.explanation, wasCorrect, levelBefore: current.level, levelAfter: current.level, answeredAt: new Date().toISOString() }
     setAnswers((items) => [...items, answer]); setChecked(true)
   }
-  async function next() {
-    if (index < questions.length - 1) { setIndex(index + 1); setSelected(''); setChecked(false); return }
-    const allAnswers = answers
-    const subject = subjects.find((item) => item.id === subjectId)
-    const correctCount = allAnswers.filter((answer) => answer.wasCorrect).length
-    const session: TestSession = { id: id(), subjectId, subjectName: subject?.name ?? 'Deleted subject', level, startedAt, completedAt: new Date().toISOString(), questionCount: allAnswers.length, correctCount, percentage: Math.round((correctCount / allAnswers.length) * 100), answers: allAnswers }
+  async function finishSession(finalAnswers: TestAnswer[]) {
+    const answered = finalAnswers.filter((answer) => !answer.wasSkipped)
+    const correctCount = answered.filter((answer) => answer.wasCorrect).length
+    const session: TestSession = { id: id(), subjectId, subjectName: subject?.name ?? 'Deleted subject', level, startedAt, completedAt: new Date().toISOString(), questionCount: finalAnswers.length, correctCount, skippedCount: finalAnswers.length - answered.length, percentage: answered.length ? Math.round((correctCount / answered.length) * 100) : 0, answers: finalAnswers }
     await db.testSessions.add(session); setCompleted(session); setQuestions([])
   }
-  if (completed) return <div className="page narrow"><section className="result-card"><span className="result-icon"><GraduationCap /></span><p className="eyebrow">Test complete</p><h1>{completed.percentage}%</h1><p>You answered {completed.correctCount} of {completed.questionCount} questions correctly.</p><div className="result-actions"><button className="button primary" onClick={() => setCompleted(null)}>Practice again</button><Link className="button ghost" to="/history">View history</Link></div></section></div>
-  if (!current) return <div className="page narrow"><header className="page-header"><div><p className="eyebrow">Mastery practice</p><h1>Start a practice test</h1><p>Choose one subject and one level. Questions are selected randomly without repeats.</p></div></header><section className="panel setup-card"><label>Subject<select value={subjectId} onChange={(event) => setSubjectId(event.target.value)}><option value="">Choose a subject</option>{subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}</select></label><label>Test level<select value={level} onChange={(event) => setLevel(Number(event.target.value) as MasteryLevel)}>{[1, 2, 3, 4].map((item) => <option key={item} value={item}>{LEVEL_NAMES[item as MasteryLevel]}</option>)}</select></label><label>Number of questions<input type="number" min={1} max={50} value={size} onChange={(event) => setSize(Math.max(1, Math.min(50, Number(event.target.value))))} /></label><div className="availability"><CircleHelp /><span>{subjectId ? `${available} question${available === 1 ? '' : 's'} available at this level` : 'Choose a subject to see available questions'}</span></div><button className="button primary full" disabled={!subjectId || !available} onClick={() => void start()}><GraduationCap /> Begin test</button></section></div>
-  const selectedChoice = current.choices.find((choice) => choice.id === selected)
-  const correct = selected === current.correctChoiceId
-  return <div className="page narrow"><div className="test-progress"><span>Question {index + 1} of {questions.length}</span><div className="bar"><i style={{ width: `${((index + 1) / questions.length) * 100}%` }} /></div><span>{LEVEL_NAMES[level]}</span></div><section className="question-card"><p className="eyebrow">Choose the best answer</p><h1>{current.prompt}</h1><div className="answer-list">{current.choices.map((choice, choiceIndex) => { const isCorrect = checked && choice.id === current.correctChoiceId; const isWrong = checked && choice.id === selected && !correct; return <button key={choice.id} disabled={checked} className={`${selected === choice.id ? 'selected ' : ''}${isCorrect ? 'correct ' : ''}${isWrong ? 'wrong' : ''}`} onClick={() => setSelected(choice.id)}><span>{String.fromCharCode(65 + choiceIndex)}</span>{choice.text}{isCorrect && <Check />}{isWrong && <X />}</button> })}</div>{checked && <div className={correct ? 'feedback correct' : 'feedback wrong'}><strong>{correct ? 'Correct!' : `Not quite. You chose “${selectedChoice?.text}”.`}</strong><p>{current.explanation}</p>{answers.at(-1)?.levelBefore !== answers.at(-1)?.levelAfter && <small>Your question moved to {LEVEL_NAMES[answers.at(-1)!.levelAfter]}.</small>}</div>}<div className="test-actions">{!checked ? <button className="button primary" disabled={!selected} onClick={() => void checkAnswer()}>Check answer</button> : <button className="button primary" onClick={() => void next()}>{index === questions.length - 1 ? 'Finish test' : 'Next question'} <ChevronRight /></button>}</div></section></div>
+  async function advance(finalAnswers: TestAnswer[]) {
+    if (index < questions.length - 1) { setAnswers(finalAnswers); setIndex(index + 1); setTypedAnswer(''); setChecked(false); return }
+    await finishSession(finalAnswers)
+  }
+  async function chooseLevel(targetLevel: MasteryLevel) {
+    if (!current || !checked) return
+    await db.questions.put(moveQuestion(current, targetLevel))
+    const finalAnswers = answers.map((answer, answerIndex) => answerIndex === answers.length - 1 ? { ...answer, levelAfter: targetLevel } : answer)
+    await advance(finalAnswers)
+  }
+  async function skipQuestion() {
+    if (!current || checked) return
+    const skipped: TestAnswer = { questionId: current.id, prompt: current.prompt, selectedAnswer: '', correctAnswer: current.acceptedAnswers[0], acceptedAnswers: current.acceptedAnswers, explanation: current.explanation, wasCorrect: false, wasSkipped: true, levelBefore: current.level, levelAfter: current.level, answeredAt: new Date().toISOString() }
+    await advance([...answers, skipped])
+  }
+  if (!subjectId || !params.get('level')) return <div className="page narrow"><EmptyState icon={<CircleHelp />} title="Choose a test inside a subject" text="Open a subject's Question Bank and select one of its four test levels." action={<Link className="button primary" to="/subjects">Open subjects</Link>} /></div>
+  if (completed) return <div className="page narrow"><section className="result-card"><span className="result-icon"><GraduationCap /></span><p className="eyebrow">Test complete</p><h1>{completed.percentage}%</h1><p>{completed.correctCount} correct · {completed.skippedCount ?? 0} skipped · {completed.questionCount} total questions</p><div className="result-actions"><Link className="button primary" to={`/subjects/${subjectId}?tab=questions`}>Back to question bank</Link><Link className="button ghost" to="/history">View history</Link></div></section></div>
+  if (!current) return <div className="page narrow"><Link className="back-link" to={`/subjects/${subjectId}?tab=questions`}><ArrowLeft /> Question bank</Link><header className="page-header"><div><p className="eyebrow">{subject?.name ?? 'Subject'} · identification</p><h1>{LEVEL_NAMES[level]}</h1><p>Questions are random. You decide whether each answered question stays here or moves to another level.</p></div></header><section className="panel setup-card"><label>Number of questions<input type="number" min={1} max={50} value={size} onChange={(event) => setSize(Math.max(1, Math.min(50, Number(event.target.value))))} /></label><div className="availability"><CircleHelp /><span>{available} question{available === 1 ? '' : 's'} available at this level</span></div><button className="button primary full" disabled={!available} onClick={() => void start()}><GraduationCap /> Begin identification test</button></section></div>
+  const latestAnswer = answers.at(-1)
+  return <div className="page narrow"><div className="test-progress"><span>Question {index + 1} of {questions.length}</span><div className="bar"><i style={{ width: `${((index + 1) / questions.length) * 100}%` }} /></div><span>{LEVEL_NAMES[level]}</span></div><section className="question-card"><p className="eyebrow">Type your answer</p><h1>{current.prompt}</h1><form className="identification-form" onSubmit={(event) => { event.preventDefault(); void checkAnswer() }}><input autoFocus disabled={checked} value={typedAnswer} onChange={(event) => setTypedAnswer(event.target.value)} placeholder="Enter your answer" aria-label="Your answer" />{!checked && <div className="test-actions split"><button type="button" className="button ghost" onClick={() => void skipQuestion()}>Skip question</button><button className="button primary" disabled={!typedAnswer.trim()}>Check answer</button></div>}</form>{checked && latestAnswer && <><div className={latestAnswer.wasCorrect ? 'feedback correct' : 'feedback wrong'}><strong>{latestAnswer.wasCorrect ? 'Correct!' : 'Incorrect'}</strong><p>Correct answer: <b>{current.acceptedAnswers[0]}</b></p><p>{current.explanation}</p></div><div className="manual-level-controls"><p>Where should this question go next?</p><div><button className="button ghost" disabled={current.level === 1} onClick={() => void chooseLevel((current.level - 1) as MasteryLevel)}><ArrowLeft /> Previous level</button><button className="button ghost" onClick={() => void chooseLevel(current.level)}>Keep here</button><button className="button primary" disabled={current.level === 4} onClick={() => void chooseLevel((current.level + 1) as MasteryLevel)}>Next level <ChevronRight /></button></div></div></>}</section></div>
 }
 
 function HistoryPage() {
   const sessions = useLiveQuery(() => db.testSessions.orderBy('completedAt').reverse().toArray(), []) ?? []
   const [selected, setSelected] = useState<TestSession | null>(null)
-  return <div className="page"><header className="page-header"><div><p className="eyebrow">Learning record</p><h1>Test history</h1><p>Review scores and the exact questions answered in each completed test.</p></div></header>{sessions.length ? <div className="history-list">{sessions.map((session) => <button key={session.id} onClick={() => setSelected(session)}><span className={session.percentage >= 75 ? 'score good' : 'score'}>{session.percentage}%</span><div><strong>{session.subjectName}</strong><small>{LEVEL_NAMES[session.level]} · {dateLabel(session.completedAt)}</small></div><div className="history-count">{session.correctCount}/{session.questionCount}<ChevronRight /></div></button>)}</div> : <EmptyState icon={<History />} title="No test history" text="Complete a practice test to create your first learning record." action={<Link className="button primary" to="/test">Start a test</Link>} />}{selected && <Modal title={`${selected.subjectName} · ${selected.percentage}%`} onClose={() => setSelected(null)}><div className="history-detail"><p>{LEVEL_NAMES[selected.level]} · {dateLabel(selected.completedAt)} · {selected.correctCount} of {selected.questionCount} correct</p>{selected.answers.map((answer, index) => <article key={`${answer.questionId}-${index}`}><span className={answer.wasCorrect ? 'answer-mark correct' : 'answer-mark wrong'}>{answer.wasCorrect ? <Check /> : <X />}</span><div><strong>{answer.prompt}</strong><p>Your answer: {answer.choices.find((choice) => choice.id === answer.selectedChoiceId)?.text}</p>{!answer.wasCorrect && <p>Correct answer: {answer.choices.find((choice) => choice.id === answer.correctChoiceId)?.text}</p>}<small>{answer.explanation}</small></div></article>)}</div></Modal>}</div>
+  function responseText(answer: TestAnswer) { return answer.selectedAnswer || answer.choices?.find((choice) => choice.id === answer.selectedChoiceId)?.text || 'No answer' }
+  function correctText(answer: TestAnswer) { return answer.correctAnswer || answer.choices?.find((choice) => choice.id === answer.correctChoiceId)?.text || 'Unavailable' }
+  return <div className="page"><header className="page-header"><div><p className="eyebrow">Learning record</p><h1>Test history</h1><p>Review scores, typed answers, skipped questions, and manual level decisions.</p></div></header>{sessions.length ? <div className="history-list">{sessions.map((session) => <button key={session.id} onClick={() => setSelected(session)}><span className={session.percentage >= 75 ? 'score good' : 'score'}>{session.percentage}%</span><div><strong>{session.subjectName}</strong><small>{LEVEL_NAMES[session.level]} · {dateLabel(session.completedAt)}{session.skippedCount ? ` · ${session.skippedCount} skipped` : ''}</small></div><div className="history-count">{session.correctCount}/{session.questionCount}<ChevronRight /></div></button>)}</div> : <EmptyState icon={<History />} title="No test history" text="Open a subject's Question Bank and complete an identification test." action={<Link className="button primary" to="/subjects">Open subjects</Link>} />}{selected && <Modal title={`${selected.subjectName} · ${selected.percentage}%`} onClose={() => setSelected(null)}><div className="history-detail"><p>{LEVEL_NAMES[selected.level]} · {dateLabel(selected.completedAt)} · {selected.correctCount} correct · {selected.skippedCount ?? 0} skipped</p>{selected.answers.map((answer, index) => <article key={`${answer.questionId}-${index}`}><span className={answer.wasSkipped ? 'answer-mark skipped' : answer.wasCorrect ? 'answer-mark correct' : 'answer-mark wrong'}>{answer.wasSkipped ? <ChevronRight /> : answer.wasCorrect ? <Check /> : <X />}</span><div><strong>{answer.prompt}</strong><p>{answer.wasSkipped ? 'Skipped without answering' : `Your answer: ${responseText(answer)}`}</p>{!answer.wasCorrect && !answer.wasSkipped && <p>Correct answer: {correctText(answer)}</p>}<small>{answer.explanation}</small>{answer.levelBefore !== answer.levelAfter && <small className="history-move">Moved from {LEVEL_NAMES[answer.levelBefore]} to {LEVEL_NAMES[answer.levelAfter]}</small>}</div></article>)}</div></Modal>}</div>
 }
 
 function SettingsPage() {

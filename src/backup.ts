@@ -1,5 +1,5 @@
 import { db } from './db'
-import type { BackupFile, PdfReviewer } from './types'
+import type { BackupFile, Choice, PdfReviewer, Question } from './types'
 
 function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -29,7 +29,7 @@ export async function createBackup(): Promise<BackupFile> {
   ])
   return {
     format: 'reviewer-organizer-backup',
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     subjects,
     pdfs: await Promise.all(pdfs.map(async ({ fileData, ...pdf }) => ({ ...pdf, fileDataBase64: await blobToDataUrl(fileData) }))),
@@ -43,7 +43,7 @@ export async function createBackup(): Promise<BackupFile> {
 export function validateBackup(value: unknown): asserts value is BackupFile {
   if (!value || typeof value !== 'object') throw new Error('This file is not a valid backup.')
   const backup = value as Partial<BackupFile>
-  if (backup.format !== 'reviewer-organizer-backup' || backup.version !== 1) throw new Error('Unsupported backup format or version.')
+  if (backup.format !== 'reviewer-organizer-backup' || (backup.version !== 1 && backup.version !== 2)) throw new Error('Unsupported backup format or version.')
   for (const key of ['subjects', 'pdfs', 'notes', 'questions', 'testSessions', 'settings'] as const) {
     if (!Array.isArray(backup[key])) throw new Error(`Backup is missing ${key}.`)
   }
@@ -51,12 +51,23 @@ export function validateBackup(value: unknown): asserts value is BackupFile {
 
 export async function restoreBackup(backup: BackupFile) {
   const pdfs: PdfReviewer[] = backup.pdfs.map(({ fileDataBase64, ...pdf }) => ({ ...pdf, fileData: dataUrlToBlob(fileDataBase64) }))
+  const questions: Question[] = backup.questions.map((storedQuestion) => {
+    const question = { ...storedQuestion } as Question & { acceptedAnswers?: string[]; choices?: Choice[]; correctChoiceId?: string; correctStreak?: number }
+    if (!question.acceptedAnswers?.length) {
+      const previousAnswer = question.choices?.find((choice) => choice.id === question.correctChoiceId)?.text
+      question.acceptedAnswers = previousAnswer ? [previousAnswer] : ['Review this answer']
+    }
+    delete question.choices
+    delete question.correctChoiceId
+    delete question.correctStreak
+    return question
+  })
   await db.transaction('rw', db.tables, async () => {
     await Promise.all(db.tables.map((table) => table.clear()))
     await db.subjects.bulkAdd(backup.subjects)
     await db.pdfs.bulkAdd(pdfs)
     await db.notes.bulkAdd(backup.notes)
-    await db.questions.bulkAdd(backup.questions)
+    await db.questions.bulkAdd(questions)
     await db.testSessions.bulkAdd(backup.testSessions)
     await db.settings.bulkAdd(backup.settings)
   })

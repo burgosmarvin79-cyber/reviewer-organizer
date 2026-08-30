@@ -43,3 +43,11 @@ Because a project Pages site lives below `/reviewer-organizer/` rather than at t
 A responsive layout reacts to CSS viewport width, not whether the physical device is a laptop or phone. Narrowing the laptop window or increasing browser zoom reduces the effective width. At 850 CSS pixels, Reviewer Organizer switches from its permanent desktop sidebar to the compact mobile navigation.
 
 Responsive work includes more than shrinking text. Actions must stack, long filenames must wrap, dialogs must fit the visible height, navigation must remain dismissible, and horizontal scrolling must be prevented without hiding useful content.
+
+## 2026-08-31 — Business rules should match user control
+
+The first mastery engine moved questions automatically based on correct-answer streaks. Marvin clarified that mastery is a personal judgment, so the application now records correctness separately from level placement. After feedback, only an explicit student action changes the level.
+
+Identification checking normalizes capitalization and repeated spaces, then compares the result against the question's accepted-answer list. This stays predictable and fully offline. It does not attempt fuzzy or AI grading, so spelling variants must be added explicitly.
+
+Changing stored data shapes requires a database migration. Existing multiple-choice questions are converted by taking their former correct choice as the first accepted identification answer. Backup restoration performs the same conversion for older backup files.

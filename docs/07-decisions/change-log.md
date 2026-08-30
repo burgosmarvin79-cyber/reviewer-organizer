@@ -4,6 +4,15 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-08-31 — Identification tests with manual mastery levels
+
+- Change: Replaced multiple-choice questions with typed identification answers supporting multiple accepted variants and normalized case/spacing.
+- Change: Removed automatic promotion and demotion. After checking an answer, the student explicitly chooses the previous level, current level, or next level.
+- Change: Moved all four Start Test actions into each subject's Question Bank and removed the global Practice Test navigation entry.
+- Change: Added skip handling, manual level decisions in history, database conversion for existing questions, and backward-compatible restore for version 1 backups.
+- Evidence: lint, seven focused identification/manual-level and legacy-backup tests, TypeScript checking, production PWA build, and production dependency audit passed.
+- Remaining risk: live phone acceptance and migration testing with a real user-created version 1 backup remain recommended.
+
 ## 2026-08-31 — Responsive laptop-to-mobile preview
 
 - Change: Expanded the compact-layout breakpoint to 850 CSS pixels and strengthened phone layouts for navigation, cards, files, forms, history, tests, and modals.
