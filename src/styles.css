@@ -11,6 +11,8 @@
 .auth-divider { display: flex; align-items: center; gap: .7rem; color: #98a1af; font-size: .75rem; margin: 1.2rem 0; }
 .auth-divider::before, .auth-divider::after { content: ''; height: 1px; background: var(--border); flex: 1; }
 .auth-screen .brand-mark { background: #c62828; color: white; }
+.auth-screen .brand-mark { background-color: white; background-image: url('/reviewer-organizer/batstateu-logo.png'); background-position: center; background-repeat: no-repeat; background-size: contain; border-radius: 50%; }
+.auth-screen .brand-mark svg { display: none; }
 .auth-screen .eyebrow { color: #c62828; }
 .auth-screen .button.primary { background: #c62828; border-color: #c62828; }
 .auth-screen .button.primary:hover { background: #a91f1f; border-color: #a91f1f; }
