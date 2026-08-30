@@ -8,3 +8,4 @@ Purpose: Optional queue for work outside the single primary task slot.
 | --- | --- | --- | --- | --- |
 | build-reviewer-organizer | delivery follow-up | codex-root | explicit delivery action or confirmation | ready |
 | improve-responsive-preview | delivery follow-up | codex-root | explicit delivery action or confirmation | ready |
+| identification-manual-levels | delivery follow-up | codex-root | explicit delivery action or confirmation | ready |

@@ -40,3 +40,16 @@ Purpose: Append-only compact summaries of closed tasks.
 - Delivery State: ready
 - Verification Evidence: lint passed; 4 mastery tests passed; TypeScript and production PWA build passed; responsive breakpoints and overflow guards inspected
 - Closed At: 2026-08-30T16:38:48Z
+
+## 2026-08-30 identification-manual-levels
+
+<!-- pmm-task-id: identification-manual-levels -->
+
+- Status: done
+- Parent Task: none
+- Title: Replace multiple-choice tests with manual identification levels
+- Execution State: done
+- Verification State: passed
+- Delivery State: ready
+- Verification Evidence: lint passed; 7 identification/manual-level and version-1 backup migration tests passed; TypeScript and production PWA build passed; production npm audit found 0 vulnerabilities; PMM doctor passed
+- Closed At: 2026-08-30T17:02:43Z
