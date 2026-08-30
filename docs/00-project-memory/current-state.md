@@ -6,11 +6,11 @@ Skip when: Only reading historical decisions or one-off command output.
 
 ## Phase
 
-Version 1 implemented and undergoing final verification/publication.
+Version 1 foundation deployed for user acceptance testing.
 
 ## Current Top Objective
 
-Publish the verified offline-first application foundation to Marvin's GitHub repository.
+Exercise the complete workflow on Marvin's phone and record usability issues for the next iteration.
 
 ## Stable Facts
 
@@ -31,11 +31,12 @@ Publish the verified offline-first application foundation to Marvin's GitHub rep
 
 - Lint, automated tests, production build, and dependency audit pass as of 2026-08-31.
 - Production output serves the application shell, service worker, and install manifest successfully.
+- GitHub Pages deploys automatically from `main` and the live HTTPS site returns the app shell, PWA manifest, and service worker successfully.
 
 ## Known Issues
 
 - No cloud synchronization or user account; data belongs to one browser origin.
-- Manual browser interaction and visual acceptance remain recommended after deployment.
+- Manual phone interaction and visual acceptance remain required before calling version 1 user-accepted.
 
 ## Current Blockers
 
@@ -43,7 +44,7 @@ Publish the verified offline-first application foundation to Marvin's GitHub rep
 
 ## Next Recommended Actions
 
-- Commit and push the verified source, then deploy or open it in a browser for user acceptance testing.
+- Open `https://burgosmarvin79-cyber.github.io/reviewer-organizer/` on the target phone, install it, and test subject, PDF, note, question, test, history, and backup workflows.
 
 ## Last Updated
 

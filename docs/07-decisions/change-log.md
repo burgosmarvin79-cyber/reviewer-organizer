@@ -4,6 +4,13 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-08-31 — GitHub Pages deployment
+
+- Change: Published the application at `https://burgosmarvin79-cyber.github.io/reviewer-organizer/` using an automated GitHub Actions workflow.
+- Change: Set Vite's repository base path to `/reviewer-organizer/` and used hash-based client navigation to prevent internal-page refresh errors on static hosting.
+- Evidence: local lint, tests, and repository-path build passed; GitHub Actions run `33322288775` succeeded; live page, manifest, and service worker returned HTTPS 200.
+- Remaining risk: installation prompts and the complete data workflow require acceptance testing on Marvin's phone and browser.
+
 ## 2026-08-31 — Version 1 foundation
 
 - Change: Chose an installable Progressive Web App to preserve the requested web interface and standalone offline behavior.

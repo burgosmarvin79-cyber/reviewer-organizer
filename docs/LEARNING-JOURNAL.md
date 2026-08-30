@@ -29,3 +29,11 @@ A snapshot is a copy of a question at the moment it was answered. Without snapsh
 - A browser smoke test proves the packaged files can be served.
 
 Passing one layer does not replace the others.
+
+## 2026-08-31 — Source code is not a deployed website
+
+Pushing files to a GitHub repository stores and versions them, but it does not automatically create a website. GitHub Pages is the hosting service that serves the production build over HTTPS.
+
+The deployment workflow is an automated recipe. Whenever verified code reaches the `main` branch, GitHub installs the exact dependencies, runs checks, builds the application, and publishes the `dist` production folder.
+
+Because a project Pages site lives below `/reviewer-organizer/` rather than at the domain root, the build must include that base path. Hash-based navigation keeps screens such as `#/subjects` inside the already-loaded application and avoids static-host 404 errors.
