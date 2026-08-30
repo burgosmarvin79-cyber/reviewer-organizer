@@ -17,13 +17,17 @@ export function enableUserSync(userId: string) {
   if (hooksInstalled) return
   hooksInstalled = true
   db.subjects.hook('creating', (_key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('subjects').upsert(subjectRow(item, activeUserId)) })
-  db.subjects.hook('updating', (_changes, _key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('subjects').upsert(subjectRow(item, activeUserId)) })
+  db.subjects.hook('updating', (changes, key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('subjects').upsert(subjectRow({ ...item, ...changes, id: key } as Subject, activeUserId)) })
+  db.subjects.hook('deleting', (key) => { if (activeUserId && !syncing && supabase) void supabase.from('subjects').delete().eq('id', key).eq('user_id', activeUserId) })
   db.notes.hook('creating', (_key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('notes').upsert(noteRow(item, activeUserId)) })
-  db.notes.hook('updating', (_changes, _key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('notes').upsert(noteRow(item, activeUserId)) })
+  db.notes.hook('updating', (changes, key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('notes').upsert(noteRow({ ...item, ...changes, id: key } as Note, activeUserId)) })
+  db.notes.hook('deleting', (key) => { if (activeUserId && !syncing && supabase) void supabase.from('notes').delete().eq('id', key).eq('user_id', activeUserId) })
   db.questions.hook('creating', (_key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('questions').upsert(questionRow(item, activeUserId)) })
-  db.questions.hook('updating', (_changes, _key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('questions').upsert(questionRow(item, activeUserId)) })
+  db.questions.hook('updating', (changes, key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('questions').upsert(questionRow({ ...item, ...changes, id: key } as Question, activeUserId)) })
+  db.questions.hook('deleting', (key) => { if (activeUserId && !syncing && supabase) void supabase.from('questions').delete().eq('id', key).eq('user_id', activeUserId) })
   db.testSessions.hook('creating', (_key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('test_sessions').upsert(sessionRow(item, activeUserId)) })
-  db.testSessions.hook('updating', (_changes, _key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('test_sessions').upsert(sessionRow(item, activeUserId)) })
+  db.testSessions.hook('updating', (changes, key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('test_sessions').upsert(sessionRow({ ...item, ...changes, id: key } as TestSession, activeUserId)) })
+  db.testSessions.hook('deleting', (key) => { if (activeUserId && !syncing && supabase) void supabase.from('test_sessions').delete().eq('id', key).eq('user_id', activeUserId) })
 }
 
 export async function syncUserData(session: Session) {
