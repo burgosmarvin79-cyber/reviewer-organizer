@@ -22,6 +22,8 @@ function AuthGate() {
   const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [otp, setOtp] = useState('')
+  const [otpSent, setOtpSent] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -42,10 +44,21 @@ function AuthGate() {
     event.preventDefault(); setError(''); setMessage('')
     const client = supabase
     if (!client) return
-    const action = mode === 'sign-in' ? client.auth.signInWithPassword({ email, password }) : client.auth.signUp({ email, password })
+    if (mode === 'sign-up') {
+      if (!otpSent) {
+        const { error: otpError } = await client.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })
+        if (otpError) return setError(otpError.message)
+        setOtpSent(true); setMessage('A 6-digit verification code was sent to your email.')
+        return
+      }
+      const { error: verifyError } = await client.auth.verifyOtp({ email, token: otp, type: 'email' })
+      if (verifyError) return setError(verifyError.message)
+      return
+    }
+    const action = client.auth.signInWithPassword({ email, password })
     const { data, error: authError } = await action
     if (authError) return setError(authError.message)
-    if (mode === 'sign-up' && !data.session) setMessage('Account created. Check your email to confirm it, then sign in.')
+    if (!data.session) setMessage('Sign in request submitted.')
   }
   async function signInWithGoogle() {
     setError('')
@@ -54,7 +67,7 @@ function AuthGate() {
     const { error: authError } = await client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + window.location.pathname } })
     if (authError) setError(authError.message)
   }
-  return <div className="auth-screen"><section className="auth-card"><div className="brand auth-brand"><span className="brand-mark"><Check /></span><div><strong>Reviewer</strong><small>Organizer</small></div></div><p className="eyebrow">Private study space</p><h1>{mode === 'sign-in' ? 'Welcome back' : 'Create your account'}</h1><p>{mode === 'sign-in' ? 'Sign in to access your subjects and progress.' : 'Your reviewers and notes will be isolated to your account.'}</p><button className="button google-button full" onClick={() => void signInWithGoogle()}><span className="google-g">G</span> Continue with Google</button><div className="auth-divider"><span>or use email</span></div><form className="form" onSubmit={submit}><label>Email<input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" /></label><label>Password<input type="password" required minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'} /></label>{error && <p className="form-error">{error}</p>}{message && <p className="notice">{message}</p>}<button className="button primary full">{mode === 'sign-in' ? 'Sign in' : 'Sign up'}</button></form><button className="text-button" onClick={() => { setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in'); setError(''); setMessage('') }}>{mode === 'sign-in' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}</button></section></div>
+  return <div className="auth-screen"><section className="auth-card"><div className="brand auth-brand"><span className="brand-mark"><Check /></span><div><strong>Reviewer</strong><small>Organizer</small></div></div><p className="eyebrow">Private study space</p><h1>{mode === 'sign-in' ? 'Welcome back' : 'Create your account'}</h1><p>{mode === 'sign-in' ? 'Sign in to access your subjects and progress.' : 'Your reviewers and notes will be isolated to your account.'}</p><button className="button google-button full" onClick={() => void signInWithGoogle()}><span className="google-g">G</span> Continue with Google</button><div className="auth-divider"><span>or use email</span></div><form className="form" onSubmit={submit}><label>Email<input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" /></label>{mode === 'sign-in' && <label>Password<input type="password" required minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" /></label>}{mode === 'sign-up' && otpSent && <label>6-digit verification code<input inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, ''))} placeholder="123456" /></label>}{error && <p className="form-error">{error}</p>}{message && <p className="notice">{message}</p>}<button className="button primary full">{mode === 'sign-in' ? 'Sign in' : otpSent ? 'Verify email' : 'Send verification code'}</button></form>{mode === 'sign-up' && otpSent && <button className="text-button" onClick={() => { setOtpSent(false); setOtp(''); setMessage('') }}>Use a different email</button>}<button className="text-button" onClick={() => { setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in'); setOtpSent(false); setOtp(''); setError(''); setMessage('') }}>{mode === 'sign-in' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}</button></section></div>
 }
 
 function id() {
