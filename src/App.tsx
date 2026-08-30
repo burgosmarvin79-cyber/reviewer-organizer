@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   ArrowLeft, BarChart3, BookOpen, Check, ChevronRight, CircleHelp, Clock3, Download,
@@ -10,8 +10,42 @@ import { createBackup, restoreBackup, validateBackup } from './backup'
 import { db, deleteSubjectCascade } from './db'
 import { isAcceptedAnswer, LEVEL_NAMES, moveQuestion, randomSelection, recordAnswer } from './mastery'
 import type { MasteryLevel, Note, Question, Subject, TestAnswer, TestSession } from './types'
+import { supabase } from './lib/supabase'
 
 const COLORS = ['#246bfd', '#16a085', '#7c5ce7', '#e67e22', '#d64f6c', '#1f8a99']
+
+function AuthGate() {
+  const [session, setSession] = useState<{ user: { email?: string } } | null>(null)
+  const [loading, setLoading] = useState(Boolean(supabase))
+  const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!supabase) return
+    const client = supabase
+    void client.auth.getSession().then(({ data }) => { setSession(data.session); setLoading(false) })
+    const { data: listener } = client.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
+    return () => listener.subscription.unsubscribe()
+  }, [])
+
+  if (!supabase) return <Layout />
+  if (loading) return <div className="auth-screen"><div className="auth-card"><p>Loading your secure study space…</p></div></div>
+  if (session) return <Layout userEmail={session.user.email} />
+
+  async function submit(event: FormEvent) {
+    event.preventDefault(); setError(''); setMessage('')
+    const client = supabase
+    if (!client) return
+    const action = mode === 'sign-in' ? client.auth.signInWithPassword({ email, password }) : client.auth.signUp({ email, password })
+    const { data, error: authError } = await action
+    if (authError) return setError(authError.message)
+    if (mode === 'sign-up' && !data.session) setMessage('Account created. Check your email to confirm it, then sign in.')
+  }
+  return <div className="auth-screen"><section className="auth-card"><div className="brand auth-brand"><span className="brand-mark"><Check /></span><div><strong>Reviewer</strong><small>Organizer</small></div></div><p className="eyebrow">Private study space</p><h1>{mode === 'sign-in' ? 'Welcome back' : 'Create your account'}</h1><p>{mode === 'sign-in' ? 'Sign in to access your subjects and progress.' : 'Your reviewers and notes will be isolated to your account.'}</p><form className="form" onSubmit={submit}><label>Email<input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" /></label><label>Password<input type="password" required minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'} /></label>{error && <p className="form-error">{error}</p>}{message && <p className="notice">{message}</p>}<button className="button primary full">{mode === 'sign-in' ? 'Sign in' : 'Sign up'}</button></form><button className="text-button" onClick={() => { setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in'); setError(''); setMessage('') }}>{mode === 'sign-in' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}</button></section></div>
+}
 
 function id() {
   return crypto.randomUUID()
@@ -36,7 +70,7 @@ function EmptyState({ icon, title, text, action }: { icon: ReactNode; title: str
   return <div className="empty-state"><span>{icon}</span><h3>{title}</h3><p>{text}</p>{action}</div>
 }
 
-function Layout() {
+function Layout({ userEmail }: { userEmail?: string } = {}) {
   const [menuOpen, setMenuOpen] = useState(false)
   const links = [
     { to: '/', label: 'Dashboard', icon: <Home /> },
@@ -62,6 +96,7 @@ function Layout() {
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
+        {userEmail && <button className="text-button account-button" onClick={() => void supabase?.auth.signOut()}>Sign out · {userEmail}</button>}
       </main>
     </div>
   )
@@ -300,4 +335,4 @@ function SettingsPage() {
   return <div className="page"><header className="page-header"><div><p className="eyebrow">Data safety</p><h1>Settings & backup</h1><p>Your study data is local. Regular backups protect it from browser-data removal or device loss.</p></div></header><div className="settings-grid"><section className="panel"><span className="setting-icon"><Download /></span><h2>Complete backup</h2><p>Download subjects, PDFs, notes, questions, progress, and test history into one file.</p><button className="button primary" onClick={() => void downloadBackup()}><Download /> Download backup</button></section><section className="panel"><span className="setting-icon"><Upload /></span><h2>Restore backup</h2><p>Replace the current database using a valid Reviewer Organizer backup.</p><input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(event) => void importBackup(event.target.files?.[0])} /><button className="button ghost" onClick={() => fileRef.current?.click()}><Upload /> Choose backup</button></section><section className="panel"><span className="setting-icon"><ShieldCheck /></span><h2>Storage protection</h2><p>{used}. Ask the browser to reduce the chance of automatic cleanup.</p><button className="button ghost" onClick={() => void requestPersistence()}><ShieldCheck /> Request protection</button></section></div>{message && <div className="notice">{message}</div>}<section className="panel learn-card"><h2>Important to remember</h2><p>GitHub contains the app’s public source code—not your private PDFs, notes, questions, or scores. Your study content remains in this browser unless you export a backup.</p></section></div>
 }
 
-export default function App() { return <Layout /> }
+export default function App() { return <AuthGate /> }
