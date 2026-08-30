@@ -58,7 +58,8 @@ Reuse content already present in the current context; do not reopen an unchanged
 ## Execution Rules
 
 - Keep project state in project docs, not in agent-global memory.
-- Treat development as guided learning for Marvin. Before and during meaningful changes, explain in beginner-friendly English what the system component does, why it is needed, and how it connects to the rest of Reviewer Organizer.
+- Respond to Marvin in natural Taglish by default. Keep programming and product terms in clear English, then explain them in Tagalog when that improves understanding. Use another language only when Marvin requests it.
+- Treat development as guided learning for Marvin. Before and during meaningful changes, explain in beginner-friendly Taglish what the system component does, why it is needed, and how it connects to the rest of Reviewer Organizer.
 - Define unfamiliar software terms when they first appear and use a short example when helpful. Do not assume prior knowledge of programming, Git, databases, testing, or deployment.
 - After each implemented feature, explain what changed, how Marvin can see or test it, the important tradeoffs or risks, and the main lesson to remember.
 - Keep explanations practical and proportional: emphasize decisions and concepts that help Marvin understand and eventually maintain the system, without burying him in noisy command logs or trivial syntax details.
