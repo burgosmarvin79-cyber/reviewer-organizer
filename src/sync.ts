@@ -4,11 +4,27 @@ import { supabase } from './lib/supabase'
 import type { Note, Question, Subject, TestSession } from './types'
 
 let syncing = false
+let activeUserId: string | null = null
+let hooksInstalled = false
 
 function subjectRow(item: Subject, userId: string) { return { id: item.id, user_id: userId, name: item.name, description: item.description, color: item.color, created_at: item.createdAt, updated_at: item.updatedAt } }
 function noteRow(item: Note, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, title: item.title, content: item.content, created_at: item.createdAt, updated_at: item.updatedAt } }
 function questionRow(item: Question, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, prompt: item.prompt, accepted_answers: item.acceptedAnswers, explanation: item.explanation, level: item.level, total_attempts: item.totalAttempts, total_correct: item.totalCorrect, last_answered_at: item.lastAnsweredAt ?? null, created_at: item.createdAt, updated_at: item.updatedAt } }
 function sessionRow(item: TestSession, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, subject_name: item.subjectName, level: item.level, started_at: item.startedAt, completed_at: item.completedAt, question_count: item.questionCount, correct_count: item.correctCount, skipped_count: item.skippedCount ?? 0, percentage: item.percentage, answers: item.answers } }
+
+export function enableUserSync(userId: string) {
+  activeUserId = userId
+  if (hooksInstalled) return
+  hooksInstalled = true
+  db.subjects.hook('creating', (_key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('subjects').upsert(subjectRow(item, activeUserId)) })
+  db.subjects.hook('updating', (_changes, _key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('subjects').upsert(subjectRow(item, activeUserId)) })
+  db.notes.hook('creating', (_key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('notes').upsert(noteRow(item, activeUserId)) })
+  db.notes.hook('updating', (_changes, _key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('notes').upsert(noteRow(item, activeUserId)) })
+  db.questions.hook('creating', (_key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('questions').upsert(questionRow(item, activeUserId)) })
+  db.questions.hook('updating', (_changes, _key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('questions').upsert(questionRow(item, activeUserId)) })
+  db.testSessions.hook('creating', (_key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('test_sessions').upsert(sessionRow(item, activeUserId)) })
+  db.testSessions.hook('updating', (_changes, _key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('test_sessions').upsert(sessionRow(item, activeUserId)) })
+}
 
 export async function syncUserData(session: Session) {
   if (!supabase || syncing) return
