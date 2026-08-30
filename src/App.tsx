@@ -11,11 +11,13 @@ import { db, deleteSubjectCascade } from './db'
 import { isAcceptedAnswer, LEVEL_NAMES, moveQuestion, randomSelection, recordAnswer } from './mastery'
 import type { MasteryLevel, Note, Question, Subject, TestAnswer, TestSession } from './types'
 import { supabase } from './lib/supabase'
+import { syncUserData } from './sync'
+import type { Session } from '@supabase/supabase-js'
 
 const COLORS = ['#246bfd', '#16a085', '#7c5ce7', '#e67e22', '#d64f6c', '#1f8a99']
 
 function AuthGate() {
-  const [session, setSession] = useState<{ user: { email?: string } } | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(Boolean(supabase))
   const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in')
   const [email, setEmail] = useState('')
@@ -30,6 +32,7 @@ function AuthGate() {
     const { data: listener } = client.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
     return () => listener.subscription.unsubscribe()
   }, [])
+  useEffect(() => { if (session) void syncUserData(session) }, [session])
 
   if (!supabase) return <div className="auth-screen"><section className="auth-card"><div className="brand auth-brand"><span className="brand-mark"><Check /></span><div><strong>Reviewer</strong><small>Organizer</small></div></div><p className="eyebrow">Secure study space</p><h1>Sign in to continue</h1><p>The app is ready for accounts, but the Supabase connection is not configured in this copy yet.</p><div className="notice">Add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> to this folder’s <code>.env.local</code>, then restart the dev server.</div></section></div>
   if (loading) return <div className="auth-screen"><div className="auth-card"><p>Loading your secure study space…</p></div></div>
@@ -44,7 +47,14 @@ function AuthGate() {
     if (authError) return setError(authError.message)
     if (mode === 'sign-up' && !data.session) setMessage('Account created. Check your email to confirm it, then sign in.')
   }
-  return <div className="auth-screen"><section className="auth-card"><div className="brand auth-brand"><span className="brand-mark"><Check /></span><div><strong>Reviewer</strong><small>Organizer</small></div></div><p className="eyebrow">Private study space</p><h1>{mode === 'sign-in' ? 'Welcome back' : 'Create your account'}</h1><p>{mode === 'sign-in' ? 'Sign in to access your subjects and progress.' : 'Your reviewers and notes will be isolated to your account.'}</p><form className="form" onSubmit={submit}><label>Email<input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" /></label><label>Password<input type="password" required minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'} /></label>{error && <p className="form-error">{error}</p>}{message && <p className="notice">{message}</p>}<button className="button primary full">{mode === 'sign-in' ? 'Sign in' : 'Sign up'}</button></form><button className="text-button" onClick={() => { setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in'); setError(''); setMessage('') }}>{mode === 'sign-in' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}</button></section></div>
+  async function signInWithGoogle() {
+    setError('')
+    const client = supabase
+    if (!client) return
+    const { error: authError } = await client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + window.location.pathname } })
+    if (authError) setError(authError.message)
+  }
+  return <div className="auth-screen"><section className="auth-card"><div className="brand auth-brand"><span className="brand-mark"><Check /></span><div><strong>Reviewer</strong><small>Organizer</small></div></div><p className="eyebrow">Private study space</p><h1>{mode === 'sign-in' ? 'Welcome back' : 'Create your account'}</h1><p>{mode === 'sign-in' ? 'Sign in to access your subjects and progress.' : 'Your reviewers and notes will be isolated to your account.'}</p><button className="button google-button full" onClick={() => void signInWithGoogle()}><span className="google-g">G</span> Continue with Google</button><div className="auth-divider"><span>or use email</span></div><form className="form" onSubmit={submit}><label>Email<input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" /></label><label>Password<input type="password" required minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'} /></label>{error && <p className="form-error">{error}</p>}{message && <p className="notice">{message}</p>}<button className="button primary full">{mode === 'sign-in' ? 'Sign in' : 'Sign up'}</button></form><button className="text-button" onClick={() => { setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in'); setError(''); setMessage('') }}>{mode === 'sign-in' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}</button></section></div>
 }
 
 function id() {
