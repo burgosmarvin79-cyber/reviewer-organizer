@@ -6,6 +6,7 @@ import type { Note, Question, Subject, TestSession } from './types'
 let syncing = false
 let activeUserId: string | null = null
 let hooksInstalled = false
+let realtimeChannel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null
 
 function subjectRow(item: Subject, userId: string) { return { id: item.id, user_id: userId, name: item.name, description: item.description, color: item.color, created_at: item.createdAt, updated_at: item.updatedAt } }
 function noteRow(item: Note, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, title: item.title, content: item.content, created_at: item.createdAt, updated_at: item.updatedAt } }
@@ -62,4 +63,14 @@ export async function syncUserData(session: Session) {
       await db.testSessions.bulkPut(remoteSessions.data.map((item) => ({ id: item.id, subjectId: item.subject_id, subjectName: item.subject_name, level: item.level, startedAt: item.started_at, completedAt: item.completed_at, questionCount: item.question_count, correctCount: item.correct_count, skippedCount: item.skipped_count, percentage: Number(item.percentage), answers: item.answers })))
     })
   } finally { syncing = false }
+}
+
+export function subscribeToUserChanges(userId: string) {
+  if (!supabase || realtimeChannel) return
+  realtimeChannel = supabase.channel(`reviewer-organizer-${userId}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'subjects', filter: `user_id=eq.${userId}` }, () => { void syncUserData({ user: { id: userId } } as Session) })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'notes', filter: `user_id=eq.${userId}` }, () => { void syncUserData({ user: { id: userId } } as Session) })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'questions', filter: `user_id=eq.${userId}` }, () => { void syncUserData({ user: { id: userId } } as Session) })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'test_sessions', filter: `user_id=eq.${userId}` }, () => { void syncUserData({ user: { id: userId } } as Session) })
+    .subscribe()
 }
