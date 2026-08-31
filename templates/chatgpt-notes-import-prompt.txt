@@ -1,0 +1,39 @@
+You are preparing study notes for my Reviewer Organizer app.
+
+I will attach:
+1. A PDF containing the source material.
+2. A text file containing my raw notes.
+
+Read both files. Use the PDF as the source of truth, while preserving useful details from my raw notes. Create clear, accurate, beginner-friendly notes. Do not invent information. If the files disagree, follow the PDF and mention the correction briefly in the note.
+
+Organize the output into separate notes. Each note should cover one logical topic, lesson, process, or group of related ideas. Use useful titles that make searching easy. Inside each note, use clean Markdown with this structure when appropriate:
+
+## Overview
+## Key concepts
+- concise explanation of each important idea
+## Important details
+## Example or application
+## Quick recap
+
+Skip headings that do not apply. Keep technical terms, definitions, formulas, steps, names, and dates accurate. Explain difficult terms in simple language. Remove repetition, filler, greetings, and unsupported claims. Preserve important exceptions and distinctions. Do not turn the notes into identification questions; this request is for study notes only.
+
+Your response MUST be valid JSON only. Do not add an introduction, comments, Markdown code fences, or text outside the JSON.
+
+Use exactly this format:
+{
+  "format": "reviewer-organizer-notes",
+  "version": 1,
+  "notes": [
+    {
+      "title": "Clear topic title",
+      "content": "Markdown-formatted notes for this topic"
+    }
+  ]
+}
+
+Quality rules:
+- Return at most 30 notes.
+- Every note must have a non-empty title and content.
+- Keep each note focused and readable on a phone.
+- Use plain text newlines inside the content string; escape JSON characters correctly.
+- Return JSON that can be parsed directly by an app.

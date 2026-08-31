@@ -11,6 +11,7 @@ import { createBackup, restoreBackup, validateBackup } from './backup'
 import { db, deleteSubjectCascade } from './db'
 import { isAcceptedAnswer, LEVEL_NAMES, moveQuestion, randomSelection, recordAnswer } from './mastery'
 import { normalizeQuestionPrompt, parseQuestionImport, type ImportableQuestion } from './question-import'
+import { normalizeNoteTitle, parseNoteImport, type ImportableNote } from './note-import'
 import type { MasteryLevel, Note, Question, Subject, TestAnswer, TestSession } from './types'
 import { supabase } from './lib/supabase'
 import { enableUserSync, getSyncStatus, subscribeToSyncStatus, subscribeToUserChanges, switchUserCache, syncUserData, unsubscribeFromUserChanges, type SyncStatus } from './sync'
@@ -316,6 +317,8 @@ function NoteForm({ subjectId, note, onClose }: { subjectId: string; note?: Note
 function NotesPanel({ subjectId }: { subjectId: string }) {
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<Note | 'new' | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [reading, setReading] = useState<Note | null>(null)
   const notes = useLiveQuery(() => db.notes.where('subjectId').equals(subjectId).reverse().sortBy('updatedAt'), [subjectId]) ?? []
   const filtered = notes.filter((note) => `${note.title} ${note.content}`.toLowerCase().includes(search.toLowerCase()))
   async function removeNote(note: Note) {
@@ -323,7 +326,40 @@ function NotesPanel({ subjectId }: { subjectId: string }) {
     try { await deleteNote(note.id); await db.notes.delete(note.id) }
     catch (error) { window.alert(error instanceof Error ? error.message : 'Could not delete this note.') }
   }
-  return <section className="panel"><div className="section-heading"><div><p className="eyebrow">Your own words</p><h2>Notes</h2></div><button className="button primary" onClick={() => setEditing('new')}><Plus /> New note</button></div>{notes.length > 0 && <label className="search"><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search notes" /></label>}{filtered.length ? <div className="note-grid">{filtered.map((note) => <article key={note.id}><div><h3>{note.title}</h3><small>Edited {dateLabel(note.updatedAt)}</small></div><p>{note.content}</p><footer><button className="button ghost" onClick={() => setEditing(note)}><Pencil /> Edit</button><button className="icon-button danger-text" onClick={() => void removeNote(note)}><Trash2 /></button></footer></article>)}</div> : <EmptyState icon={<NotebookPen />} title={notes.length ? 'No matching notes' : 'No notes yet'} text={notes.length ? 'Try another search.' : 'Write summaries in your own words to strengthen memory.'} />}{editing && <Modal title={editing === 'new' ? 'New note' : 'Edit note'} onClose={() => setEditing(null)}><NoteForm subjectId={subjectId} note={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} /></Modal>}</section>
+  return <section className="panel"><div className="section-heading"><div><p className="eyebrow">Your own words</p><h2>Notes</h2></div><div className="heading-actions"><button className="button ghost" onClick={() => setImporting(true)}><Upload /> Import notes</button><button className="button primary" onClick={() => setEditing('new')}><Plus /> New note</button></div></div>{notes.length > 0 && <label className="search"><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search notes" /></label>}{filtered.length ? <div className="note-grid">{filtered.map((note) => <article key={note.id}><div><h3>{note.title}</h3><small>Edited {dateLabel(note.updatedAt)}</small></div><p>{note.content}</p><footer><button className="button primary" onClick={() => setReading(note)}>Read</button><button className="button ghost" onClick={() => setEditing(note)}><Pencil /> Edit</button><button className="icon-button danger-text" onClick={() => void removeNote(note)}><Trash2 /></button></footer></article>)}</div> : <EmptyState icon={<NotebookPen />} title={notes.length ? 'No matching notes' : 'No notes yet'} text={notes.length ? 'Try another search.' : 'Write summaries in your own words to strengthen memory.'} />}{editing && <Modal title={editing === 'new' ? 'New note' : 'Edit note'} onClose={() => setEditing(null)}><NoteForm subjectId={subjectId} note={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} /></Modal>}{importing && <Modal title="Import notes" onClose={() => setImporting(false)}><NoteImportForm subjectId={subjectId} existingNotes={notes} onClose={() => setImporting(false)} /></Modal>}{reading && <Modal title={reading.title} onClose={() => setReading(null)}><article className="reading-view"><small>Edited {dateLabel(reading.updatedAt)}</small><div>{reading.content}</div></article></Modal>}</section>
+}
+
+function NoteImportForm({ subjectId, existingNotes, onClose }: { subjectId: string; existingNotes: Note[]; onClose: () => void }) {
+  const [text, setText] = useState('')
+  const [fileName, setFileName] = useState('')
+  const [preview, setPreview] = useState<ImportableNote[]>([])
+  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [warnings, setWarnings] = useState<string[]>([])
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+  function review(value = text) {
+    try {
+      const result = parseNoteImport(value)
+      const existingTitles = new Set(existingNotes.map((note) => normalizeNoteTitle(note.title)))
+      const importable = result.notes.filter((note) => !existingTitles.has(normalizeNoteTitle(note.title)))
+      const duplicates = result.notes.filter((note) => existingTitles.has(normalizeNoteTitle(note.title))).map((note) => `Skipped note already in this subject: “${note.title}”`)
+      if (!importable.length) throw new Error('Every note in this file already exists in this subject.')
+      setPreview(importable); setSelected(new Set(importable.map((_, index) => index))); setWarnings([...result.warnings, ...duplicates]); setError('')
+    } catch (reason) { setPreview([]); setSelected(new Set()); setWarnings([]); setError(reason instanceof Error ? reason.message : 'Could not read these notes.') }
+  }
+  async function chooseFile(file?: File) {
+    if (!file) return
+    if (file.size > 4 * 1024 * 1024) return setError('Choose a notes file smaller than 4 MB.')
+    const value = await file.text(); setFileName(file.name); setText(value); review(value)
+  }
+  async function importNotes() {
+    const chosen = preview.filter((_, index) => selected.has(index)); if (!chosen.length) return setError('Select at least one note to import.')
+    setSaving(true); setError('')
+    try { const now = new Date().toISOString(); const saved = chosen.map((note) => ({ id: id(), subjectId, ...note, createdAt: now, updatedAt: now })); await Promise.all(saved.map(saveNote)); await db.notes.bulkAdd(saved); onClose() }
+    catch (reason) { setSaving(false); setError(reason instanceof Error ? reason.message : 'The notes could not be imported.') }
+  }
+  if (preview.length) return <div className="note-import form"><div className="import-summary"><Check /><div><strong>{preview.length} notes ready</strong><small>{selected.size} selected for this subject</small></div></div>{warnings.length > 0 && <div className="import-warnings"><strong>Review notes</strong>{warnings.map((warning) => <p key={warning}>{warning}</p>)}</div>}<div className="import-select-actions"><button type="button" className="text-button" onClick={() => setSelected(new Set(preview.map((_, index) => index)))}>Select all</button><button type="button" className="text-button" onClick={() => setSelected(new Set())}>Clear all</button></div><div className="import-preview">{preview.map((note, index) => <label key={`${note.title}-${index}`} className={selected.has(index) ? 'selected' : ''}><input type="checkbox" checked={selected.has(index)} onChange={() => setSelected((current) => { const next = new Set(current); if (next.has(index)) next.delete(index); else next.add(index); return next })} /><div><strong>{note.title}</strong><small>{note.content}</small></div></label>)}</div>{error && <p className="form-error">{error}</p>}<div className="form-actions"><button type="button" className="button ghost" onClick={() => { setPreview([]); setError('') }}>Back</button><button type="button" className="button primary" disabled={saving || !selected.size} onClick={() => void importNotes()}><Upload /> {saving ? 'Importing…' : `Import ${selected.size} notes`}</button></div></div>
+  return <div className="note-import form"><div className="import-guide"><NotebookPen /><div><strong>Upload organized notes from ChatGPT</strong><p>Use the included prompt with your PDF and raw notes. Upload the resulting JSON file here.</p></div></div><label className="file-drop"><Upload /><strong>{fileName || 'Choose notes file'}</strong><span>.txt or .json · maximum 4 MB</span><input type="file" accept=".txt,.json,text/plain,application/json" onChange={(event) => void chooseFile(event.target.files?.[0])} /></label><div className="import-divider"><span>or paste the JSON</span></div><label>Notes JSON<textarea className="large-textarea" value={text} onChange={(event) => { setText(event.target.value); setFileName('') }} placeholder={'{\n  "format": "reviewer-organizer-notes",\n  "version": 1,\n  "notes": [...]\n}'} /></label>{error && <p className="form-error">{error}</p>}<div className="form-actions"><button type="button" className="button ghost" onClick={onClose}>Cancel</button><button type="button" className="button primary" disabled={!text.trim()} onClick={() => review()}><Check /> Review notes</button></div></div>
 }
 
 function QuestionForm({ subjectId, question, onClose }: { subjectId: string; question?: Question; onClose: () => void }) {
