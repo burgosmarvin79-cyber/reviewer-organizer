@@ -114,3 +114,9 @@ Skip when: You only need the active task or current state.
 - Change: Authentication setup now switches the local cache before enabling the new user's sync and realtime subscriptions.
 - Evidence: lint, twelve automated tests, TypeScript checking, and production build passed.
 - Remaining risk: two-account phone/laptop acceptance testing is still required with real Supabase accounts.
+## 2026-08-31 — Subject progress and visible sync state
+
+- Change: Added per-subject mastery progress, last-study date, average score, test count, and Continue Test action.
+- Change: Added a live sidebar sync status that distinguishes offline, syncing, synced, and error states; existing reconnect, focus, and visibility refresh triggers continue retrying cloud synchronization.
+- Evidence: lint, twelve automated tests, TypeScript checking, and production build passed.
+- Remaining risk: a durable per-record offline mutation queue remains a future enhancement; current retry behavior depends on local records and the existing synchronization reconciliation.

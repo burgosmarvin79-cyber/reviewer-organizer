@@ -82,6 +82,10 @@ This makes failure recoverable because the form stays open with its content and 
 
 When a dashboard shows totals from many unrelated subjects, the numbers are less useful and the screen becomes crowded. The dashboard now acts as a subject launcher. PDFs, questions, mastery progress, average score, and completed-test counts are shown in the workspace of the subject they belong to, which keeps context and navigation together.
 
+## 2026-08-31 — Sync state should be visible
+
+Cloud synchronization can be offline, in progress, complete, or failed. The sidebar now shows those states directly and the app retries when the device returns online, regains focus, or becomes visible again. This helps a student distinguish “saved on this device” from “confirmed in the private cloud.”
+
 ## 2026-08-31 — Bulk actions need an explicit scope
 
 Selection mode makes a destructive action understandable: the student first chooses specific visible questions, sees the selected count, and confirms the batch. The app deletes only those IDs for the signed-in owner, while historical test snapshots remain because they represent past answers rather than live question-bank records.

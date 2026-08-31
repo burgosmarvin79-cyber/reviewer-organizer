@@ -29,6 +29,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 - Main dashboard now presents subjects only; each subject workspace contains its own PDF, question, mastery, score, and test summary.
 - Question Bank supports selecting visible questions and deleting a confirmed batch from Supabase and local storage.
 - Authenticated account switches clear the previous account's IndexedDB cache before hydrating the new account, preventing cross-account local-data leakage.
+- Subject workspaces now show mastery progress, last-study date, and a Continue Test action; the sidebar shows offline, syncing, synced, or error status and retries on reconnect/focus.
 - Manual and bulk question saves now wait for confirmed private Supabase persistence before updating the local question bank, preventing phone uploads from appearing successful before cloud synchronization finishes.
 - Automated mastery-rule tests and production build configuration.
 - Email authentication, per-user Supabase study-data synchronization, deletion synchronization, and realtime subscriptions.

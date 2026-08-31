@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
-  ArrowLeft, BarChart3, BookOpen, Check, ChevronRight, CircleHelp, Clock3, Cloud,
+  AlertCircle, ArrowLeft, BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, CircleHelp, Clock3, CloudOff, RefreshCw,
   Download,
   FileText, GraduationCap, History, Home, Menu, NotebookPen, Pencil, Plus, Search,
   Settings, ShieldCheck, Trash2, Upload, X,
@@ -13,7 +13,7 @@ import { isAcceptedAnswer, LEVEL_NAMES, moveQuestion, randomSelection, recordAns
 import { normalizeQuestionPrompt, parseQuestionImport, type ImportableQuestion } from './question-import'
 import type { MasteryLevel, Note, Question, Subject, TestAnswer, TestSession } from './types'
 import { supabase } from './lib/supabase'
-import { enableUserSync, subscribeToUserChanges, switchUserCache, syncUserData, unsubscribeFromUserChanges } from './sync'
+import { enableUserSync, getSyncStatus, subscribeToSyncStatus, subscribeToUserChanges, switchUserCache, syncUserData, unsubscribeFromUserChanges, type SyncStatus } from './sync'
 import type { Session } from '@supabase/supabase-js'
 import { deleteNote, deleteQuestions, deleteSubject, saveNote, saveQuestion, saveQuestions, saveSubject } from './remote'
 import { createPdfOpenUrl, createPdfReviewer, deletePdfReviewer, deleteSubjectPdfs } from './pdf-storage'
@@ -103,6 +103,8 @@ function EmptyState({ icon, title, text, action }: { icon: ReactNode; title: str
 
 function Layout({ userEmail }: { userEmail?: string } = {}) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(getSyncStatus())
+  useEffect(() => subscribeToSyncStatus(setSyncStatus), [])
   const links = [
     { to: '/', label: 'Dashboard', icon: <Home /> },
     { to: '/subjects', label: 'Subjects', icon: <BookOpen /> },
@@ -116,7 +118,7 @@ function Layout({ userEmail }: { userEmail?: string } = {}) {
         <div className="brand app-brand"><span className="brand-mark"><img src="/reviewer-organizer/reviewer-logo.jpg" alt="Reviewer Organizer logo" /></span><div><strong>Reviewer Organizer</strong><small>Study workspace</small></div></div>
         <nav>{links.map((link) => <NavLink key={link.to} to={link.to} end={link.to === '/'} onClick={() => setMenuOpen(false)}>{link.icon}<span>{link.label}</span></NavLink>)}</nav>
         <div className="sidebar-footer">
-          <div className="sync-badge"><Cloud /><span><strong>Private cloud sync</strong><small>Available offline on this device</small></span></div>
+          <div className={`sync-badge sync-${syncStatus}`}>{syncStatus === 'offline' ? <CloudOff /> : syncStatus === 'syncing' ? <RefreshCw className="spin" /> : syncStatus === 'error' ? <AlertCircle /> : <CheckCircle2 />}<span><strong>{syncStatus === 'offline' ? 'Offline mode' : syncStatus === 'syncing' ? 'Syncing…' : syncStatus === 'error' ? 'Sync needs attention' : 'Synced to private cloud'}</strong><small>{syncStatus === 'offline' ? 'Changes will retry when online' : syncStatus === 'syncing' ? 'Updating your other devices' : syncStatus === 'error' ? 'We will retry when you reconnect' : 'Your account data is up to date'}</small></span></div>
           {userEmail && <div className="account-card"><span className="account-avatar">{userEmail.charAt(0).toUpperCase()}</span><div><strong>{userEmail}</strong><small>Student account</small></div><button className="icon-button" onClick={() => void supabase?.auth.signOut()} aria-label="Sign out" title="Sign out"><ArrowLeft /></button></div>}
         </div>
       </aside>
@@ -218,13 +220,15 @@ function SubjectSummary({ subjectId }: { subjectId: string }) {
   const summary = useLiveQuery(async () => {
     const [pdfs, notes, questions, sessions] = await Promise.all([
       db.pdfs.where('subjectId').equals(subjectId).count(), db.notes.where('subjectId').equals(subjectId).count(),
-      db.questions.where('subjectId').equals(subjectId).count(), db.testSessions.where('subjectId').equals(subjectId).reverse().sortBy('completedAt'),
+      db.questions.where('subjectId').equals(subjectId).toArray(), db.testSessions.where('subjectId').equals(subjectId).reverse().sortBy('completedAt'),
     ])
     return { pdfs, notes, questions, sessions }
   }, [subjectId])
   if (!summary) return null
   const average = summary.sessions.length ? Math.round(summary.sessions.reduce((total, session) => total + session.percentage, 0) / summary.sessions.length) : 0
-  return <section className="subject-summary" aria-label="Subject summary"><article><span className="stat-icon gold"><FileText /></span><div><strong>{summary.pdfs}</strong><small>PDF reviewers</small></div></article><article><span className="stat-icon violet"><CircleHelp /></span><div><strong>{summary.questions}</strong><small>Questions</small></div></article><article><span className="stat-icon green"><BarChart3 /></span><div><strong>{average}%</strong><small>Average score</small></div></article><article><span className="stat-icon blue"><Clock3 /></span><div><strong>{summary.sessions.length}</strong><small>Tests completed</small></div></article></section>
+  const nextLevel = ([1, 2, 3, 4] as MasteryLevel[]).find((level) => summary.questions.some((question) => question.level === level))
+  const progress = summary.questions.length ? Math.round((summary.questions.filter((question) => question.level === 4).length / summary.questions.length) * 100) : 0
+  return <section className="subject-summary" aria-label="Subject summary"><article><span className="stat-icon gold"><FileText /></span><div><strong>{summary.pdfs}</strong><small>PDF reviewers</small></div></article><article><span className="stat-icon violet"><CircleHelp /></span><div><strong>{summary.questions.length}</strong><small>Questions</small></div></article><article><span className="stat-icon green"><BarChart3 /></span><div><strong>{average}%</strong><small>Average score</small></div></article><article><span className="stat-icon blue"><Clock3 /></span><div><strong>{summary.sessions.length}</strong><small>Tests completed</small></div></article><div className="subject-progress"><div><strong>Mastery progress</strong><span>{progress}% at Final Test Reviewer</span></div><div className="bar"><i style={{ width: `${progress}%` }} /></div><small>{summary.sessions[0] ? `Last studied ${dateLabel(summary.sessions[0].completedAt)}` : 'No test completed yet'}</small>{nextLevel && <Link className="button ghost" to={`/test?subject=${subjectId}&level=${nextLevel}`}>Continue Test {nextLevel}<ChevronRight /></Link>}</div></section>
 }
 
 function PdfPanel({ subjectId }: { subjectId: string }) {

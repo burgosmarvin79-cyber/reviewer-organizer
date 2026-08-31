@@ -11,6 +11,20 @@ let realtimeUserId: string | null = null
 let realtimeRefreshTimer: ReturnType<typeof setTimeout> | null = null
 let syncQueued = false
 const LOCAL_CACHE_OWNER_KEY = 'reviewer-organizer-cache-owner'
+export type SyncStatus = 'offline' | 'syncing' | 'synced' | 'error'
+let syncStatus: SyncStatus = navigator.onLine ? 'synced' : 'offline'
+const syncStatusListeners = new Set<(status: SyncStatus) => void>()
+
+function setSyncStatus(status: SyncStatus) {
+  syncStatus = status
+  syncStatusListeners.forEach((listener) => listener(status))
+}
+
+export function getSyncStatus() { return syncStatus }
+export function subscribeToSyncStatus(listener: (status: SyncStatus) => void) {
+  syncStatusListeners.add(listener)
+  return () => { syncStatusListeners.delete(listener) }
+}
 
 function subjectRow(item: Subject, userId: string) { return { id: item.id, user_id: userId, name: item.name, description: item.description, color: item.color, created_at: item.createdAt, updated_at: item.updatedAt } }
 function noteRow(item: Note, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, title: item.title, content: item.content, created_at: item.createdAt, updated_at: item.updatedAt } }
@@ -51,8 +65,10 @@ export function enableUserSync(userId: string) {
 
 export async function syncUserData(userId: string) {
   if (!supabase) return
+  if (!navigator.onLine) { setSyncStatus('offline'); return }
   if (syncing) { syncQueued = true; return }
   syncing = true
+  setSyncStatus('syncing')
   try {
     const [remoteSubjects, remotePdfs, remoteNotes, remoteQuestions, remoteSessions] = await Promise.all([
       supabase.from('subjects').select('*').eq('user_id', userId),
@@ -106,6 +122,10 @@ export async function syncUserData(userId: string) {
       await db.pdfs.bulkDelete(removedCloudPdfIds)
       await db.pdfFiles.bulkDelete(removedCloudPdfIds)
     })
+    setSyncStatus('synced')
+  } catch (error) {
+    setSyncStatus(navigator.onLine ? 'error' : 'offline')
+    throw error
   } finally {
     syncing = false
     if (syncQueued) { syncQueued = false; void syncUserData(userId) }
