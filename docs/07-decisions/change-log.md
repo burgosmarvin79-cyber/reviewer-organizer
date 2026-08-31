@@ -4,6 +4,15 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-08-31 — Store reviewer PDFs privately across devices
+
+- Change: Added private `reviewer-pdfs` uploads with per-user paths, `pdf_reviewers` metadata synchronization, short-lived signed open URLs, and coordinated cloud deletion.
+- Change: Added IndexedDB version 3, separating lightweight PDF metadata from temporary local binary files so subject pages do not load every PDF into iPhone memory.
+- Change: Existing browser PDFs migrate automatically after sign-in; their local binary remains intact until both Storage upload and metadata persistence succeed.
+- Change: Backup format version 3 downloads cloud-only PDFs when creating a complete backup and restores them as pending local files for secure re-upload.
+- Evidence: ESLint, eight automated tests, TypeScript, production PWA build, and diff validation pass locally.
+- Remaining risk: authenticated production upload, signed opening on iPhone, phone-to-laptop visibility, deletion, legacy-data migration, and two-account denial still require live acceptance after deployment.
+
 ## 2026-08-31 — Reduce iPhone subject-route resource pressure
 
 - Change: Added explicit Supabase Realtime channel cleanup when the authenticated user lifecycle changes.

@@ -13,10 +13,15 @@ export interface PdfReviewer {
   id: string
   subjectId: string
   name: string
-  fileData: Blob
   mimeType: string
   size: number
   createdAt: string
+  storagePath?: string
+}
+
+export interface LocalPdfFile {
+  id: string
+  fileData: Blob
 }
 
 export interface Note {
@@ -86,10 +91,10 @@ export interface AppSettings {
 
 export interface BackupFile {
   format: 'reviewer-organizer-backup'
-  version: 1 | 2
+  version: 1 | 2 | 3
   exportedAt: string
   subjects: Subject[]
-  pdfs: Array<Omit<PdfReviewer, 'fileData'> & { fileDataBase64: string }>
+  pdfs: Array<PdfReviewer & { fileDataBase64: string }>
   notes: Note[]
   questions: Question[]
   testSessions: TestSession[]

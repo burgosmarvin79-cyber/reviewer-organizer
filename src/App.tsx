@@ -15,6 +15,7 @@ import { supabase } from './lib/supabase'
 import { enableUserSync, subscribeToUserChanges, syncUserData, unsubscribeFromUserChanges } from './sync'
 import type { Session } from '@supabase/supabase-js'
 import { deleteSubject, saveSubject } from './remote'
+import { createPdfOpenUrl, createPdfReviewer, deletePdfReviewer, deleteSubjectPdfs } from './pdf-storage'
 
 const COLORS = ['#a51d25', '#7a171d', '#c74b50', '#d49a28', '#59636f', '#8b5e3c']
 
@@ -213,6 +214,7 @@ function SubjectPage() {
   async function remove() {
     const confirmation = window.prompt(`Deleting this subject also deletes all of its PDFs, notes, questions, and test history. Type “${currentSubject.name}” to continue.`)
     if (confirmation !== currentSubject.name) return
+    await deleteSubjectPdfs(currentSubject.id)
     await deleteSubjectCascade(currentSubject.id)
     await deleteSubject(currentSubject.id)
     navigate('/subjects')
@@ -222,21 +224,31 @@ function SubjectPage() {
 
 function PdfPanel({ subjectId }: { subjectId: string }) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
   const pdfs = useLiveQuery(() => db.pdfs.where('subjectId').equals(subjectId).reverse().sortBy('createdAt'), [subjectId]) ?? []
   async function addPdf(file?: File) {
     if (!file) return
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) return window.alert('Please choose a PDF file.')
-    if (file.size > 100 * 1024 * 1024) return window.alert('This PDF is larger than the 100 MB limit.')
-    if (file.size > 25 * 1024 * 1024 && !window.confirm('This PDF is larger than 25 MB and may use significant device storage. Add it anyway?')) return
-    await db.pdfs.add({ id: id(), subjectId, name: file.name, fileData: file, mimeType: 'application/pdf', size: file.size, createdAt: new Date().toISOString() })
-    if (inputRef.current) inputRef.current.value = ''
+    if (file.size > 50 * 1024 * 1024) return window.alert('This PDF is larger than the 50 MB cloud-storage limit.')
+    setBusy(true); setMessage('Uploading PDF to your private cloud storage…')
+    try {
+      await createPdfReviewer(subjectId, file)
+      setMessage('PDF uploaded and available on your signed-in devices.')
+    } catch (error) {
+      setMessage(`${error instanceof Error ? error.message : 'Upload failed.'} The local copy is preserved and will retry when you reconnect.`)
+    } finally { setBusy(false); if (inputRef.current) inputRef.current.value = '' }
   }
-  function openPdf(fileData: Blob) {
-    const url = URL.createObjectURL(fileData)
-    window.open(url, '_blank', 'noopener,noreferrer')
-    window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  async function openPdf(pdf: (typeof pdfs)[number]) {
+    try { window.location.assign(await createPdfOpenUrl(pdf)) }
+    catch (error) { setMessage(error instanceof Error ? error.message : 'Could not open this PDF.') }
   }
-  return <section className="panel"><div className="section-heading"><div><p className="eyebrow">Offline library</p><h2>PDF reviewers</h2></div><><input ref={inputRef} type="file" accept="application/pdf,.pdf" hidden onChange={(event) => void addPdf(event.target.files?.[0])} /><button className="button primary" onClick={() => inputRef.current?.click()}><Upload /> Add PDF</button></></div>{pdfs.length ? <div className="document-list">{pdfs.map((pdf) => <article key={pdf.id}><span className="file-icon"><FileText /></span><div><strong>{pdf.name}</strong><small>{(pdf.size / 1024 / 1024).toFixed(1)} MB · added {dateLabel(pdf.createdAt)}</small></div><button className="button ghost" onClick={() => openPdf(pdf.fileData)}>Open</button><button className="icon-button danger-text" onClick={() => window.confirm(`Delete ${pdf.name}?`) && void db.pdfs.delete(pdf.id)} aria-label={`Delete ${pdf.name}`}><Trash2 /></button></article>)}</div> : <EmptyState icon={<FileText />} title="No PDF reviewers" text="Add course handouts, modules, or reviewer files for offline access." />}</section>
+  async function removePdf(pdf: (typeof pdfs)[number]) {
+    if (!window.confirm(`Delete ${pdf.name} from all your signed-in devices?`)) return
+    try { await deletePdfReviewer(pdf); setMessage('PDF deleted from private cloud storage.') }
+    catch (error) { setMessage(error instanceof Error ? error.message : 'Could not delete this PDF.') }
+  }
+  return <section className="panel"><div className="section-heading"><div><p className="eyebrow">Private cloud library</p><h2>PDF reviewers</h2></div><><input ref={inputRef} type="file" accept="application/pdf,.pdf" hidden onChange={(event) => void addPdf(event.target.files?.[0])} /><button className="button primary" disabled={busy} onClick={() => inputRef.current?.click()}><Upload /> {busy ? 'Uploading…' : 'Add PDF'}</button></></div>{message && <div className="notice pdf-notice">{message}</div>}{pdfs.length ? <div className="document-list">{pdfs.map((pdf) => <article key={pdf.id}><span className="file-icon"><FileText /></span><div><strong>{pdf.name}</strong><small>{(pdf.size / 1024 / 1024).toFixed(1)} MB · {pdf.storagePath ? 'cloud synced' : 'waiting for upload'} · added {dateLabel(pdf.createdAt)}</small></div><button className="button ghost" disabled={!pdf.storagePath} onClick={() => void openPdf(pdf)}>Open</button><button className="icon-button danger-text" onClick={() => void removePdf(pdf)} aria-label={`Delete ${pdf.name}`}><Trash2 /></button></article>)}</div> : <EmptyState icon={<FileText />} title="No PDF reviewers" text="Upload a PDF once, then open it from any device signed in to your account." />}</section>
 }
 
 function NoteForm({ subjectId, note, onClose }: { subjectId: string; note?: Note; onClose: () => void }) {
@@ -360,7 +372,7 @@ function SettingsPage() {
   }
   async function requestPersistence() { const granted = await navigator.storage?.persist?.(); setMessage(granted ? 'Persistent storage is enabled.' : 'The browser did not grant persistent storage. Keep regular backups.') }
   const used = storageEstimate?.usage ? `${(storageEstimate.usage / 1024 / 1024).toFixed(1)} MB used` : 'Storage estimate unavailable'
-  return <div className="page"><header className="page-header"><div><p className="eyebrow">Data safety</p><h1>Settings & backup</h1><p>Your study data is local. Regular backups protect it from browser-data removal or device loss.</p></div></header><div className="settings-grid"><section className="panel"><span className="setting-icon"><Download /></span><h2>Complete backup</h2><p>Download subjects, PDFs, notes, questions, progress, and test history into one file.</p><button className="button primary" onClick={() => void downloadBackup()}><Download /> Download backup</button></section><section className="panel"><span className="setting-icon"><Upload /></span><h2>Restore backup</h2><p>Replace the current database using a valid Reviewer Organizer backup.</p><input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(event) => void importBackup(event.target.files?.[0])} /><button className="button ghost" onClick={() => fileRef.current?.click()}><Upload /> Choose backup</button></section><section className="panel"><span className="setting-icon"><ShieldCheck /></span><h2>Storage protection</h2><p>{used}. Ask the browser to reduce the chance of automatic cleanup.</p><button className="button ghost" onClick={() => void requestPersistence()}><ShieldCheck /> Request protection</button></section></div>{message && <div className="notice">{message}</div>}<section className="panel learn-card"><h2>Important to remember</h2><p>GitHub contains the app’s public source code—not your private PDFs, notes, questions, or scores. Your study content remains in this browser unless you export a backup.</p></section></div>
+  return <div className="page"><header className="page-header"><div><p className="eyebrow">Data safety</p><h1>Settings & backup</h1><p>Your study records sync privately to your account, while backups provide an extra recovery copy.</p></div></header><div className="settings-grid"><section className="panel"><span className="setting-icon"><Download /></span><h2>Complete backup</h2><p>Download subjects, PDFs, notes, questions, progress, and test history into one file.</p><button className="button primary" onClick={() => void downloadBackup()}><Download /> Download backup</button></section><section className="panel"><span className="setting-icon"><Upload /></span><h2>Restore backup</h2><p>Replace the current database using a valid Reviewer Organizer backup.</p><input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(event) => void importBackup(event.target.files?.[0])} /><button className="button ghost" onClick={() => fileRef.current?.click()}><Upload /> Choose backup</button></section><section className="panel"><span className="setting-icon"><ShieldCheck /></span><h2>Storage protection</h2><p>{used}. Ask the browser to reduce the chance of automatic cleanup.</p><button className="button ghost" onClick={() => void requestPersistence()}><ShieldCheck /> Request protection</button></section></div>{message && <div className="notice">{message}</div>}<section className="panel learn-card"><h2>Important to remember</h2><p>GitHub contains the app’s public source code—not your private study records. PDFs sync through private Supabase Storage, while local browser storage supports migration and offline metadata.</p></section></div>
 }
 
 export default function App() { return <AuthGate /> }

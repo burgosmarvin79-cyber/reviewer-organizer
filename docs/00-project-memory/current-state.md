@@ -27,6 +27,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 - Subject, PDF, note, question-bank, practice-test, dashboard, history, and backup interfaces.
 - Automated mastery-rule tests and production build configuration.
 - Email authentication, per-user Supabase study-data synchronization, deletion synchronization, and realtime subscriptions.
+- Private Supabase PDF upload, cross-device metadata synchronization, signed five-minute open links, cloud deletion, and automatic migration of legacy browser PDFs.
 - BatStateU-inspired red, white, and warm-neutral application shell using the university seal already provided for the project.
 
 ## What Works
@@ -37,7 +38,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 
 ## Known Issues
 
-- Complete RLS isolation, private PDF storage, existing local-data ownership migration, offline conflict behavior, and recovery paths still require verification.
+- Complete two-account RLS isolation, live PDF migration/upload/open/delete, offline conflict behavior, and recovery paths still require verification.
 - Manual desktop and phone visual acceptance of the BatStateU-inspired interface remains required.
 - An iPhone Safari subject-route crash was reported. A local repair now cleans up Realtime channels, coalesces cloud events, incrementally reconciles IndexedDB, and removes `color-mix()` from subject surfaces; live iPhone verification remains pending deployment.
 
@@ -47,7 +48,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 
 ## Next Recommended Actions
 
-- Preview the current interface locally and confirm the visual direction, then complete two-account privacy, private PDF, offline synchronization, and migration acceptance tests before deployment.
+- Deploy the locally verified private-PDF workflow, then upload on phone, open on laptop, test deletion, and confirm a second account cannot access the signed-in owner's PDF.
 
 ## Last Updated
 

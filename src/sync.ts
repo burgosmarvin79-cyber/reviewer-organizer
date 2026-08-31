@@ -1,5 +1,6 @@
 import { db } from './db'
 import { supabase } from './lib/supabase'
+import { migratePendingPdfs } from './pdf-storage'
 import type { Note, Question, Subject, TestSession } from './types'
 
 let syncing = false
@@ -38,16 +39,17 @@ export async function syncUserData(userId: string) {
   if (syncing) { syncQueued = true; return }
   syncing = true
   try {
-    const [remoteSubjects, remoteNotes, remoteQuestions, remoteSessions] = await Promise.all([
+    const [remoteSubjects, remotePdfs, remoteNotes, remoteQuestions, remoteSessions] = await Promise.all([
       supabase.from('subjects').select('*').eq('user_id', userId),
+      supabase.from('pdf_reviewers').select('*').eq('user_id', userId),
       supabase.from('notes').select('*').eq('user_id', userId),
       supabase.from('questions').select('*').eq('user_id', userId),
       supabase.from('test_sessions').select('*').eq('user_id', userId),
     ])
-    if (remoteSubjects.error || remoteNotes.error || remoteQuestions.error || remoteSessions.error) throw remoteSubjects.error ?? remoteNotes.error ?? remoteQuestions.error ?? remoteSessions.error
+    if (remoteSubjects.error || remotePdfs.error || remoteNotes.error || remoteQuestions.error || remoteSessions.error) throw remoteSubjects.error ?? remotePdfs.error ?? remoteNotes.error ?? remoteQuestions.error ?? remoteSessions.error
 
     const localSubjects = await db.subjects.toArray()
-    const hasRemoteData = remoteSubjects.data.length + remoteNotes.data.length + remoteQuestions.data.length + remoteSessions.data.length > 0
+    const hasRemoteData = remoteSubjects.data.length + remotePdfs.data.length + remoteNotes.data.length + remoteQuestions.data.length + remoteSessions.data.length > 0
     if (!hasRemoteData && localSubjects.length) {
       await Promise.all([
         supabase.from('subjects').upsert(localSubjects.map((item) => subjectRow(item, userId))),
@@ -55,6 +57,7 @@ export async function syncUserData(userId: string) {
         supabase.from('questions').upsert((await db.questions.toArray()).map((item) => questionRow(item, userId))),
         supabase.from('test_sessions').upsert((await db.testSessions.toArray()).map((item) => sessionRow(item, userId))),
       ])
+      await migratePendingPdfs(userId)
       return
     }
     const subjects = remoteSubjects.data.map((item) => ({ id: item.id, name: item.name, description: item.description, color: item.color, createdAt: item.created_at, updatedAt: item.updated_at }))
@@ -73,6 +76,21 @@ export async function syncUserData(userId: string) {
         db.questions.bulkDelete(questionKeys.filter((key) => !questionIds.has(key))), db.testSessions.bulkDelete(sessionKeys.filter((key) => !sessionIds.has(key))),
       ])
     })
+    await migratePendingPdfs(userId)
+    const { data: refreshedPdfRows, error: refreshedPdfError } = await supabase.from('pdf_reviewers').select('*').eq('user_id', userId)
+    if (refreshedPdfError) throw refreshedPdfError
+    const remotePdfItems = refreshedPdfRows.map((item) => ({
+      id: item.id, subjectId: item.subject_id, name: item.name, storagePath: item.storage_path,
+      mimeType: item.mime_type, size: Number(item.size), createdAt: item.created_at,
+    }))
+    const remotePdfIds = new Set(remotePdfItems.map((item) => item.id))
+    await db.transaction('rw', db.pdfs, db.pdfFiles, async () => {
+      const localPdfs = await db.pdfs.toArray()
+      const removedCloudPdfIds = localPdfs.filter((pdf) => pdf.storagePath && !remotePdfIds.has(pdf.id)).map((pdf) => pdf.id)
+      await db.pdfs.bulkPut(remotePdfItems)
+      await db.pdfs.bulkDelete(removedCloudPdfIds)
+      await db.pdfFiles.bulkDelete(removedCloudPdfIds)
+    })
   } finally {
     syncing = false
     if (syncQueued) { syncQueued = false; void syncUserData(userId) }
@@ -89,6 +107,7 @@ export function subscribeToUserChanges(userId: string) {
   realtimeUserId = userId
   realtimeChannel = supabase.channel(`reviewer-organizer-${userId}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'subjects', filter: `user_id=eq.${userId}` }, refresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'pdf_reviewers', filter: `user_id=eq.${userId}` }, refresh)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'notes', filter: `user_id=eq.${userId}` }, refresh)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'questions', filter: `user_id=eq.${userId}` }, refresh)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'test_sessions', filter: `user_id=eq.${userId}` }, refresh)

@@ -12,6 +12,8 @@ A familiar navigation model can be reused without copying another product's appe
 
 Realtime subscriptions need a lifecycle. A React screen must remove its channel when the user session ends or changes; otherwise stale connections can consume resources and trigger duplicate work. Cloud events should also be grouped, and local synchronization should update only changed or removed records instead of clearing and rebuilding the entire database each time.
 
+A file list should not contain the full files it describes. Keeping PDF metadata and binary Blobs in separate IndexedDB tables lets the interface count and display reviewers without loading megabytes into memory. Supabase Storage becomes the private source of truth, while a short-lived signed URL allows the authenticated student to open one selected PDF without making the bucket public.
+
 ## 2026-08-31 — How the first version fits together
 
 ### Source code and student data are different

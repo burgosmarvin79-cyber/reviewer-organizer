@@ -9,11 +9,11 @@ delivery_status: not-requested
 owner: codex-root
 branch: main
 base_sha: 5b51133c1658acec4e09e2994ea49ebd7d00c489
-revision: 5
+revision: 6
 verification_head: none
 verification_source_hash: none
 verified_at: none
-updated_at: 2026-08-31T04:03:24Z
+updated_at: 2026-08-31T04:49:00Z
 ---
 
 # Active Task
@@ -66,7 +66,7 @@ Skip when: The task is unrelated to the current execution context.
 - Last Failure: none
 - Failure Class: none
 - Attempted Fix: none
-- Next Concrete Action: Deploy the verified iPhone resource-pressure repair after Marvin confirms publication, then reproduce the same subject URL on his phone
+- Next Concrete Action: Deploy the locally verified private-PDF workflow, then have Marvin test phone upload, laptop opening, deletion, legacy migration, and two-account denial
 
 ## Record
 
