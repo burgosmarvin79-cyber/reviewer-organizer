@@ -108,3 +108,9 @@ Skip when: You only need the active task or current state.
 - Change: Added Question Bank selection mode with select-visible, clear-selection, and confirmed delete-selected actions.
 - Change: Batch deletion removes records for the signed-in owner from Supabase before removing their local cache; test-history snapshots remain available.
 - Evidence: lint, twelve automated tests, TypeScript checking, and production build passed.
+## 2026-08-31 — Isolate local caches by signed-in account
+
+- Change: Added an account-owner marker and cache switch that clears subjects, PDFs, PDF binaries, notes, questions, test sessions, and settings before loading another user's cloud data.
+- Change: Authentication setup now switches the local cache before enabling the new user's sync and realtime subscriptions.
+- Evidence: lint, twelve automated tests, TypeScript checking, and production build passed.
+- Remaining risk: two-account phone/laptop acceptance testing is still required with real Supabase accounts.

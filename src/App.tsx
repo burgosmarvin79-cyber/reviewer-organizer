@@ -13,7 +13,7 @@ import { isAcceptedAnswer, LEVEL_NAMES, moveQuestion, randomSelection, recordAns
 import { normalizeQuestionPrompt, parseQuestionImport, type ImportableQuestion } from './question-import'
 import type { MasteryLevel, Note, Question, Subject, TestAnswer, TestSession } from './types'
 import { supabase } from './lib/supabase'
-import { enableUserSync, subscribeToUserChanges, syncUserData, unsubscribeFromUserChanges } from './sync'
+import { enableUserSync, subscribeToUserChanges, switchUserCache, syncUserData, unsubscribeFromUserChanges } from './sync'
 import type { Session } from '@supabase/supabase-js'
 import { deleteNote, deleteQuestions, deleteSubject, saveNote, saveQuestion, saveQuestions, saveSubject } from './remote'
 import { createPdfOpenUrl, createPdfReviewer, deletePdfReviewer, deleteSubjectPdfs } from './pdf-storage'
@@ -39,15 +39,22 @@ function AuthGate() {
   const userId = session?.user.id
   useEffect(() => {
     if (!userId) return
-    enableUserSync(userId)
-    const refresh = () => { void syncUserData(userId).catch(() => undefined) }
+    let cancelled = false
+    const refresh = () => { if (!cancelled) void syncUserData(userId).catch(() => undefined) }
+    const activate = async () => {
+      await switchUserCache(userId)
+      if (cancelled) return
+      enableUserSync(userId)
+      refresh()
+      subscribeToUserChanges(userId)
+    }
+    void activate().catch(() => undefined)
     const refreshWhenVisible = () => { if (document.visibilityState === 'visible') refresh() }
-    refresh()
-    subscribeToUserChanges(userId)
     window.addEventListener('online', refresh)
     window.addEventListener('focus', refresh)
     document.addEventListener('visibilitychange', refreshWhenVisible)
     return () => {
+      cancelled = true
       window.removeEventListener('online', refresh)
       window.removeEventListener('focus', refresh)
       document.removeEventListener('visibilitychange', refreshWhenVisible)

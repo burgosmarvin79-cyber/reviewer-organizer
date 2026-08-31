@@ -85,3 +85,7 @@ When a dashboard shows totals from many unrelated subjects, the numbers are less
 ## 2026-08-31 — Bulk actions need an explicit scope
 
 Selection mode makes a destructive action understandable: the student first chooses specific visible questions, sees the selected count, and confirms the batch. The app deletes only those IDs for the signed-in owner, while historical test snapshots remain because they represent past answers rather than live question-bank records.
+
+## 2026-08-31 — Cloud privacy also needs local privacy
+
+Row Level Security protects rows when the app asks Supabase for data, but a browser's IndexedDB cache is local and does not automatically know which account is currently signed in. The app now stores only a small account-owner identifier and clears the previous user's local study cache before loading another user's records. This closes the gap where a new account could briefly see old cached data while synchronization was starting.

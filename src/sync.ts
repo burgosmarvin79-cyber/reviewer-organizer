@@ -10,11 +10,26 @@ let realtimeChannel: ReturnType<NonNullable<typeof supabase>['channel']> | null 
 let realtimeUserId: string | null = null
 let realtimeRefreshTimer: ReturnType<typeof setTimeout> | null = null
 let syncQueued = false
+const LOCAL_CACHE_OWNER_KEY = 'reviewer-organizer-cache-owner'
 
 function subjectRow(item: Subject, userId: string) { return { id: item.id, user_id: userId, name: item.name, description: item.description, color: item.color, created_at: item.createdAt, updated_at: item.updatedAt } }
 function noteRow(item: Note, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, title: item.title, content: item.content, created_at: item.createdAt, updated_at: item.updatedAt } }
 function questionRow(item: Question, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, prompt: item.prompt, accepted_answers: item.acceptedAnswers, explanation: item.explanation, level: item.level, total_attempts: item.totalAttempts, total_correct: item.totalCorrect, last_answered_at: item.lastAnsweredAt ?? null, created_at: item.createdAt, updated_at: item.updatedAt } }
 function sessionRow(item: TestSession, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, subject_name: item.subjectName, level: item.level, started_at: item.startedAt, completed_at: item.completedAt, question_count: item.questionCount, correct_count: item.correctCount, skipped_count: item.skippedCount ?? 0, percentage: item.percentage, answers: item.answers } }
+
+export async function switchUserCache(userId: string) {
+  const previousOwner = localStorage.getItem(LOCAL_CACHE_OWNER_KEY)
+  if (previousOwner === userId) return
+  syncing = true
+  try {
+    await db.transaction('rw', [db.subjects, db.pdfs, db.pdfFiles, db.notes, db.questions, db.testSessions, db.settings], async () => {
+      await Promise.all([
+        db.subjects.clear(), db.pdfs.clear(), db.pdfFiles.clear(), db.notes.clear(), db.questions.clear(), db.testSessions.clear(), db.settings.clear(),
+      ])
+    })
+    localStorage.setItem(LOCAL_CACHE_OWNER_KEY, userId)
+  } finally { syncing = false }
+}
 
 export function enableUserSync(userId: string) {
   activeUserId = userId
