@@ -77,3 +77,7 @@ The source notes and PDF belong in ChatGPT; only the generated questionnaire bel
 Question imports can contain many records, so starting unobserved background uploads creates a false-success risk: the dialog may close even if Supabase rejects the request or the phone loses its connection. The import workflow now waits for one authenticated batch upsert to succeed before writing the same questions into the local browser database. Manual question saves follow the same confirmation rule.
 
 This makes failure recoverable because the form stays open with its content and an error message. Realtime then tells another signed-in device to fetch the confirmed cloud records.
+
+## 2026-08-31 — Keep summaries close to their owner
+
+When a dashboard shows totals from many unrelated subjects, the numbers are less useful and the screen becomes crowded. The dashboard now acts as a subject launcher. PDFs, questions, mastery progress, average score, and completed-test counts are shown in the workspace of the subject they belong to, which keeps context and navigation together.

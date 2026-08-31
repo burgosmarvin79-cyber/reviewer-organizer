@@ -98,3 +98,8 @@ Skip when: You only need the active task or current state.
 - Change: Failed cloud writes remain visible in the form instead of closing and implying cross-device synchronization succeeded.
 - Evidence: lint, twelve automated tests, TypeScript checking, and the production PWA build passed.
 - Remaining risk: live phone-to-laptop import and realtime arrival still require acceptance testing with Marvin's Supabase account.
+## 2026-08-31 — Subject-focused dashboard
+
+- Change: Removed global PDF, question, average-score, mastery-ladder, and latest-activity panels from the main dashboard.
+- Change: Kept the dashboard focused on clickable subjects and added per-subject summary cards for PDFs, questions, average score, and completed tests.
+- Evidence: lint, twelve automated tests, TypeScript checking, and production build passed after the change.

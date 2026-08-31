@@ -129,40 +129,14 @@ function Layout({ userEmail }: { userEmail?: string } = {}) {
 }
 
 function Dashboard() {
-  const data = useLiveQuery(async () => {
-    const [subjects, pdfs, notes, questions, sessions] = await Promise.all([
-      db.subjects.toArray(), db.pdfs.toArray(), db.notes.toArray(), db.questions.toArray(), db.testSessions.reverse().sortBy('completedAt'),
-    ])
-    return { subjects, pdfs, notes, questions, sessions: sessions.reverse() }
-  }, [])
-  if (!data) return <p>Loading your study space…</p>
-  const levelCounts = [1, 2, 3, 4].map((level) => data.questions.filter((question) => question.level === level).length)
-  const average = data.sessions.length ? Math.round(data.sessions.reduce((sum, session) => sum + session.percentage, 0) / data.sessions.length) : 0
-  return (
-    <div className="page">
-      <header className="page-header"><div><p className="eyebrow">Your study command center</p><h1>Ready for a focused session?</h1><p>Keep your reviewers organized and turn practice into measurable progress.</p></div><Link className="button primary" to="/subjects"><BookOpen /> Open subjects</Link></header>
-      <section className="stats-grid">
-        <article><span className="stat-icon blue"><BookOpen /></span><div><strong>{data.subjects.length}</strong><small>Subjects</small></div></article>
-        <article><span className="stat-icon gold"><FileText /></span><div><strong>{data.pdfs.length}</strong><small>PDF reviewers</small></div></article>
-        <article><span className="stat-icon violet"><CircleHelp /></span><div><strong>{data.questions.length}</strong><small>Questions</small></div></article>
-        <article><span className="stat-icon green"><BarChart3 /></span><div><strong>{average}%</strong><small>Average score</small></div></article>
-      </section>
-      <div className="dashboard-grid">
-        <section className="panel"><div className="section-heading"><div><p className="eyebrow">Mastery ladder</p><h2>Question progress</h2></div><Link to="/subjects">Choose subject <ChevronRight /></Link></div>
-          {data.questions.length === 0 ? <EmptyState icon={<CircleHelp />} title="Your question bank is empty" text="Add questions inside a subject to begin building mastery." /> :
-            <div className="mastery-bars">{levelCounts.map((count, index) => <div key={index}><div><span>{LEVEL_NAMES[(index + 1) as MasteryLevel]}</span><strong>{count}</strong></div><div className="bar"><i style={{ width: `${data.questions.length ? (count / data.questions.length) * 100 : 0}%` }} /></div></div>)}</div>}
-        </section>
-        <section className="panel"><div className="section-heading"><div><p className="eyebrow">Latest activity</p><h2>Recent tests</h2></div><Link to="/history">All history <ChevronRight /></Link></div>
-          {data.sessions.length === 0 ? <EmptyState icon={<Clock3 />} title="No tests yet" text="Your completed practice sessions will appear here." /> :
-            <div className="activity-list">{data.sessions.slice(0, 5).map((session) => <article key={session.id}><span className={session.percentage >= 75 ? 'score good' : 'score'}>{session.percentage}%</span><div><strong>{session.subjectName}</strong><small>{LEVEL_NAMES[session.level]} · {dateLabel(session.completedAt)}</small></div></article>)}</div>}
-        </section>
-      </div>
-      <section className="panel subjects-preview"><div className="section-heading"><div><p className="eyebrow">Your library</p><h2>Subjects</h2></div><Link to="/subjects">Manage subjects <ChevronRight /></Link></div>
-        {data.subjects.length === 0 ? <EmptyState icon={<BookOpen />} title="Create your first subject" text="A subject keeps related PDFs, notes, and questions together." action={<Link className="button primary" to="/subjects"><Plus /> Add subject</Link>} /> :
-          <div className="card-grid">{data.subjects.slice(0, 4).map((subject) => <SubjectCard key={subject.id} subject={subject} />)}</div>}
-      </section>
-    </div>
-  )
+  const subjects = useLiveQuery(() => db.subjects.orderBy('name').toArray(), [])
+  if (!subjects) return <p>Loading your study space…</p>
+  return <div className="page">
+    <header className="page-header"><div><p className="eyebrow">Your study command center</p><h1>Choose a subject to begin</h1><p>Keep each subject's PDFs, notes, questions, mastery, and scores together in one workspace.</p></div><Link className="button primary" to="/subjects"><BookOpen /> Manage subjects</Link></header>
+    <section className="panel subjects-preview dashboard-subjects"><div className="section-heading"><div><p className="eyebrow">Your library</p><h2>Subjects</h2></div><Link to="/subjects">Manage subjects <ChevronRight /></Link></div>
+      {subjects.length === 0 ? <EmptyState icon={<BookOpen />} title="Create your first subject" text="A subject keeps related PDFs, notes, questions, mastery, and scores together." action={<Link className="button primary" to="/subjects"><Plus /> Add subject</Link>} /> : <div className="card-grid">{subjects.map((subject) => <SubjectCard key={subject.id} subject={subject} />)}</div>}
+    </section>
+  </div>
 }
 
 function SubjectCard({ subject }: { subject: Subject }) {
@@ -230,7 +204,20 @@ function SubjectPage() {
     await deleteSubject(currentSubject.id)
     navigate('/subjects')
   }
-  return <div className="page"><Link className="back-link" to="/subjects"><ArrowLeft /> All subjects</Link><header className="subject-hero" style={{ '--subject-color': subject.color } as React.CSSProperties}><span><BookOpen /></span><div><p className="eyebrow">Subject workspace</p><h1>{subject.name}</h1><p>{subject.description || 'Add a description to explain this subject.'}</p></div><div className="hero-actions"><button className="button ghost" onClick={() => setEditing(true)}><Pencil /> Edit</button><button className="button danger" onClick={remove}><Trash2 /> Delete</button></div></header><div className="tabs" role="tablist"><button className={tab === 'pdfs' ? 'active' : ''} onClick={() => setTab('pdfs')}><FileText /> PDF reviewers</button><button className={tab === 'notes' ? 'active' : ''} onClick={() => setTab('notes')}><NotebookPen /> Notes</button><button className={tab === 'questions' ? 'active' : ''} onClick={() => setTab('questions')}><CircleHelp /> Question bank</button></div>{tab === 'pdfs' && <PdfPanel subjectId={subject.id} />}{tab === 'notes' && <NotesPanel subjectId={subject.id} />}{tab === 'questions' && <QuestionsPanel subjectId={subject.id} />}{editing && <Modal title="Edit subject" onClose={() => setEditing(false)}><SubjectForm subject={subject} onClose={() => setEditing(false)} /></Modal>}</div>
+  return <div className="page"><Link className="back-link" to="/subjects"><ArrowLeft /> All subjects</Link><header className="subject-hero" style={{ '--subject-color': subject.color } as React.CSSProperties}><span><BookOpen /></span><div><p className="eyebrow">Subject workspace</p><h1>{subject.name}</h1><p>{subject.description || 'Add a description to explain this subject.'}</p></div><div className="hero-actions"><button className="button ghost" onClick={() => setEditing(true)}><Pencil /> Edit</button><button className="button danger" onClick={remove}><Trash2 /> Delete</button></div></header><SubjectSummary subjectId={subject.id} /><div className="tabs" role="tablist"><button className={tab === 'pdfs' ? 'active' : ''} onClick={() => setTab('pdfs')}><FileText /> PDF reviewers</button><button className={tab === 'notes' ? 'active' : ''} onClick={() => setTab('notes')}><NotebookPen /> Notes</button><button className={tab === 'questions' ? 'active' : ''} onClick={() => setTab('questions')}><CircleHelp /> Question bank</button></div>{tab === 'pdfs' && <PdfPanel subjectId={subject.id} />}{tab === 'notes' && <NotesPanel subjectId={subject.id} />}{tab === 'questions' && <QuestionsPanel subjectId={subject.id} />}{editing && <Modal title="Edit subject" onClose={() => setEditing(false)}><SubjectForm subject={subject} onClose={() => setEditing(false)} /></Modal>}</div>
+}
+
+function SubjectSummary({ subjectId }: { subjectId: string }) {
+  const summary = useLiveQuery(async () => {
+    const [pdfs, notes, questions, sessions] = await Promise.all([
+      db.pdfs.where('subjectId').equals(subjectId).count(), db.notes.where('subjectId').equals(subjectId).count(),
+      db.questions.where('subjectId').equals(subjectId).count(), db.testSessions.where('subjectId').equals(subjectId).reverse().sortBy('completedAt'),
+    ])
+    return { pdfs, notes, questions, sessions }
+  }, [subjectId])
+  if (!summary) return null
+  const average = summary.sessions.length ? Math.round(summary.sessions.reduce((total, session) => total + session.percentage, 0) / summary.sessions.length) : 0
+  return <section className="subject-summary" aria-label="Subject summary"><article><span className="stat-icon gold"><FileText /></span><div><strong>{summary.pdfs}</strong><small>PDF reviewers</small></div></article><article><span className="stat-icon violet"><CircleHelp /></span><div><strong>{summary.questions}</strong><small>Questions</small></div></article><article><span className="stat-icon green"><BarChart3 /></span><div><strong>{average}%</strong><small>Average score</small></div></article><article><span className="stat-icon blue"><Clock3 /></span><div><strong>{summary.sessions.length}</strong><small>Tests completed</small></div></article></section>
 }
 
 function PdfPanel({ subjectId }: { subjectId: string }) {

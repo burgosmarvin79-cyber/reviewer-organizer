@@ -26,6 +26,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 - IndexedDB database for subjects, PDFs, notes, questions, settings, and test-history snapshots.
 - Subject, PDF, note, question-bank, practice-test, dashboard, history, and backup interfaces.
 - Question Bank bulk import for `.txt` or `.json` questionnaires, including strict validation, duplicate filtering, and selectable review before saving.
+- Main dashboard now presents subjects only; each subject workspace contains its own PDF, question, mastery, score, and test summary.
 - Manual and bulk question saves now wait for confirmed private Supabase persistence before updating the local question bank, preventing phone uploads from appearing successful before cloud synchronization finishes.
 - Automated mastery-rule tests and production build configuration.
 - Email authentication, per-user Supabase study-data synchronization, deletion synchronization, and realtime subscriptions.
