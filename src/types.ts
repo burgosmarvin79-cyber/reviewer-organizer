@@ -19,6 +19,8 @@ export interface PdfReviewer {
   storagePath?: string
 }
 
+export type NoteLevel = 1 | 2 | 3
+
 export interface LocalPdfFile {
   id: string
   fileData: Blob
@@ -29,6 +31,7 @@ export interface Note {
   subjectId: string
   title: string
   content: string
+  level: NoteLevel
   createdAt: string
   updatedAt: string
 }

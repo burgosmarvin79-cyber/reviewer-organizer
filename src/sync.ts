@@ -27,7 +27,7 @@ export function subscribeToSyncStatus(listener: (status: SyncStatus) => void) {
 }
 
 function subjectRow(item: Subject, userId: string) { return { id: item.id, user_id: userId, name: item.name, description: item.description, color: item.color, created_at: item.createdAt, updated_at: item.updatedAt } }
-function noteRow(item: Note, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, title: item.title, content: item.content, created_at: item.createdAt, updated_at: item.updatedAt } }
+function noteRow(item: Note, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, title: item.title, content: item.content, note_level: item.level ?? 1, created_at: item.createdAt, updated_at: item.updatedAt } }
 function questionRow(item: Question, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, prompt: item.prompt, accepted_answers: item.acceptedAnswers, explanation: item.explanation, level: item.level, total_attempts: item.totalAttempts, total_correct: item.totalCorrect, last_answered_at: item.lastAnsweredAt ?? null, created_at: item.createdAt, updated_at: item.updatedAt } }
 function sessionRow(item: TestSession, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, subject_name: item.subjectName, level: item.level, started_at: item.startedAt, completed_at: item.completedAt, question_count: item.questionCount, correct_count: item.correctCount, skipped_count: item.skippedCount ?? 0, percentage: item.percentage, answers: item.answers } }
 
@@ -92,7 +92,7 @@ export async function syncUserData(userId: string) {
       return
     }
     const subjects = remoteSubjects.data.map((item) => ({ id: item.id, name: item.name, description: item.description, color: item.color, createdAt: item.created_at, updatedAt: item.updated_at }))
-    const notes = remoteNotes.data.map((item) => ({ id: item.id, subjectId: item.subject_id, title: item.title, content: item.content, createdAt: item.created_at, updatedAt: item.updated_at }))
+    const notes = remoteNotes.data.map((item) => ({ id: item.id, subjectId: item.subject_id, title: item.title, content: item.content, level: ([1, 2, 3].includes(Number(item.note_level)) ? Number(item.note_level) : 1) as Note['level'], createdAt: item.created_at, updatedAt: item.updated_at }))
     const questions = remoteQuestions.data.map((item) => ({ id: item.id, subjectId: item.subject_id, prompt: item.prompt, acceptedAnswers: item.accepted_answers, explanation: item.explanation, level: item.level, totalAttempts: item.total_attempts, totalCorrect: item.total_correct, lastAnsweredAt: item.last_answered_at ?? undefined, createdAt: item.created_at, updatedAt: item.updated_at }))
     const sessions = remoteSessions.data.map((item) => ({ id: item.id, subjectId: item.subject_id, subjectName: item.subject_name, level: item.level, startedAt: item.started_at, completedAt: item.completed_at, questionCount: item.question_count, correctCount: item.correct_count, skippedCount: item.skipped_count, percentage: Number(item.percentage), answers: item.answers }))
     await db.transaction('rw', db.subjects, db.notes, db.questions, db.testSessions, async () => {

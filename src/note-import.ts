@@ -1,9 +1,12 @@
 export const NOTE_IMPORT_FORMAT = 'reviewer-organizer-notes'
 export const MAX_IMPORT_NOTES = 200
 
+import type { NoteLevel } from './types'
+
 export interface ImportableNote {
   title: string
   content: string
+  level: NoteLevel
 }
 
 export interface NoteImportResult {
@@ -38,12 +41,14 @@ export function parseNoteImport(text: string): NoteImportResult {
     if (!isRecord(item)) throw new Error(`Note ${number} must be an object.`)
     const title = typeof item.title === 'string' ? item.title.trim() : ''
     const content = typeof item.content === 'string' ? item.content.trim() : ''
+    const level = item.level === undefined ? 1 : Number(item.level)
     if (!title) throw new Error(`Note ${number} is missing its title.`)
     if (!content) throw new Error(`Note ${number} is missing its content.`)
+    if (![1, 2, 3].includes(level)) throw new Error(`Note ${number} has an invalid level. Use 1, 2, or 3.`)
     const key = normalizeNoteTitle(title)
     if (seenTitles.has(key)) { warnings.push(`Skipped duplicate inside the file: “${title}”`); return }
     seenTitles.add(key)
-    notes.push({ title, content })
+    notes.push({ title, content, level: level as NoteLevel })
   })
   if (!notes.length) throw new Error('The file contains no unique notes to import.')
   return { notes, warnings }

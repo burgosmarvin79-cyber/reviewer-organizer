@@ -24,7 +24,7 @@ export async function saveNote(note: Note) {
   const id = await userId()
   const { error } = await supabase!.from('notes').upsert({
     id: note.id, user_id: id, subject_id: note.subjectId, title: note.title,
-    content: note.content, created_at: note.createdAt, updated_at: note.updatedAt,
+    content: note.content, note_level: note.level ?? 1, created_at: note.createdAt, updated_at: note.updatedAt,
   })
   if (error) throw error
 }

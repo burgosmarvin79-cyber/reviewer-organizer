@@ -26,7 +26,8 @@ Use exactly this format:
   "notes": [
     {
       "title": "Clear topic title",
-      "content": "Markdown-formatted notes for this topic"
+      "content": "Markdown-formatted notes for this topic",
+      "level": 1
     }
   ]
 }
@@ -34,6 +35,7 @@ Use exactly this format:
 Quality rules:
 - Return at most 30 notes.
 - Every note must have a non-empty title and content.
+- Set every new note's level to 1.
 - Keep each note focused and readable on a phone.
 - Use plain text newlines inside the content string; escape JSON characters correctly.
 - Return JSON that can be parsed directly by an app.

@@ -27,6 +27,7 @@ create table if not exists public.notes (
   subject_id uuid not null references public.subjects(id) on delete cascade,
   title text not null,
   content text not null default '',
+  note_level smallint not null default 1 check (note_level between 1 and 3),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
