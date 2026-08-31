@@ -1,4 +1,3 @@
-import type { Session } from '@supabase/supabase-js'
 import { db } from './db'
 import { supabase } from './lib/supabase'
 import type { Note, Question, Subject, TestSession } from './types'
@@ -7,6 +6,9 @@ let syncing = false
 let activeUserId: string | null = null
 let hooksInstalled = false
 let realtimeChannel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null
+let realtimeUserId: string | null = null
+let realtimeRefreshTimer: ReturnType<typeof setTimeout> | null = null
+let syncQueued = false
 
 function subjectRow(item: Subject, userId: string) { return { id: item.id, user_id: userId, name: item.name, description: item.description, color: item.color, created_at: item.createdAt, updated_at: item.updatedAt } }
 function noteRow(item: Note, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, title: item.title, content: item.content, created_at: item.createdAt, updated_at: item.updatedAt } }
@@ -31,11 +33,11 @@ export function enableUserSync(userId: string) {
   db.testSessions.hook('deleting', (key) => { if (activeUserId && !syncing && supabase) void supabase.from('test_sessions').delete().eq('id', key).eq('user_id', activeUserId) })
 }
 
-export async function syncUserData(session: Session) {
-  if (!supabase || syncing) return
+export async function syncUserData(userId: string) {
+  if (!supabase) return
+  if (syncing) { syncQueued = true; return }
   syncing = true
   try {
-    const userId = session.user.id
     const [remoteSubjects, remoteNotes, remoteQuestions, remoteSessions] = await Promise.all([
       supabase.from('subjects').select('*').eq('user_id', userId),
       supabase.from('notes').select('*').eq('user_id', userId),
@@ -55,22 +57,47 @@ export async function syncUserData(session: Session) {
       ])
       return
     }
+    const subjects = remoteSubjects.data.map((item) => ({ id: item.id, name: item.name, description: item.description, color: item.color, createdAt: item.created_at, updatedAt: item.updated_at }))
+    const notes = remoteNotes.data.map((item) => ({ id: item.id, subjectId: item.subject_id, title: item.title, content: item.content, createdAt: item.created_at, updatedAt: item.updated_at }))
+    const questions = remoteQuestions.data.map((item) => ({ id: item.id, subjectId: item.subject_id, prompt: item.prompt, acceptedAnswers: item.accepted_answers, explanation: item.explanation, level: item.level, totalAttempts: item.total_attempts, totalCorrect: item.total_correct, lastAnsweredAt: item.last_answered_at ?? undefined, createdAt: item.created_at, updatedAt: item.updated_at }))
+    const sessions = remoteSessions.data.map((item) => ({ id: item.id, subjectId: item.subject_id, subjectName: item.subject_name, level: item.level, startedAt: item.started_at, completedAt: item.completed_at, questionCount: item.question_count, correctCount: item.correct_count, skippedCount: item.skipped_count, percentage: Number(item.percentage), answers: item.answers }))
     await db.transaction('rw', db.subjects, db.notes, db.questions, db.testSessions, async () => {
-      await Promise.all([db.subjects.clear(), db.notes.clear(), db.questions.clear(), db.testSessions.clear()])
-      await db.subjects.bulkPut(remoteSubjects.data.map((item) => ({ id: item.id, name: item.name, description: item.description, color: item.color, createdAt: item.created_at, updatedAt: item.updated_at })))
-      await db.notes.bulkPut(remoteNotes.data.map((item) => ({ id: item.id, subjectId: item.subject_id, title: item.title, content: item.content, createdAt: item.created_at, updatedAt: item.updated_at })))
-      await db.questions.bulkPut(remoteQuestions.data.map((item) => ({ id: item.id, subjectId: item.subject_id, prompt: item.prompt, acceptedAnswers: item.accepted_answers, explanation: item.explanation, level: item.level, totalAttempts: item.total_attempts, totalCorrect: item.total_correct, lastAnsweredAt: item.last_answered_at ?? undefined, createdAt: item.created_at, updatedAt: item.updated_at })))
-      await db.testSessions.bulkPut(remoteSessions.data.map((item) => ({ id: item.id, subjectId: item.subject_id, subjectName: item.subject_name, level: item.level, startedAt: item.started_at, completedAt: item.completed_at, questionCount: item.question_count, correctCount: item.correct_count, skippedCount: item.skipped_count, percentage: Number(item.percentage), answers: item.answers })))
+      const [subjectKeys, noteKeys, questionKeys, sessionKeys] = await Promise.all([
+        db.subjects.toCollection().primaryKeys(), db.notes.toCollection().primaryKeys(), db.questions.toCollection().primaryKeys(), db.testSessions.toCollection().primaryKeys(),
+      ])
+      const subjectIds = new Set(subjects.map((item) => item.id)); const noteIds = new Set(notes.map((item) => item.id))
+      const questionIds = new Set(questions.map((item) => item.id)); const sessionIds = new Set(sessions.map((item) => item.id))
+      await Promise.all([
+        db.subjects.bulkPut(subjects), db.notes.bulkPut(notes), db.questions.bulkPut(questions), db.testSessions.bulkPut(sessions),
+        db.subjects.bulkDelete(subjectKeys.filter((key) => !subjectIds.has(key))), db.notes.bulkDelete(noteKeys.filter((key) => !noteIds.has(key))),
+        db.questions.bulkDelete(questionKeys.filter((key) => !questionIds.has(key))), db.testSessions.bulkDelete(sessionKeys.filter((key) => !sessionIds.has(key))),
+      ])
     })
-  } finally { syncing = false }
+  } finally {
+    syncing = false
+    if (syncQueued) { syncQueued = false; void syncUserData(userId) }
+  }
 }
 
 export function subscribeToUserChanges(userId: string) {
-  if (!supabase || realtimeChannel) return
+  if (!supabase || (realtimeChannel && realtimeUserId === userId)) return
+  unsubscribeFromUserChanges()
+  const refresh = () => {
+    if (realtimeRefreshTimer) clearTimeout(realtimeRefreshTimer)
+    realtimeRefreshTimer = setTimeout(() => { realtimeRefreshTimer = null; void syncUserData(userId) }, 250)
+  }
+  realtimeUserId = userId
   realtimeChannel = supabase.channel(`reviewer-organizer-${userId}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'subjects', filter: `user_id=eq.${userId}` }, () => { void syncUserData({ user: { id: userId } } as Session) })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'notes', filter: `user_id=eq.${userId}` }, () => { void syncUserData({ user: { id: userId } } as Session) })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'questions', filter: `user_id=eq.${userId}` }, () => { void syncUserData({ user: { id: userId } } as Session) })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'test_sessions', filter: `user_id=eq.${userId}` }, () => { void syncUserData({ user: { id: userId } } as Session) })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'subjects', filter: `user_id=eq.${userId}` }, refresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'notes', filter: `user_id=eq.${userId}` }, refresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'questions', filter: `user_id=eq.${userId}` }, refresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'test_sessions', filter: `user_id=eq.${userId}` }, refresh)
     .subscribe()
+}
+
+export function unsubscribeFromUserChanges() {
+  if (realtimeRefreshTimer) { clearTimeout(realtimeRefreshTimer); realtimeRefreshTimer = null }
+  if (supabase && realtimeChannel) void supabase.removeChannel(realtimeChannel)
+  realtimeChannel = null
+  realtimeUserId = null
 }

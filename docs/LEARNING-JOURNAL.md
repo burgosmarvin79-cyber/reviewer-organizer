@@ -10,6 +10,8 @@ Interface labels must also follow real system behavior. Once study data can sync
 
 A familiar navigation model can be reused without copying another product's appearance. The useful Classroom pattern is the relationship between a subject card and its focused workspace. Reviewer Organizer keeps its own BatStateU-inspired identity while using that understandable card-to-content flow.
 
+Realtime subscriptions need a lifecycle. A React screen must remove its channel when the user session ends or changes; otherwise stale connections can consume resources and trigger duplicate work. Cloud events should also be grouped, and local synchronization should update only changed or removed records instead of clearing and rebuilding the entire database each time.
+
 ## 2026-08-31 — How the first version fits together
 
 ### Source code and student data are different

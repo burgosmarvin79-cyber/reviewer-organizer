@@ -12,7 +12,7 @@ import { db, deleteSubjectCascade } from './db'
 import { isAcceptedAnswer, LEVEL_NAMES, moveQuestion, randomSelection, recordAnswer } from './mastery'
 import type { MasteryLevel, Note, Question, Subject, TestAnswer, TestSession } from './types'
 import { supabase } from './lib/supabase'
-import { enableUserSync, subscribeToUserChanges, syncUserData } from './sync'
+import { enableUserSync, subscribeToUserChanges, syncUserData, unsubscribeFromUserChanges } from './sync'
 import type { Session } from '@supabase/supabase-js'
 import { deleteSubject, saveSubject } from './remote'
 
@@ -34,7 +34,14 @@ function AuthGate() {
     const { data: listener } = client.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
     return () => listener.subscription.unsubscribe()
   }, [])
-  useEffect(() => { if (session) { enableUserSync(session.user.id); void syncUserData(session); subscribeToUserChanges(session.user.id) } }, [session])
+  const userId = session?.user.id
+  useEffect(() => {
+    if (!userId) return
+    enableUserSync(userId)
+    void syncUserData(userId)
+    subscribeToUserChanges(userId)
+    return unsubscribeFromUserChanges
+  }, [userId])
 
   if (!supabase) return <div className="auth-screen"><section className="auth-card"><div className="brand auth-brand"><span className="brand-mark"><Check /></span><div><strong>Reviewer</strong><small>Organizer</small></div></div><p className="eyebrow">Secure study space</p><h1>Sign in to continue</h1><p>The app is ready for accounts, but the Supabase connection is not configured in this copy yet.</p><div className="notice">Add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> to this folder’s <code>.env.local</code>, then restart the dev server.</div></section></div>
   if (loading) return <div className="auth-screen"><div className="auth-card"><p>Loading your secure study space…</p></div></div>

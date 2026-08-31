@@ -39,6 +39,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 
 - Complete RLS isolation, private PDF storage, existing local-data ownership migration, offline conflict behavior, and recovery paths still require verification.
 - Manual desktop and phone visual acceptance of the BatStateU-inspired interface remains required.
+- An iPhone Safari subject-route crash was reported. A local repair now cleans up Realtime channels, coalesces cloud events, incrementally reconciles IndexedDB, and removes `color-mix()` from subject surfaces; live iPhone verification remains pending deployment.
 
 ## Current Blockers
 

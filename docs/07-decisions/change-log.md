@@ -4,6 +4,15 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-08-31 — Reduce iPhone subject-route resource pressure
+
+- Change: Added explicit Supabase Realtime channel cleanup when the authenticated user lifecycle changes.
+- Change: Coalesced bursts of Realtime table notifications and queued one follow-up synchronization instead of running overlapping refreshes.
+- Change: Replaced full clear-and-rebuild local synchronization with incremental upserts and deletion reconciliation across subjects, notes, questions, and test history.
+- Change: Removed `color-mix()` from subject cards and banners for broader iPhone WebKit compatibility.
+- Evidence: ESLint, seven automated tests, TypeScript, and production PWA build pass locally.
+- Remaining risk: the screenshot proves an iPhone Safari content-process crash but not its exact internal WebKit cause; the repair requires live deployment and reproduction testing on Marvin's phone.
+
 ## 2026-08-31 — Adopt a simple BatStateU-inspired application shell
 
 - Change: Replaced the navy and blue application shell with a restrained deep-red, white, warm-gray, and gold visual system inspired by Batangas State University.
