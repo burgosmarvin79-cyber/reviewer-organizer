@@ -5,7 +5,13 @@ import { registerSW } from 'virtual:pwa-register'
 import App from './App'
 import './styles.css'
 
-registerSW({ immediate: true })
+registerSW({
+  immediate: true,
+  onNeedRefresh() {
+    // Activate the new app shell immediately so installed PWAs do not stay on an old screen.
+    window.location.reload()
+  },
+})
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
