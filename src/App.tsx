@@ -106,7 +106,7 @@ function Layout({ userEmail }: { userEmail?: string } = {}) {
     <div className="app-shell">
       {menuOpen && <button className="mobile-overlay" onClick={() => setMenuOpen(false)} aria-label="Close navigation menu" />}
       <aside className={menuOpen ? 'sidebar open' : 'sidebar'}>
-        <div className="brand app-brand"><span className="brand-mark"><img src="/reviewer-organizer/batstateu-logo.png" alt="Batangas State University seal" /></span><div><strong>Reviewer Organizer</strong><small>Study workspace</small></div></div>
+        <div className="brand app-brand"><span className="brand-mark"><img src="/reviewer-organizer/reviewer-logo.jpg" alt="Reviewer Organizer logo" /></span><div><strong>Reviewer Organizer</strong><small>Study workspace</small></div></div>
         <nav>{links.map((link) => <NavLink key={link.to} to={link.to} end={link.to === '/'} onClick={() => setMenuOpen(false)}>{link.icon}<span>{link.label}</span></NavLink>)}</nav>
         <div className="sidebar-footer">
           <div className="sync-badge"><Cloud /><span><strong>Private cloud sync</strong><small>Available offline on this device</small></span></div>

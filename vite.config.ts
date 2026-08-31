@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
+      includeAssets: ['icon.svg', 'reviewer-logo.jpg'],
       manifest: {
         name: 'Reviewer Organizer',
         short_name: 'Reviewer',
@@ -18,7 +18,7 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/reviewer-organizer/',
         scope: '/reviewer-organizer/',
-        icons: [{ src: '/reviewer-organizer/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
+        icons: [{ src: '/reviewer-organizer/reviewer-logo.jpg', sizes: '2048x2048', type: 'image/jpeg', purpose: 'any maskable' }],
       },
       workbox: { globPatterns: ['**/*.{js,css,html,svg}'] },
     }),
