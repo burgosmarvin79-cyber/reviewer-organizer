@@ -10,6 +10,7 @@ Reviewer Organizer is an installable, offline-first web application that helps s
 - Store PDF reviewers within a subject; add, open, and delete them.
 - Create, edit, search, and delete notes within a subject.
 - Create, edit, filter, and delete identification questions with one primary answer, optional accepted alternatives, and an explanation.
+- Bulk-import ChatGPT-generated identification questions from a validated Reviewer Organizer JSON questionnaire, with duplicate warnings and a selectable preview before saving.
 - Run randomized tests for one subject and one mastery level at a time.
 - Let the student manually keep a question at its current level or move it one level forward or backward after checking an answer.
 - Allow questions to be skipped without changing their level or counting them as answered.

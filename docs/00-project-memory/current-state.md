@@ -25,6 +25,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 - React and TypeScript Progressive Web App with responsive navigation and offline service worker.
 - IndexedDB database for subjects, PDFs, notes, questions, settings, and test-history snapshots.
 - Subject, PDF, note, question-bank, practice-test, dashboard, history, and backup interfaces.
+- Question Bank bulk import for `.txt` or `.json` questionnaires, including strict validation, duplicate filtering, and selectable review before saving.
 - Automated mastery-rule tests and production build configuration.
 - Email authentication, per-user Supabase study-data synchronization, deletion synchronization, and realtime subscriptions.
 - Private Supabase PDF upload, cross-device metadata synchronization, signed five-minute open links, cloud deletion, and automatic migration of legacy browser PDFs.
@@ -34,6 +35,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 ## What Works
 
 - Lint, seven automated tests, and production build pass after the 2026-08-31 interface update.
+- Questionnaire import validation is covered by four focused tests; the complete suite now contains twelve passing tests.
 - Production output serves the application shell, service worker, and install manifest successfully.
 - GitHub Pages deploys automatically from `main` and the live HTTPS site returns the app shell, PWA manifest, and service worker successfully.
 

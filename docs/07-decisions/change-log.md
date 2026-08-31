@@ -86,3 +86,9 @@ Skip when: You only need the active task or current state.
 - Change: Included complete local backup and restore because browser-local data has no cloud copy.
 - Evidence: lint, four mastery tests, production build, dependency audit, and production HTTP smoke test passed.
 - Remaining risk: browser-specific storage and install behavior needs manual acceptance on the user's target device.
+## 2026-08-31 — Review-first questionnaire import
+
+- Change: Added `.txt` and `.json` bulk import for ChatGPT-generated identification questionnaires inside each subject's Question Bank.
+- Change: Required a versioned JSON contract, rejected malformed questions, filtered duplicates, and added a selectable preview before records are saved and synchronized.
+- Evidence: lint, twelve automated tests including four focused import-validation cases, TypeScript checking, and the production PWA build passed.
+- Remaining risk: a real questionnaire generated from Marvin's uploaded notes still needs manual content and cross-device acceptance testing.

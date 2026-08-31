@@ -10,6 +10,7 @@ import { Link, NavLink, Route, Routes, useNavigate, useParams, useSearchParams }
 import { createBackup, restoreBackup, validateBackup } from './backup'
 import { db, deleteSubjectCascade } from './db'
 import { isAcceptedAnswer, LEVEL_NAMES, moveQuestion, randomSelection, recordAnswer } from './mastery'
+import { normalizeQuestionPrompt, parseQuestionImport, type ImportableQuestion } from './question-import'
 import type { MasteryLevel, Note, Question, Subject, TestAnswer, TestSession } from './types'
 import { supabase } from './lib/supabase'
 import { enableUserSync, subscribeToUserChanges, syncUserData, unsubscribeFromUserChanges } from './sync'
@@ -307,13 +308,89 @@ function QuestionForm({ subjectId, question, onClose }: { subjectId: string; que
   return <form className="form" onSubmit={submit}><label>Identification question<textarea autoFocus required value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="e.g. Who wrote Noli Me Tangere?" /></label><fieldset><legend>Accepted answers</legend><div className="answer-editor">{acceptedAnswers.map((answer, index) => <div key={index}><input value={answer} onChange={(event) => updateAnswer(index, event.target.value)} placeholder={index === 0 ? 'Primary correct answer' : 'Alternative accepted answer'} /><button type="button" className="icon-button" disabled={acceptedAnswers.length === 1} onClick={() => setAcceptedAnswers((current) => current.filter((_, answerIndex) => answerIndex !== index))}><X /></button></div>)}</div>{acceptedAnswers.length < 8 && <button type="button" className="text-button" onClick={() => setAcceptedAnswers([...acceptedAnswers, ''])}><Plus /> Add accepted answer</button>}<small>Capitalization and extra spaces are ignored. Add spelling variants when needed.</small></fieldset><label>Explanation<textarea required value={explanation} onChange={(event) => setExplanation(event.target.value)} placeholder="Explain the answer so the student can review it after checking." /></label>{error && <p className="form-error">{error}</p>}<div className="form-actions"><button type="button" className="button ghost" onClick={onClose}>Cancel</button><button className="button primary">Save question</button></div></form>
 }
 
+function QuestionImportForm({ subjectId, existingQuestions, onClose }: { subjectId: string; existingQuestions: Question[]; onClose: () => void }) {
+  const [text, setText] = useState('')
+  const [fileName, setFileName] = useState('')
+  const [preview, setPreview] = useState<ImportableQuestion[]>([])
+  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [warnings, setWarnings] = useState<string[]>([])
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  function review(value = text) {
+    try {
+      const result = parseQuestionImport(value)
+      const existingPrompts = new Set(existingQuestions.map((question) => normalizeQuestionPrompt(question.prompt)))
+      const importable = result.questions.filter((question) => !existingPrompts.has(normalizeQuestionPrompt(question.prompt)))
+      const existingDuplicates = result.questions
+        .filter((question) => existingPrompts.has(normalizeQuestionPrompt(question.prompt)))
+        .map((question) => `Skipped question already in this subject: “${question.prompt}”`)
+      if (!importable.length) throw new Error('Every question in this file is already in this subject.')
+      setPreview(importable)
+      setSelected(new Set(importable.map((_, index) => index)))
+      setWarnings([...result.warnings, ...existingDuplicates])
+      setError('')
+    } catch (reason) {
+      setPreview([])
+      setSelected(new Set())
+      setWarnings([])
+      setError(reason instanceof Error ? reason.message : 'Could not read this questionnaire.')
+    }
+  }
+
+  async function chooseFile(file?: File) {
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) return setError('Choose a questionnaire file smaller than 2 MB.')
+    const value = await file.text()
+    setFileName(file.name)
+    setText(value)
+    review(value)
+  }
+
+  async function importQuestions() {
+    const chosen = preview.filter((_, index) => selected.has(index))
+    if (!chosen.length) return setError('Select at least one question to import.')
+    setSaving(true)
+    setError('')
+    try {
+      const now = new Date().toISOString()
+      await db.questions.bulkAdd(chosen.map((question) => ({
+        id: id(), subjectId, ...question, totalAttempts: 0, totalCorrect: 0, createdAt: now, updatedAt: now,
+      })))
+      onClose()
+    } catch (reason) {
+      setSaving(false)
+      setError(reason instanceof Error ? reason.message : 'The questions could not be imported.')
+    }
+  }
+
+  if (preview.length) return <div className="question-import form">
+    <div className="import-summary"><Check /><div><strong>{preview.length} questions ready</strong><small>{selected.size} selected for this subject</small></div></div>
+    {warnings.length > 0 && <div className="import-warnings"><strong>Review notes</strong>{warnings.map((warning) => <p key={warning}>{warning}</p>)}</div>}
+    <div className="import-select-actions"><button type="button" className="text-button" onClick={() => setSelected(new Set(preview.map((_, index) => index)))}>Select all</button><button type="button" className="text-button" onClick={() => setSelected(new Set())}>Clear all</button></div>
+    <div className="import-preview">{preview.map((question, index) => <label key={`${question.prompt}-${index}`} className={selected.has(index) ? 'selected' : ''}><input type="checkbox" checked={selected.has(index)} onChange={() => setSelected((current) => { const next = new Set(current); if (next.has(index)) next.delete(index); else next.add(index); return next })} /><div><strong>{question.prompt}</strong><span>Answer: {question.acceptedAnswers.join(' / ')}</span><small>{question.explanation}</small></div></label>)}</div>
+    {error && <p className="form-error">{error}</p>}
+    <div className="form-actions"><button type="button" className="button ghost" onClick={() => { setPreview([]); setError('') }}>Back</button><button type="button" className="button primary" disabled={saving || !selected.size} onClick={() => void importQuestions()}><Upload /> {saving ? 'Importing…' : `Import ${selected.size} questions`}</button></div>
+  </div>
+
+  return <div className="question-import form">
+    <div className="import-guide"><FileText /><div><strong>Upload the questionnaire from ChatGPT</strong><p>Use a <code>.txt</code> or <code>.json</code> file containing JSON only. Your notes or PDF should not be uploaded here.</p></div></div>
+    <label className="file-drop"><Upload /><strong>{fileName || 'Choose questionnaire file'}</strong><span>.txt or .json · maximum 2 MB</span><input type="file" accept=".txt,.json,text/plain,application/json" onChange={(event) => void chooseFile(event.target.files?.[0])} /></label>
+    <div className="import-divider"><span>or paste the JSON</span></div>
+    <label>Questionnaire JSON<textarea className="large-textarea" value={text} onChange={(event) => { setText(event.target.value); setFileName('') }} placeholder={'{\n  "format": "reviewer-organizer-questions",\n  "version": 1,\n  "questions": [...]\n}'} /></label>
+    {error && <p className="form-error">{error}</p>}
+    <div className="form-actions"><button type="button" className="button ghost" onClick={onClose}>Cancel</button><button type="button" className="button primary" disabled={!text.trim()} onClick={() => review()}><Check /> Review questions</button></div>
+  </div>
+}
+
 function QuestionsPanel({ subjectId }: { subjectId: string }) {
   const [search, setSearch] = useState('')
   const [level, setLevel] = useState<MasteryLevel | 0>(0)
   const [editing, setEditing] = useState<Question | 'new' | null>(null)
+  const [importing, setImporting] = useState(false)
   const questions = useLiveQuery(() => db.questions.where('subjectId').equals(subjectId).reverse().sortBy('updatedAt'), [subjectId]) ?? []
   const filtered = questions.filter((question) => (!level || question.level === level) && `${question.prompt} ${question.explanation}`.toLowerCase().includes(search.toLowerCase()))
-  return <section className="panel"><div className="section-heading"><div><p className="eyebrow">Manual mastery practice</p><h2>Question bank</h2></div><button className="button primary" onClick={() => setEditing('new')}><Plus /> Add question</button></div><div className="test-level-grid">{([1, 2, 3, 4] as MasteryLevel[]).map((item) => { const count = questions.filter((question) => question.level === item).length; return <article key={item} className={`test-level-card level-card-${item}`}><div className={`level-pill level-${item}`}>{LEVEL_NAMES[item]}</div><strong>{count}</strong><span>{count === 1 ? 'question' : 'questions'}</span><Link className="button primary" aria-disabled={!count} to={count ? `/test?subject=${subjectId}&level=${item}` : '#'} onClick={(event) => { if (!count) event.preventDefault() }}><GraduationCap /> Start test</Link></article> })}</div>{questions.length > 0 && <div className="toolbar"><label className="search"><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search questions" /></label><select value={level} onChange={(event) => setLevel(Number(event.target.value) as MasteryLevel | 0)}><option value={0}>All levels</option>{[1, 2, 3, 4].map((item) => <option key={item} value={item}>{LEVEL_NAMES[item as MasteryLevel]}</option>)}</select></div>}{filtered.length ? <div className="question-list">{filtered.map((question) => <article key={question.id}><div className={`level-pill level-${question.level}`}>{LEVEL_NAMES[question.level]}</div><h3>{question.prompt}</h3><p>{question.acceptedAnswers.length} accepted answer{question.acceptedAnswers.length === 1 ? '' : 's'} · {question.totalAttempts} attempts</p><footer><button className="button ghost" onClick={() => setEditing(question)}><Pencil /> Edit</button><button className="icon-button danger-text" onClick={() => window.confirm('Delete this question? Its snapshots remain in test history.') && void db.questions.delete(question.id)}><Trash2 /></button></footer></article>)}</div> : <EmptyState icon={<CircleHelp />} title={questions.length ? 'No matching questions' : 'No questions yet'} text={questions.length ? 'Adjust your search or level filter.' : 'Add identification questions to begin your manual mastery ladder.'} />}{editing && <Modal title={editing === 'new' ? 'New identification question' : 'Edit identification question'} onClose={() => setEditing(null)}><QuestionForm subjectId={subjectId} question={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} /></Modal>}</section>
+  return <section className="panel"><div className="section-heading"><div><p className="eyebrow">Manual mastery practice</p><h2>Question bank</h2></div><div className="heading-actions"><button className="button ghost" onClick={() => setImporting(true)}><Upload /> Import questions</button><button className="button primary" onClick={() => setEditing('new')}><Plus /> Add question</button></div></div><div className="test-level-grid">{([1, 2, 3, 4] as MasteryLevel[]).map((item) => { const count = questions.filter((question) => question.level === item).length; return <article key={item} className={`test-level-card level-card-${item}`}><div className={`level-pill level-${item}`}>{LEVEL_NAMES[item]}</div><strong>{count}</strong><span>{count === 1 ? 'question' : 'questions'}</span><Link className="button primary" aria-disabled={!count} to={count ? `/test?subject=${subjectId}&level=${item}` : '#'} onClick={(event) => { if (!count) event.preventDefault() }}><GraduationCap /> Start test</Link></article> })}</div>{questions.length > 0 && <div className="toolbar"><label className="search"><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search questions" /></label><select value={level} onChange={(event) => setLevel(Number(event.target.value) as MasteryLevel | 0)}><option value={0}>All levels</option>{[1, 2, 3, 4].map((item) => <option key={item} value={item}>{LEVEL_NAMES[item as MasteryLevel]}</option>)}</select></div>}{filtered.length ? <div className="question-list">{filtered.map((question) => <article key={question.id}><div className={`level-pill level-${question.level}`}>{LEVEL_NAMES[question.level]}</div><h3>{question.prompt}</h3><p>{question.acceptedAnswers.length} accepted answer{question.acceptedAnswers.length === 1 ? '' : 's'} · {question.totalAttempts} attempts</p><footer><button className="button ghost" onClick={() => setEditing(question)}><Pencil /> Edit</button><button className="icon-button danger-text" onClick={() => window.confirm('Delete this question? Its snapshots remain in test history.') && void db.questions.delete(question.id)}><Trash2 /></button></footer></article>)}</div> : <EmptyState icon={<CircleHelp />} title={questions.length ? 'No matching questions' : 'No questions yet'} text={questions.length ? 'Adjust your search or level filter.' : 'Add or import identification questions to begin your manual mastery ladder.'} />}{editing && <Modal title={editing === 'new' ? 'New identification question' : 'Edit identification question'} onClose={() => setEditing(null)}><QuestionForm subjectId={subjectId} question={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} /></Modal>}{importing && <Modal title="Import questions" onClose={() => setImporting(false)}><QuestionImportForm subjectId={subjectId} existingQuestions={questions} onClose={() => setImporting(false)} /></Modal>}</section>
 }
 
 function TestPage() {

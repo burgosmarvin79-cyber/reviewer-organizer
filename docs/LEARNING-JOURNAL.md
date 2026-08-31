@@ -65,3 +65,9 @@ The first mastery engine moved questions automatically based on correct-answer s
 Identification checking normalizes capitalization and repeated spaces, then compares the result against the question's accepted-answer list. This stays predictable and fully offline. It does not attempt fuzzy or AI grading, so spelling variants must be added explicitly.
 
 Changing stored data shapes requires a database migration. Existing multiple-choice questions are converted by taking their former correct choice as the first accepted identification answer. Backup restoration performs the same conversion for older backup files.
+
+## 2026-08-31 — AI output needs a data contract
+
+A data contract is an agreed structure that both ChatGPT and Reviewer Organizer understand. Here, ChatGPT produces versioned JSON containing a prompt, accepted answers, explanation, and mastery level. The app does not blindly trust that output: it validates every field, rejects malformed files, detects duplicates, and asks the student to review selected questions before saving.
+
+The source notes and PDF belong in ChatGPT; only the generated questionnaire belongs in the app's import screen. Keeping those steps separate avoids placing an AI API key in the browser while still making question entry much faster.

@@ -66,11 +66,11 @@ Skip when: The task is unrelated to the current execution context.
 - Last Failure: none
 - Failure Class: none
 - Attempted Fix: none
-- Next Concrete Action: Deploy the verified note-sync repair, then have Marvin test phone-to-laptop note create, edit, delete, and two-account denial
+- Next Concrete Action: Have Marvin test a real ChatGPT questionnaire import, then deploy the verified import and sync changes when requested
 
 ## Record
 
-- Verification Evidence: pending after checkpoint
+- Verification Evidence: Questionnaire importer lint, twelve-test suite, TypeScript production build, and PWA generation passed locally on 2026-08-31; live acceptance remains pending.
 - Delivery Status: not-requested
 - Delivery Evidence: pending
 - Docs Updated: pending
