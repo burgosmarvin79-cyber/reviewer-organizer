@@ -15,7 +15,7 @@ import type { MasteryLevel, Note, Question, Subject, TestAnswer, TestSession } f
 import { supabase } from './lib/supabase'
 import { enableUserSync, subscribeToUserChanges, syncUserData, unsubscribeFromUserChanges } from './sync'
 import type { Session } from '@supabase/supabase-js'
-import { deleteNote, deleteSubject, saveNote, saveSubject } from './remote'
+import { deleteNote, deleteSubject, saveNote, saveQuestion, saveQuestions, saveSubject } from './remote'
 import { createPdfOpenUrl, createPdfReviewer, deletePdfReviewer, deleteSubjectPdfs } from './pdf-storage'
 
 const COLORS = ['#a51d25', '#7a171d', '#c74b50', '#d49a28', '#59636f', '#8b5e3c']
@@ -296,16 +296,18 @@ function QuestionForm({ subjectId, question, onClose }: { subjectId: string; que
   const [explanation, setExplanation] = useState(question?.explanation ?? '')
   const [acceptedAnswers, setAcceptedAnswers] = useState<string[]>(question?.acceptedAnswers?.length ? question.acceptedAnswers : [''])
   const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
   function updateAnswer(index: number, value: string) { setAcceptedAnswers((current) => current.map((answer, answerIndex) => answerIndex === index ? value : answer)) }
   async function submit(event: FormEvent) {
-    event.preventDefault()
+    event.preventDefault(); setError(''); setSaving(true)
     const cleaned = [...new Set(acceptedAnswers.map((answer) => answer.trim()).filter(Boolean))]
-    if (!cleaned.length) return setError('Add at least one accepted answer.')
+    if (!cleaned.length) { setSaving(false); return setError('Add at least one accepted answer.') }
     const now = new Date().toISOString()
-    await db.questions.put({ id: question?.id ?? id(), subjectId, prompt: prompt.trim(), acceptedAnswers: cleaned, explanation: explanation.trim(), level: question?.level ?? 1, totalAttempts: question?.totalAttempts ?? 0, totalCorrect: question?.totalCorrect ?? 0, lastAnsweredAt: question?.lastAnsweredAt, createdAt: question?.createdAt ?? now, updatedAt: now })
-    onClose()
+    const savedQuestion = { id: question?.id ?? id(), subjectId, prompt: prompt.trim(), acceptedAnswers: cleaned, explanation: explanation.trim(), level: question?.level ?? 1, totalAttempts: question?.totalAttempts ?? 0, totalCorrect: question?.totalCorrect ?? 0, lastAnsweredAt: question?.lastAnsweredAt, createdAt: question?.createdAt ?? now, updatedAt: now }
+    try { await saveQuestion(savedQuestion); await db.questions.put(savedQuestion); onClose() }
+    catch (saveError) { setError(saveError instanceof Error ? saveError.message : 'Could not save this question to the cloud.'); setSaving(false) }
   }
-  return <form className="form" onSubmit={submit}><label>Identification question<textarea autoFocus required value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="e.g. Who wrote Noli Me Tangere?" /></label><fieldset><legend>Accepted answers</legend><div className="answer-editor">{acceptedAnswers.map((answer, index) => <div key={index}><input value={answer} onChange={(event) => updateAnswer(index, event.target.value)} placeholder={index === 0 ? 'Primary correct answer' : 'Alternative accepted answer'} /><button type="button" className="icon-button" disabled={acceptedAnswers.length === 1} onClick={() => setAcceptedAnswers((current) => current.filter((_, answerIndex) => answerIndex !== index))}><X /></button></div>)}</div>{acceptedAnswers.length < 8 && <button type="button" className="text-button" onClick={() => setAcceptedAnswers([...acceptedAnswers, ''])}><Plus /> Add accepted answer</button>}<small>Capitalization and extra spaces are ignored. Add spelling variants when needed.</small></fieldset><label>Explanation<textarea required value={explanation} onChange={(event) => setExplanation(event.target.value)} placeholder="Explain the answer so the student can review it after checking." /></label>{error && <p className="form-error">{error}</p>}<div className="form-actions"><button type="button" className="button ghost" onClick={onClose}>Cancel</button><button className="button primary">Save question</button></div></form>
+  return <form className="form" onSubmit={submit}><label>Identification question<textarea autoFocus required value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="e.g. Who wrote Noli Me Tangere?" /></label><fieldset><legend>Accepted answers</legend><div className="answer-editor">{acceptedAnswers.map((answer, index) => <div key={index}><input value={answer} onChange={(event) => updateAnswer(index, event.target.value)} placeholder={index === 0 ? 'Primary correct answer' : 'Alternative accepted answer'} /><button type="button" className="icon-button" disabled={acceptedAnswers.length === 1} onClick={() => setAcceptedAnswers((current) => current.filter((_, answerIndex) => answerIndex !== index))}><X /></button></div>)}</div>{acceptedAnswers.length < 8 && <button type="button" className="text-button" onClick={() => setAcceptedAnswers([...acceptedAnswers, ''])}><Plus /> Add accepted answer</button>}<small>Capitalization and extra spaces are ignored. Add spelling variants when needed.</small></fieldset><label>Explanation<textarea required value={explanation} onChange={(event) => setExplanation(event.target.value)} placeholder="Explain the answer so the student can review it after checking." /></label>{error && <p className="form-error">{error}</p>}<div className="form-actions"><button type="button" className="button ghost" onClick={onClose}>Cancel</button><button className="button primary" disabled={saving}>{saving ? 'Saving to cloud…' : 'Save question'}</button></div></form>
 }
 
 function QuestionImportForm({ subjectId, existingQuestions, onClose }: { subjectId: string; existingQuestions: Question[]; onClose: () => void }) {
@@ -354,9 +356,11 @@ function QuestionImportForm({ subjectId, existingQuestions, onClose }: { subject
     setError('')
     try {
       const now = new Date().toISOString()
-      await db.questions.bulkAdd(chosen.map((question) => ({
+      const savedQuestions = chosen.map((question) => ({
         id: id(), subjectId, ...question, totalAttempts: 0, totalCorrect: 0, createdAt: now, updatedAt: now,
-      })))
+      }))
+      await saveQuestions(savedQuestions)
+      await db.questions.bulkAdd(savedQuestions)
       onClose()
     } catch (reason) {
       setSaving(false)

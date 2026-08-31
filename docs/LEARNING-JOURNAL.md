@@ -71,3 +71,9 @@ Changing stored data shapes requires a database migration. Existing multiple-cho
 A data contract is an agreed structure that both ChatGPT and Reviewer Organizer understand. Here, ChatGPT produces versioned JSON containing a prompt, accepted answers, explanation, and mastery level. The app does not blindly trust that output: it validates every field, rejects malformed files, detects duplicates, and asks the student to review selected questions before saving.
 
 The source notes and PDF belong in ChatGPT; only the generated questionnaire belongs in the app's import screen. Keeping those steps separate avoids placing an AI API key in the browser while still making question entry much faster.
+
+## 2026-08-31 — A local save is not proof of cloud synchronization
+
+Question imports can contain many records, so starting unobserved background uploads creates a false-success risk: the dialog may close even if Supabase rejects the request or the phone loses its connection. The import workflow now waits for one authenticated batch upsert to succeed before writing the same questions into the local browser database. Manual question saves follow the same confirmation rule.
+
+This makes failure recoverable because the form stays open with its content and an error message. Realtime then tells another signed-in device to fetch the confirmed cloud records.

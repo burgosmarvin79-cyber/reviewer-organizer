@@ -1,5 +1,5 @@
 import { supabase } from './lib/supabase'
-import type { Note, Subject } from './types'
+import type { Note, Question, Subject } from './types'
 
 async function userId() {
   if (!supabase) throw new Error('Supabase is not configured.')
@@ -32,5 +32,27 @@ export async function saveNote(note: Note) {
 export async function deleteNote(noteId: string) {
   const id = await userId()
   const { error } = await supabase!.from('notes').delete().eq('id', noteId).eq('user_id', id)
+  if (error) throw error
+}
+
+function questionRow(question: Question, ownerId: string) {
+  return {
+    id: question.id, user_id: ownerId, subject_id: question.subjectId, prompt: question.prompt,
+    accepted_answers: question.acceptedAnswers, explanation: question.explanation, level: question.level,
+    total_attempts: question.totalAttempts, total_correct: question.totalCorrect,
+    last_answered_at: question.lastAnsweredAt ?? null, created_at: question.createdAt, updated_at: question.updatedAt,
+  }
+}
+
+export async function saveQuestion(question: Question) {
+  const ownerId = await userId()
+  const { error } = await supabase!.from('questions').upsert(questionRow(question, ownerId))
+  if (error) throw error
+}
+
+export async function saveQuestions(questions: Question[]) {
+  if (!questions.length) return
+  const ownerId = await userId()
+  const { error } = await supabase!.from('questions').upsert(questions.map((question) => questionRow(question, ownerId)))
   if (error) throw error
 }

@@ -92,3 +92,9 @@ Skip when: You only need the active task or current state.
 - Change: Required a versioned JSON contract, rejected malformed questions, filtered duplicates, and added a selectable preview before records are saved and synchronized.
 - Evidence: lint, twelve automated tests including four focused import-validation cases, TypeScript checking, and the production PWA build passed.
 - Remaining risk: a real questionnaire generated from Marvin's uploaded notes still needs manual content and cross-device acceptance testing.
+## 2026-08-31 — Confirm question cloud saves
+
+- Change: Manual question creation/editing and bulk questionnaire imports now await an authenticated Supabase upsert before updating the local question bank.
+- Change: Failed cloud writes remain visible in the form instead of closing and implying cross-device synchronization succeeded.
+- Evidence: lint, twelve automated tests, TypeScript checking, and the production PWA build passed.
+- Remaining risk: live phone-to-laptop import and realtime arrival still require acceptance testing with Marvin's Supabase account.
