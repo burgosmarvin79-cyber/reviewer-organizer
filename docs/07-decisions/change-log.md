@@ -4,6 +4,15 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-08-31 — Make note synchronization observable and resilient
+
+- Change: Note creation and editing now await direct Supabase persistence, display a saving state, preserve the local copy on failure, and surface the cloud error instead of silently closing.
+- Change: Note deletion now confirms remote deletion before removing the local record.
+- Change: Authenticated data resynchronizes when the browser regains internet, returns to the foreground, or receives focus, covering missed Realtime events.
+- Change: Added an idempotent migration enabling subjects, PDF metadata, notes, questions, and test history in the `supabase_realtime` publication without changing RLS policies.
+- Evidence: Marvin confirmed the production SQL completed successfully; ESLint, eight automated tests, TypeScript, and production PWA build pass locally.
+- Remaining risk: phone-to-laptop note create, edit, and delete plus two-account denial require live acceptance after deployment.
+
 ## 2026-08-31 — Store reviewer PDFs privately across devices
 
 - Change: Added private `reviewer-pdfs` uploads with per-user paths, `pdf_reviewers` metadata synchronization, short-lived signed open URLs, and coordinated cloud deletion.

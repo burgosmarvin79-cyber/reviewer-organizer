@@ -14,7 +14,7 @@ import type { MasteryLevel, Note, Question, Subject, TestAnswer, TestSession } f
 import { supabase } from './lib/supabase'
 import { enableUserSync, subscribeToUserChanges, syncUserData, unsubscribeFromUserChanges } from './sync'
 import type { Session } from '@supabase/supabase-js'
-import { deleteSubject, saveSubject } from './remote'
+import { deleteNote, deleteSubject, saveNote, saveSubject } from './remote'
 import { createPdfOpenUrl, createPdfReviewer, deletePdfReviewer, deleteSubjectPdfs } from './pdf-storage'
 
 const COLORS = ['#a51d25', '#7a171d', '#c74b50', '#d49a28', '#59636f', '#8b5e3c']
@@ -39,9 +39,19 @@ function AuthGate() {
   useEffect(() => {
     if (!userId) return
     enableUserSync(userId)
-    void syncUserData(userId)
+    const refresh = () => { void syncUserData(userId).catch(() => undefined) }
+    const refreshWhenVisible = () => { if (document.visibilityState === 'visible') refresh() }
+    refresh()
     subscribeToUserChanges(userId)
-    return unsubscribeFromUserChanges
+    window.addEventListener('online', refresh)
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', refreshWhenVisible)
+    return () => {
+      window.removeEventListener('online', refresh)
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
+      unsubscribeFromUserChanges()
+    }
   }, [userId])
 
   if (!supabase) return <div className="auth-screen"><section className="auth-card"><div className="brand auth-brand"><span className="brand-mark"><Check /></span><div><strong>Reviewer</strong><small>Organizer</small></div></div><p className="eyebrow">Secure study space</p><h1>Sign in to continue</h1><p>The app is ready for accounts, but the Supabase connection is not configured in this copy yet.</p><div className="notice">Add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> to this folder’s <code>.env.local</code>, then restart the dev server.</div></section></div>
@@ -254,11 +264,17 @@ function PdfPanel({ subjectId }: { subjectId: string }) {
 function NoteForm({ subjectId, note, onClose }: { subjectId: string; note?: Note; onClose: () => void }) {
   const [title, setTitle] = useState(note?.title ?? '')
   const [content, setContent] = useState(note?.content ?? '')
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
   async function submit(event: FormEvent) {
-    event.preventDefault(); const now = new Date().toISOString()
-    await db.notes.put({ id: note?.id ?? id(), subjectId, title: title.trim(), content: content.trim(), createdAt: note?.createdAt ?? now, updatedAt: now }); onClose()
+    event.preventDefault(); setError(''); setSaving(true); const now = new Date().toISOString()
+    const savedNote = { id: note?.id ?? id(), subjectId, title: title.trim(), content: content.trim(), createdAt: note?.createdAt ?? now, updatedAt: now }
+    await db.notes.put(savedNote)
+    try { await saveNote(savedNote); onClose() }
+    catch (saveError) { setError(`${saveError instanceof Error ? saveError.message : 'Cloud save failed.'} The note remains saved on this device.`) }
+    finally { setSaving(false) }
   }
-  return <form className="form" onSubmit={submit}><label>Title<input autoFocus required maxLength={120} value={title} onChange={(event) => setTitle(event.target.value)} /></label><label>Notes<textarea className="large-textarea" required value={content} onChange={(event) => setContent(event.target.value)} placeholder="Write your own explanation, summary, or reminder…" /></label><div className="form-actions"><button type="button" className="button ghost" onClick={onClose}>Cancel</button><button className="button primary">Save note</button></div></form>
+  return <form className="form" onSubmit={submit}><label>Title<input autoFocus required maxLength={120} value={title} onChange={(event) => setTitle(event.target.value)} /></label><label>Notes<textarea className="large-textarea" required value={content} onChange={(event) => setContent(event.target.value)} placeholder="Write your own explanation, summary, or reminder…" /></label>{error && <p className="form-error">{error}</p>}<div className="form-actions"><button type="button" className="button ghost" onClick={onClose}>Cancel</button><button className="button primary" disabled={saving}>{saving ? 'Saving…' : 'Save note'}</button></div></form>
 }
 
 function NotesPanel({ subjectId }: { subjectId: string }) {
@@ -266,7 +282,12 @@ function NotesPanel({ subjectId }: { subjectId: string }) {
   const [editing, setEditing] = useState<Note | 'new' | null>(null)
   const notes = useLiveQuery(() => db.notes.where('subjectId').equals(subjectId).reverse().sortBy('updatedAt'), [subjectId]) ?? []
   const filtered = notes.filter((note) => `${note.title} ${note.content}`.toLowerCase().includes(search.toLowerCase()))
-  return <section className="panel"><div className="section-heading"><div><p className="eyebrow">Your own words</p><h2>Notes</h2></div><button className="button primary" onClick={() => setEditing('new')}><Plus /> New note</button></div>{notes.length > 0 && <label className="search"><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search notes" /></label>}{filtered.length ? <div className="note-grid">{filtered.map((note) => <article key={note.id}><div><h3>{note.title}</h3><small>Edited {dateLabel(note.updatedAt)}</small></div><p>{note.content}</p><footer><button className="button ghost" onClick={() => setEditing(note)}><Pencil /> Edit</button><button className="icon-button danger-text" onClick={() => window.confirm(`Delete “${note.title}”?`) && void db.notes.delete(note.id)}><Trash2 /></button></footer></article>)}</div> : <EmptyState icon={<NotebookPen />} title={notes.length ? 'No matching notes' : 'No notes yet'} text={notes.length ? 'Try another search.' : 'Write summaries in your own words to strengthen memory.'} />}{editing && <Modal title={editing === 'new' ? 'New note' : 'Edit note'} onClose={() => setEditing(null)}><NoteForm subjectId={subjectId} note={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} /></Modal>}</section>
+  async function removeNote(note: Note) {
+    if (!window.confirm(`Delete “${note.title}” from all your signed-in devices?`)) return
+    try { await deleteNote(note.id); await db.notes.delete(note.id) }
+    catch (error) { window.alert(error instanceof Error ? error.message : 'Could not delete this note.') }
+  }
+  return <section className="panel"><div className="section-heading"><div><p className="eyebrow">Your own words</p><h2>Notes</h2></div><button className="button primary" onClick={() => setEditing('new')}><Plus /> New note</button></div>{notes.length > 0 && <label className="search"><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search notes" /></label>}{filtered.length ? <div className="note-grid">{filtered.map((note) => <article key={note.id}><div><h3>{note.title}</h3><small>Edited {dateLabel(note.updatedAt)}</small></div><p>{note.content}</p><footer><button className="button ghost" onClick={() => setEditing(note)}><Pencil /> Edit</button><button className="icon-button danger-text" onClick={() => void removeNote(note)}><Trash2 /></button></footer></article>)}</div> : <EmptyState icon={<NotebookPen />} title={notes.length ? 'No matching notes' : 'No notes yet'} text={notes.length ? 'Try another search.' : 'Write summaries in your own words to strengthen memory.'} />}{editing && <Modal title={editing === 'new' ? 'New note' : 'Edit note'} onClose={() => setEditing(null)}><NoteForm subjectId={subjectId} note={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} /></Modal>}</section>
 }
 
 function QuestionForm({ subjectId, question, onClose }: { subjectId: string; question?: Question; onClose: () => void }) {

@@ -14,6 +14,8 @@ Realtime subscriptions need a lifecycle. A React screen must remove its channel 
 
 A file list should not contain the full files it describes. Keeping PDF metadata and binary Blobs in separate IndexedDB tables lets the interface count and display reviewers without loading megabytes into memory. Supabase Storage becomes the private source of truth, while a short-lived signed URL allows the authenticated student to open one selected PDF without making the bucket public.
 
+Saving locally and starting a cloud request are not the same as confirming synchronization. A reliable form waits for the remote response, shows progress, and explains failure while preserving recoverable local work. Realtime also requires both client subscription code and database publication membership; Row Level Security still decides which published rows each authenticated user may receive.
+
 ## 2026-08-31 — How the first version fits together
 
 ### Source code and student data are different

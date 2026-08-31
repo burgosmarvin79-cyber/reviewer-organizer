@@ -1,5 +1,5 @@
 import { supabase } from './lib/supabase'
-import type { Subject } from './types'
+import type { Note, Subject } from './types'
 
 async function userId() {
   if (!supabase) throw new Error('Supabase is not configured.')
@@ -17,5 +17,20 @@ export async function saveSubject(subject: Subject) {
 export async function deleteSubject(subjectId: string) {
   const id = await userId()
   const { error } = await supabase!.from('subjects').delete().eq('id', subjectId).eq('user_id', id)
+  if (error) throw error
+}
+
+export async function saveNote(note: Note) {
+  const id = await userId()
+  const { error } = await supabase!.from('notes').upsert({
+    id: note.id, user_id: id, subject_id: note.subjectId, title: note.title,
+    content: note.content, created_at: note.createdAt, updated_at: note.updatedAt,
+  })
+  if (error) throw error
+}
+
+export async function deleteNote(noteId: string) {
+  const id = await userId()
+  const { error } = await supabase!.from('notes').delete().eq('id', noteId).eq('user_id', id)
   if (error) throw error
 }
