@@ -10,7 +10,7 @@ Version 1 foundation deployed for user acceptance testing.
 
 ## Current Top Objective
 
-Exercise the complete workflow on Marvin's phone and record usability issues for the next iteration.
+Complete and validate the private Supabase workflow while refining the application through a simple BatStateU-inspired interface.
 
 ## Stable Facts
 
@@ -26,17 +26,19 @@ Exercise the complete workflow on Marvin's phone and record usability issues for
 - IndexedDB database for subjects, PDFs, notes, questions, settings, and test-history snapshots.
 - Subject, PDF, note, question-bank, practice-test, dashboard, history, and backup interfaces.
 - Automated mastery-rule tests and production build configuration.
+- Email authentication, per-user Supabase study-data synchronization, deletion synchronization, and realtime subscriptions.
+- BatStateU-inspired red, white, and warm-neutral application shell using the university seal already provided for the project.
 
 ## What Works
 
-- Lint, automated tests, production build, and dependency audit pass as of 2026-08-31.
+- Lint, seven automated tests, and production build pass after the 2026-08-31 interface update.
 - Production output serves the application shell, service worker, and install manifest successfully.
 - GitHub Pages deploys automatically from `main` and the live HTTPS site returns the app shell, PWA manifest, and service worker successfully.
 
 ## Known Issues
 
-- No cloud synchronization or user account; data belongs to one browser origin.
-- Manual phone interaction and visual acceptance remain required before calling version 1 user-accepted.
+- Complete RLS isolation, private PDF storage, existing local-data ownership migration, offline conflict behavior, and recovery paths still require verification.
+- Manual desktop and phone visual acceptance of the BatStateU-inspired interface remains required.
 
 ## Current Blockers
 
@@ -44,7 +46,7 @@ Exercise the complete workflow on Marvin's phone and record usability issues for
 
 ## Next Recommended Actions
 
-- Open `https://burgosmarvin79-cyber.github.io/reviewer-organizer/` on the target phone, install it, and test subject, PDF, note, question, test, history, and backup workflows.
+- Preview the current interface locally and confirm the visual direction, then complete two-account privacy, private PDF, offline synchronization, and migration acceptance tests before deployment.
 
 ## Last Updated
 

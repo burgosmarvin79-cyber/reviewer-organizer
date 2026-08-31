@@ -9,11 +9,11 @@ delivery_status: not-requested
 owner: codex-root
 branch: main
 base_sha: 5b51133c1658acec4e09e2994ea49ebd7d00c489
-revision: 2
+revision: 4
 verification_head: none
 verification_source_hash: none
 verified_at: none
-updated_at: 2026-08-30T17:22:29Z
+updated_at: 2026-08-31T03:37:05Z
 ---
 
 # Active Task
@@ -24,7 +24,7 @@ Skip when: The task is unrelated to the current execution context.
 
 ## Status
 
-- Title: Add private Supabase backend and offline sync
+- Title: Complete private Supabase workflow and BatStateU-inspired interface
 - Runtime Profile: Sprint
 - Risk Level: normal
 - Loop Budget: 3
@@ -33,9 +33,9 @@ Skip when: The task is unrelated to the current execution context.
 
 ## Task
 
-- Objective: Add private Supabase backend and offline sync
-- Scope: Backend architecture, migrations, RLS, private storage, private login, IndexedDB migration, synchronization, tests, documentation, and deployment
-- Allowed Files or Areas: Backend architecture, migrations, RLS, private storage, private login, IndexedDB migration, synchronization, tests, documentation, and deployment
+- Objective: Complete the private Supabase workflow and present it through a simple, organized BatStateU-inspired interface
+- Scope: Backend architecture, migrations, RLS, private storage, private login, IndexedDB migration, synchronization, interface layout and visual system, tests, documentation, and deployment
+- Allowed Files or Areas: Supabase and local-data code, authentication and application interface, styling and branding assets, tests, project documentation, and deployment configuration
 - Forbidden Actions: unrelated edits, destructive operations, publication, and production writes without explicit authorization.
 - Source Artifacts: project instructions, current source, and task request.
 
@@ -66,7 +66,7 @@ Skip when: The task is unrelated to the current execution context.
 - Last Failure: none
 - Failure Class: none
 - Attempted Fix: none
-- Next Concrete Action: Confirm local Supabase public configuration, then create multi-user schema, RLS policies, private PDF storage policies, and authentication flows
+- Next Concrete Action: Have Marvin visually accept the Classroom-inspired BatStateU subject cards on desktop and phone, then complete RLS, private PDF, migration, and offline-sync verification
 
 ## Record
 

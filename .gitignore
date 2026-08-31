@@ -7,5 +7,6 @@ coverage/
 .env.*
 !.env.example
 .DS_Store
+*.swp
 playwright-report/
 test-results/

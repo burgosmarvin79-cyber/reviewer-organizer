@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
-  ArrowLeft, BarChart3, BookOpen, Check, ChevronRight, CircleHelp, Clock3, Download,
+  ArrowLeft, BarChart3, BookOpen, Check, ChevronRight, CircleHelp, Clock3, Cloud,
+  Download,
   FileText, GraduationCap, History, Home, Menu, NotebookPen, Pencil, Plus, Search,
   Settings, ShieldCheck, Trash2, Upload, X,
 } from 'lucide-react'
@@ -15,7 +16,7 @@ import { enableUserSync, subscribeToUserChanges, syncUserData } from './sync'
 import type { Session } from '@supabase/supabase-js'
 import { deleteSubject, saveSubject } from './remote'
 
-const COLORS = ['#246bfd', '#16a085', '#7c5ce7', '#e67e22', '#d64f6c', '#1f8a99']
+const COLORS = ['#a51d25', '#7a171d', '#c74b50', '#d49a28', '#59636f', '#8b5e3c']
 
 function AuthGate() {
   const [session, setSession] = useState<Session | null>(null)
@@ -86,9 +87,12 @@ function Layout({ userEmail }: { userEmail?: string } = {}) {
     <div className="app-shell">
       {menuOpen && <button className="mobile-overlay" onClick={() => setMenuOpen(false)} aria-label="Close navigation menu" />}
       <aside className={menuOpen ? 'sidebar open' : 'sidebar'}>
-        <div className="brand"><span className="brand-mark"><Check /></span><div><strong>Reviewer</strong><small>Organizer</small></div></div>
+        <div className="brand app-brand"><span className="brand-mark"><img src="/reviewer-organizer/batstateu-logo.png" alt="Batangas State University seal" /></span><div><strong>Reviewer Organizer</strong><small>Study workspace</small></div></div>
         <nav>{links.map((link) => <NavLink key={link.to} to={link.to} end={link.to === '/'} onClick={() => setMenuOpen(false)}>{link.icon}<span>{link.label}</span></NavLink>)}</nav>
-        <div className="offline-badge"><ShieldCheck /><span><strong>Stored locally</strong><small>Your study data stays here.</small></span></div>
+        <div className="sidebar-footer">
+          <div className="sync-badge"><Cloud /><span><strong>Private cloud sync</strong><small>Available offline on this device</small></span></div>
+          {userEmail && <div className="account-card"><span className="account-avatar">{userEmail.charAt(0).toUpperCase()}</span><div><strong>{userEmail}</strong><small>Student account</small></div><button className="icon-button" onClick={() => void supabase?.auth.signOut()} aria-label="Sign out" title="Sign out"><ArrowLeft /></button></div>}
+        </div>
       </aside>
       <main className="main-content">
         <button className="menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-expanded={menuOpen}><Menu /></button>
@@ -100,7 +104,6 @@ function Layout({ userEmail }: { userEmail?: string } = {}) {
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
-        {userEmail && <button className="text-button account-button" onClick={() => void supabase?.auth.signOut()}>Sign out · {userEmail}</button>}
       </main>
     </div>
   )
@@ -149,7 +152,18 @@ function SubjectCard({ subject }: { subject: Subject }) {
     notes: await db.notes.where('subjectId').equals(subject.id).count(),
     questions: await db.questions.where('subjectId').equals(subject.id).count(),
   }), [subject.id])
-  return <Link className="subject-card" to={`/subjects/${subject.id}`}><span className="subject-color" style={{ background: subject.color }}><BookOpen /></span><div><h3>{subject.name}</h3><p>{subject.description || 'No description yet.'}</p><small>{counts?.pdfs ?? 0} PDFs · {counts?.notes ?? 0} notes · {counts?.questions ?? 0} questions</small></div><ChevronRight /></Link>
+  return <Link className="subject-card" to={`/subjects/${subject.id}`} style={{ '--subject-color': subject.color } as React.CSSProperties}>
+    <div className="subject-card-banner"><span className="subject-card-icon"><BookOpen /></span><div><p>Subject workspace</p><h3>{subject.name}</h3></div></div>
+    <div className="subject-card-content">
+      <p>{subject.description || 'PDFs, notes, questions, and practice materials.'}</p>
+      <div className="resource-summary" aria-label="Subject content summary">
+        <span><FileText /><strong>{counts?.pdfs ?? 0}</strong><small>PDFs</small></span>
+        <span><NotebookPen /><strong>{counts?.notes ?? 0}</strong><small>Notes</small></span>
+        <span><CircleHelp /><strong>{counts?.questions ?? 0}</strong><small>Questions</small></span>
+      </div>
+      <footer><span>Open subject</span><ChevronRight /></footer>
+    </div>
+  </Link>
 }
 
 function SubjectForm({ subject, onClose }: { subject?: Subject; onClose: () => void }) {

@@ -2,6 +2,14 @@
 
 This journal records practical concepts learned while building the project. It intentionally excludes credentials, private student data, and noisy command logs.
 
+## 2026-08-31 — A theme is a small visual system
+
+A coherent university-inspired interface does not require decorating every element. A limited palette, consistent corner shapes, clear spacing, and one obvious active-navigation style create stronger identity with less visual noise.
+
+Interface labels must also follow real system behavior. Once study data can synchronize through Supabase, a label saying that everything only stays locally becomes misleading. Good interface design includes accurate status language, not just colors and logos.
+
+A familiar navigation model can be reused without copying another product's appearance. The useful Classroom pattern is the relationship between a subject card and its focused workspace. Reviewer Organizer keeps its own BatStateU-inspired identity while using that understandable card-to-content flow.
+
 ## 2026-08-31 — How the first version fits together
 
 ### Source code and student data are different

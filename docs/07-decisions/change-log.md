@@ -4,6 +4,15 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-08-31 — Adopt a simple BatStateU-inspired application shell
+
+- Change: Replaced the navy and blue application shell with a restrained deep-red, white, warm-gray, and gold visual system inspired by Batangas State University.
+- Change: Reused the project-provided university seal in the sidebar, simplified card shapes, strengthened active navigation, and grouped synchronization and account controls in the sidebar footer.
+- Change: Adopted a Classroom-inspired subject flow: each subject is a fully clickable rectangular card with a colored banner and live PDF, note, and question counts; opening it reveals the existing content tabs in a clearer workspace banner.
+- Change: Corrected the former local-only status label to describe private cloud synchronization with offline device availability.
+- Evidence: ESLint, seven automated tests, TypeScript production build, PWA generation, and production-logo presence checks passed.
+- Remaining risk: Marvin must visually accept the desktop and phone layouts before this design is considered final; the production build also reports a non-blocking JavaScript chunk-size warning, and the change has not been deployed by this task.
+
 ## 2026-08-31 — Adopt multi-user Supabase authentication
 
 - Change: Reversed the earlier account-free boundary and approved public email/password sign-up, sign-in, sign-out, email verification, and password recovery.
