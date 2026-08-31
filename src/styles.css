@@ -124,6 +124,22 @@ h2 { font-size: 1.25rem; margin-bottom: .4rem; }
 }
 
 .study-mode-hint { color: var(--muted); font-size: .8rem; }.study-mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }.study-mode-card { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 13px; padding: 17px; color: inherit; border: 1px solid var(--border); border-radius: 13px; background: #fffdfc; transition: .2s ease; }.study-mode-card:hover { border-color: var(--red); background: #fff8f7; transform: translateY(-1px); }.study-mode-card > span { width: 42px; height: 42px; display: grid; place-items: center; color: var(--red); background: var(--red-soft); border-radius: 11px; }.study-mode-card > span svg, .study-mode-card > svg { width: 20px; }.study-mode-card h3 { margin: 0 0 4px; font-size: .98rem; }.study-mode-card p { margin: 0; color: var(--muted); font-size: .76rem; line-height: 1.4; }.study-mode-card > svg { color: var(--muted); }.review-card { background: white; border: 1px solid var(--border); border-radius: 20px; padding: clamp(24px, 5vw, 44px); }.review-card h2 { font-size: clamp(1.4rem, 3vw, 2rem); line-height: 1.35; margin: 14px 0 28px; }.review-answer { margin: 20px 0; padding: 18px; color: #126a4d; background: #e9f9f2; border-radius: 12px; }.review-answer strong { font-size: 1.25rem; }.review-answer p { margin: 7px 0 0; color: #27674f; }
+
+/* Keep study-mode cards readable on narrow phone screens. These rules come
+   after the shared card styles so the mobile layout cannot be overridden by
+   the desktop two-column declaration above. */
+@media (max-width: 850px) {
+  .study-mode-grid { grid-template-columns: 1fr; }
+  .study-mode-card { min-height: 92px; padding: 16px; }
+}
+@media (max-width: 560px) {
+  .panel { padding: 18px 14px; }
+  .tabs { margin-top: 16px; margin-bottom: 12px; }
+  .tabs button { flex: 0 0 auto; min-height: 44px; }
+  .study-mode-card { grid-template-columns: auto minmax(0, 1fr) auto; gap: 11px; }
+  .study-mode-card h3 { font-size: 1rem; }
+  .study-mode-card p { font-size: .8rem; }
+}
 @media (max-height: 560px) and (max-width: 850px) {
   .sidebar { padding-block: 18px; overflow-y: auto; }
   .brand { padding-bottom: 16px; }
