@@ -86,6 +86,10 @@ When a dashboard shows totals from many unrelated subjects, the numbers are less
 
 Cloud synchronization can be offline, in progress, complete, or failed. The sidebar now shows those states directly and the app retries when the device returns online, regains focus, or becomes visible again. This helps a student distinguish “saved on this device” from “confirmed in the private cloud.”
 
+## 2026-08-31 — Review practice and mastery tests serve different purposes
+
+Flashcards and quick review encourage repeated recall without changing mastery placement. Missed-question review focuses attention on weak items, while mixed practice combines levels for variety. These modes are intentionally separate from the formal mastery test, which records test history and supports explicit level movement.
+
 ## 2026-08-31 — Bulk actions need an explicit scope
 
 Selection mode makes a destructive action understandable: the student first chooses specific visible questions, sees the selected count, and confirms the batch. The app deletes only those IDs for the signed-in owner, while historical test snapshots remain because they represent past answers rather than live question-bank records.

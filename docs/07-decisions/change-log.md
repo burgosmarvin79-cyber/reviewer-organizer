@@ -120,3 +120,9 @@ Skip when: You only need the active task or current state.
 - Change: Added a live sidebar sync status that distinguishes offline, syncing, synced, and error states; existing reconnect, focus, and visibility refresh triggers continue retrying cloud synchronization.
 - Evidence: lint, twelve automated tests, TypeScript checking, and production build passed.
 - Remaining risk: a durable per-record offline mutation queue remains a future enhancement; current retry behavior depends on local records and the existing synchronization reconciliation.
+## 2026-08-31 — Multiple study modes per subject
+
+- Change: Added a Study modes tab with flashcards, quick review, missed-question review, and mixed practice across all levels.
+- Change: Review modes are separate from mastery tests; they help recall and practice without changing a question's mastery level automatically.
+- Evidence: lint, twelve automated tests, TypeScript checking, and production build passed.
+- Remaining risk: mixed practice currently provides immediate feedback but does not create a formal test-history record.

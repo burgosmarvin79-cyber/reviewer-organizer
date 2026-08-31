@@ -129,6 +129,7 @@ function Layout({ userEmail }: { userEmail?: string } = {}) {
           <Route path="/subjects" element={<SubjectsPage />} />
           <Route path="/subjects/:subjectId" element={<SubjectPage />} />
           <Route path="/test" element={<TestPage />} />
+          <Route path="/review" element={<ReviewPage />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
@@ -193,13 +194,13 @@ function SubjectsPage() {
   return <div className="page"><header className="page-header"><div><p className="eyebrow">Study library</p><h1>Subjects</h1><p>Every subject contains its own PDF reviewers, notes, and question bank.</p></div><button className="button primary" onClick={() => setEditing('new')}><Plus /> Add subject</button></header><div className="toolbar"><label className="search"><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search subjects" /></label></div>{filtered.length ? <div className="card-grid">{filtered.map((subject) => <SubjectCard key={subject.id} subject={subject} />)}</div> : <EmptyState icon={<BookOpen />} title={subjects.length ? 'No matching subjects' : 'No subjects yet'} text={subjects.length ? 'Try another search.' : 'Create a subject to organize your first study materials.'} action={!subjects.length ? <button className="button primary" onClick={() => setEditing('new')}><Plus /> Add subject</button> : undefined} />}{editing && <Modal title={editing === 'new' ? 'New subject' : 'Edit subject'} onClose={() => setEditing(null)}><SubjectForm subject={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} /></Modal>}</div>
 }
 
-type SubjectTab = 'pdfs' | 'notes' | 'questions'
+type SubjectTab = 'pdfs' | 'notes' | 'questions' | 'review'
 
 function SubjectPage() {
   const { subjectId = '' } = useParams()
   const [subjectParams] = useSearchParams()
   const navigate = useNavigate()
-  const [tab, setTab] = useState<SubjectTab>(subjectParams.get('tab') === 'questions' ? 'questions' : 'pdfs')
+  const [tab, setTab] = useState<SubjectTab>(['questions', 'review', 'notes'].includes(subjectParams.get('tab') ?? '') ? subjectParams.get('tab') as SubjectTab : 'pdfs')
   const [editing, setEditing] = useState(false)
   const subject = useLiveQuery(() => db.subjects.get(subjectId), [subjectId])
   if (subject === undefined) return <p>Loading subject…</p>
@@ -213,7 +214,7 @@ function SubjectPage() {
     await deleteSubject(currentSubject.id)
     navigate('/subjects')
   }
-  return <div className="page"><Link className="back-link" to="/subjects"><ArrowLeft /> All subjects</Link><header className="subject-hero" style={{ '--subject-color': subject.color } as React.CSSProperties}><span><BookOpen /></span><div><p className="eyebrow">Subject workspace</p><h1>{subject.name}</h1><p>{subject.description || 'Add a description to explain this subject.'}</p></div><div className="hero-actions"><button className="button ghost" onClick={() => setEditing(true)}><Pencil /> Edit</button><button className="button danger" onClick={remove}><Trash2 /> Delete</button></div></header><SubjectSummary subjectId={subject.id} /><div className="tabs" role="tablist"><button className={tab === 'pdfs' ? 'active' : ''} onClick={() => setTab('pdfs')}><FileText /> PDF reviewers</button><button className={tab === 'notes' ? 'active' : ''} onClick={() => setTab('notes')}><NotebookPen /> Notes</button><button className={tab === 'questions' ? 'active' : ''} onClick={() => setTab('questions')}><CircleHelp /> Question bank</button></div>{tab === 'pdfs' && <PdfPanel subjectId={subject.id} />}{tab === 'notes' && <NotesPanel subjectId={subject.id} />}{tab === 'questions' && <QuestionsPanel subjectId={subject.id} />}{editing && <Modal title="Edit subject" onClose={() => setEditing(false)}><SubjectForm subject={subject} onClose={() => setEditing(false)} /></Modal>}</div>
+  return <div className="page"><Link className="back-link" to="/subjects"><ArrowLeft /> All subjects</Link><header className="subject-hero" style={{ '--subject-color': subject.color } as React.CSSProperties}><span><BookOpen /></span><div><p className="eyebrow">Subject workspace</p><h1>{subject.name}</h1><p>{subject.description || 'Add a description to explain this subject.'}</p></div><div className="hero-actions"><button className="button ghost" onClick={() => setEditing(true)}><Pencil /> Edit</button><button className="button danger" onClick={remove}><Trash2 /> Delete</button></div></header><SubjectSummary subjectId={subject.id} /><div className="tabs" role="tablist"><button className={tab === 'pdfs' ? 'active' : ''} onClick={() => setTab('pdfs')}><FileText /> PDF reviewers</button><button className={tab === 'notes' ? 'active' : ''} onClick={() => setTab('notes')}><NotebookPen /> Notes</button><button className={tab === 'questions' ? 'active' : ''} onClick={() => setTab('questions')}><CircleHelp /> Question bank</button><button className={tab === 'review' ? 'active' : ''} onClick={() => setTab('review')}><GraduationCap /> Study modes</button></div>{tab === 'pdfs' && <PdfPanel subjectId={subject.id} />}{tab === 'notes' && <NotesPanel subjectId={subject.id} />}{tab === 'questions' && <QuestionsPanel subjectId={subject.id} />}{tab === 'review' && <StudyModesPanel subjectId={subject.id} />}{editing && <Modal title="Edit subject" onClose={() => setEditing(false)}><SubjectForm subject={subject} onClose={() => setEditing(false)} /></Modal>}</div>
 }
 
 function SubjectSummary({ subjectId }: { subjectId: string }) {
@@ -229,6 +230,42 @@ function SubjectSummary({ subjectId }: { subjectId: string }) {
   const nextLevel = ([1, 2, 3, 4] as MasteryLevel[]).find((level) => summary.questions.some((question) => question.level === level))
   const progress = summary.questions.length ? Math.round((summary.questions.filter((question) => question.level === 4).length / summary.questions.length) * 100) : 0
   return <section className="subject-summary" aria-label="Subject summary"><article><span className="stat-icon gold"><FileText /></span><div><strong>{summary.pdfs}</strong><small>PDF reviewers</small></div></article><article><span className="stat-icon violet"><CircleHelp /></span><div><strong>{summary.questions.length}</strong><small>Questions</small></div></article><article><span className="stat-icon green"><BarChart3 /></span><div><strong>{average}%</strong><small>Average score</small></div></article><article><span className="stat-icon blue"><Clock3 /></span><div><strong>{summary.sessions.length}</strong><small>Tests completed</small></div></article><div className="subject-progress"><div><strong>Mastery progress</strong><span>{progress}% at Final Test Reviewer</span></div><div className="bar"><i style={{ width: `${progress}%` }} /></div><small>{summary.sessions[0] ? `Last studied ${dateLabel(summary.sessions[0].completedAt)}` : 'No test completed yet'}</small>{nextLevel && <Link className="button ghost" to={`/test?subject=${subjectId}&level=${nextLevel}`}>Continue Test {nextLevel}<ChevronRight /></Link>}</div></section>
+}
+
+function StudyModesPanel({ subjectId }: { subjectId: string }) {
+  const questions = useLiveQuery(() => db.questions.where('subjectId').equals(subjectId).toArray(), [subjectId]) ?? []
+  const missed = questions.filter((question) => question.totalAttempts > question.totalCorrect).length
+  const modes = [
+    { mode: 'flashcards', title: 'Flashcards', text: 'Reveal the answer when you are ready.', icon: <BookOpen /> },
+    { mode: 'quick', title: 'Quick review', text: 'See prompts, answers, and explanations at your own pace.', icon: <RefreshCw /> },
+    { mode: 'missed', title: 'Missed questions', text: `${missed} question${missed === 1 ? '' : 's'} to revisit from past tests.`, icon: <CircleHelp /> },
+    { mode: 'mixed', title: 'Mixed test', text: 'Practice questions from every mastery level in one session.', icon: <GraduationCap /> },
+  ] as const
+  return <section className="panel"><div className="section-heading"><div><p className="eyebrow">Choose your study style</p><h2>Study modes</h2></div><span className="study-mode-hint">{questions.length} question{questions.length === 1 ? '' : 's'} available</span></div><div className="study-mode-grid">{modes.map((item) => <Link key={item.mode} className="study-mode-card" to={`/review?subject=${subjectId}&mode=${item.mode}`}><span>{item.icon}</span><div><h3>{item.title}</h3><p>{item.text}</p></div><ChevronRight /></Link>)}</div></section>
+}
+
+type ReviewMode = 'flashcards' | 'quick' | 'missed' | 'mixed'
+
+function ReviewPage() {
+  const [params] = useSearchParams()
+  const subjectId = params.get('subject') ?? ''
+  const requestedMode = params.get('mode') as ReviewMode | null
+  const mode: ReviewMode = requestedMode && ['flashcards', 'quick', 'missed', 'mixed'].includes(requestedMode) ? requestedMode : 'flashcards'
+  const subject = useLiveQuery(() => subjectId ? db.subjects.get(subjectId) : undefined, [subjectId])
+  const questions = useLiveQuery(() => subjectId ? db.questions.where('subjectId').equals(subjectId).toArray() : Promise.resolve([] as Question[]), [subjectId]) ?? []
+  const pool = questions.filter((question) => mode !== 'missed' || question.totalAttempts > question.totalCorrect)
+  const [index, setIndex] = useState(0)
+  const [revealed, setRevealed] = useState(false)
+  const [typedAnswer, setTypedAnswer] = useState('')
+  const [checked, setChecked] = useState(false)
+  const [correctCount, setCorrectCount] = useState(0)
+  const current = pool[index]
+  function next() { setIndex((value) => value + 1); setRevealed(false); setTypedAnswer(''); setChecked(false) }
+  function checkMixed(event: FormEvent) { event.preventDefault(); if (!current || checked || !typedAnswer.trim()) return; setChecked(true); if (isAcceptedAnswer(typedAnswer, current.acceptedAnswers)) setCorrectCount((value) => value + 1) }
+  if (!subject) return <div className="page"><p>Loading study mode…</p></div>
+  if (!pool.length) return <div className="page narrow"><Link className="back-link" to={`/subjects/${subjectId}?tab=review`}><ArrowLeft /> Study modes</Link><EmptyState icon={<CircleHelp />} title={mode === 'missed' ? 'No missed questions' : 'No questions yet'} text={mode === 'missed' ? 'Great work—there are no questions marked incorrect from past tests.' : 'Add questions to this subject before starting a review mode.'} /></div>
+  if (!current) return <div className="page narrow"><Link className="back-link" to={`/subjects/${subjectId}?tab=review`}><ArrowLeft /> Study modes</Link><section className="result-card"><span className="result-icon"><GraduationCap /></span><p className="eyebrow">Review complete</p><h1>{mode === 'mixed' ? `${correctCount}/${pool.length}` : pool.length}</h1><p>{mode === 'mixed' ? 'correct answers in this mixed practice session' : 'questions reviewed'}</p><Link className="button primary" to={`/subjects/${subjectId}?tab=review`}>Back to study modes</Link></section></div>
+  return <div className="page narrow"><Link className="back-link" to={`/subjects/${subjectId}?tab=review`}><ArrowLeft /> {subject.name} study modes</Link><header className="page-header"><div><p className="eyebrow">{mode === 'flashcards' ? 'Flashcards' : mode === 'quick' ? 'Quick review' : mode === 'missed' ? 'Missed questions' : 'Mixed test'}</p><h1>Question {index + 1} of {pool.length}</h1></div></header><section className="review-card"><p className="eyebrow">{mode === 'mixed' ? 'Type your answer' : 'Think first, then reveal'}</p><h2>{current.prompt}</h2>{mode === 'mixed' ? <form className="identification-form" onSubmit={checkMixed}><input autoFocus disabled={checked} value={typedAnswer} onChange={(event) => setTypedAnswer(event.target.value)} placeholder="Enter your answer" /><button className="button primary" disabled={checked || !typedAnswer.trim()}>Check answer</button></form> : <>{(revealed || mode === 'quick') && <div className="review-answer"><strong>{current.acceptedAnswers[0]}</strong><p>{current.explanation}</p></div>}{mode === 'flashcards' && !revealed && <button className="button primary full" onClick={() => setRevealed(true)}>Reveal answer</button>}</>}{checked && <div className={isAcceptedAnswer(typedAnswer, current.acceptedAnswers) ? 'feedback correct' : 'feedback wrong'}><strong>{isAcceptedAnswer(typedAnswer, current.acceptedAnswers) ? 'Correct!' : 'Review this answer'}</strong><p>Answer: <b>{current.acceptedAnswers[0]}</b></p><p>{current.explanation}</p></div>}{((mode !== 'mixed' && (revealed || mode === 'quick')) || checked) && <button className="button primary full" onClick={next}>{index === pool.length - 1 ? 'Finish review' : 'Next question'} <ChevronRight /></button>}</section></div>
 }
 
 function PdfPanel({ subjectId }: { subjectId: string }) {
