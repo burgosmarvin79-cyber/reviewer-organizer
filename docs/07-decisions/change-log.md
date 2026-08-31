@@ -103,3 +103,8 @@ Skip when: You only need the active task or current state.
 - Change: Removed global PDF, question, average-score, mastery-ladder, and latest-activity panels from the main dashboard.
 - Change: Kept the dashboard focused on clickable subjects and added per-subject summary cards for PDFs, questions, average score, and completed tests.
 - Evidence: lint, twelve automated tests, TypeScript checking, and production build passed after the change.
+## 2026-08-31 — Batch question selection and deletion
+
+- Change: Added Question Bank selection mode with select-visible, clear-selection, and confirmed delete-selected actions.
+- Change: Batch deletion removes records for the signed-in owner from Supabase before removing their local cache; test-history snapshots remain available.
+- Evidence: lint, twelve automated tests, TypeScript checking, and production build passed.

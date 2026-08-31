@@ -56,3 +56,10 @@ export async function saveQuestions(questions: Question[]) {
   const { error } = await supabase!.from('questions').upsert(questions.map((question) => questionRow(question, ownerId)))
   if (error) throw error
 }
+
+export async function deleteQuestions(questionIds: string[]) {
+  if (!questionIds.length) return
+  const ownerId = await userId()
+  const { error } = await supabase!.from('questions').delete().in('id', questionIds).eq('user_id', ownerId)
+  if (error) throw error
+}
