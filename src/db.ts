@@ -1,3 +1,7 @@
+/**
+ * Defines the browser's offline IndexedDB database through Dexie.
+ * Version upgrades preserve data created by older releases of the app.
+ */
 import Dexie, { type EntityTable } from 'dexie'
 import type { AppSettings, Choice, LocalPdfFile, Note, PdfReviewer, Question, Subject, TestSession } from './types'
 
@@ -9,6 +13,7 @@ type LegacyQuestion = Omit<Question, 'acceptedAnswers'> & {
 }
 
 class ReviewerDatabase extends Dexie {
+  // EntityTable supplies TypeScript with each table's record and primary-key type.
   subjects!: EntityTable<Subject, 'id'>
   pdfs!: EntityTable<PdfReviewer, 'id'>
   pdfFiles!: EntityTable<LocalPdfFile, 'id'>
@@ -35,6 +40,7 @@ class ReviewerDatabase extends Dexie {
       testSessions: 'id, subjectId, level, completedAt',
       settings: 'id',
     }).upgrade(async (transaction) => {
+      // Version 2 replaced multiple-choice fields with accepted text answers.
       await transaction.table<LegacyQuestion>('questions').toCollection().modify((question) => {
         if (!question.acceptedAnswers?.length) {
           const previousCorrectAnswer = question.choices?.find((choice) => choice.id === question.correctChoiceId)?.text
@@ -54,6 +60,7 @@ class ReviewerDatabase extends Dexie {
       testSessions: 'id, subjectId, level, completedAt',
       settings: 'id',
     }).upgrade(async (transaction) => {
+      // Keep large PDF Blobs separate so ordinary PDF metadata stays lightweight.
       const pdfs = transaction.table<PdfReviewer & { fileData?: Blob }>('pdfs')
       const pdfFiles = transaction.table<LocalPdfFile>('pdfFiles')
       const legacyPdfs = await pdfs.toArray()
@@ -72,6 +79,7 @@ class ReviewerDatabase extends Dexie {
 export const db = new ReviewerDatabase()
 
 export async function deleteSubjectCascade(subjectId: string) {
+  // IndexedDB has no SQL foreign-key cascade, so related records are removed here.
   await db.transaction('rw', [db.subjects, db.pdfs, db.pdfFiles, db.notes, db.questions, db.testSessions], async () => {
     const pdfIds = await db.pdfs.where('subjectId').equals(subjectId).primaryKeys()
     await Promise.all([

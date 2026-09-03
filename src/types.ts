@@ -1,3 +1,4 @@
+/** Shared data contracts used by the interface, local database, and cloud sync. */
 export type MasteryLevel = 1 | 2 | 3 | 4
 
 export interface Subject {
@@ -10,6 +11,7 @@ export interface Subject {
 }
 
 export interface PdfReviewer {
+  // Metadata stays small; the actual Blob lives locally or at storagePath.
   id: string
   subjectId: string
   name: string
@@ -56,6 +58,7 @@ export interface Question {
 }
 
 export interface TestAnswer {
+  // Historical snapshots preserve what the learner saw when the test was taken.
   questionId: string
   prompt: string
   selectedAnswer: string
@@ -93,6 +96,7 @@ export interface AppSettings {
 }
 
 export interface BackupFile {
+  // The version allows future releases to migrate older exported files safely.
   format: 'reviewer-organizer-backup'
   version: 1 | 2 | 3
   exportedAt: string

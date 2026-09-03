@@ -1,3 +1,4 @@
+/** Safety tests for valid, malformed, duplicate, and oversized question imports. */
 import { describe, expect, it } from 'vitest'
 import { parseQuestionImport } from './question-import'
 

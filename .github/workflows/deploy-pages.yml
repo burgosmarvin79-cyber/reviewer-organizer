@@ -1,3 +1,4 @@
+# Build, verify, and publish the app whenever main changes or Marvin runs it manually.
 name: Deploy Reviewer Organizer to GitHub Pages
 
 on:
@@ -6,11 +7,13 @@ on:
   workflow_dispatch:
 
 permissions:
+  # Follow least privilege: source is read-only, with write access only for Pages.
   contents: read
   pages: write
   id-token: write
 
 concurrency:
+  # A newer deployment replaces an older in-progress deployment.
   group: pages
   cancel-in-progress: true
 
@@ -31,6 +34,7 @@ jobs:
         run: npm ci
 
       - name: Configure Supabase environment
+        # GitHub Secrets inject public connection values without committing them.
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
@@ -38,6 +42,7 @@ jobs:
           printf 'VITE_SUPABASE_URL=%s\nVITE_SUPABASE_PUBLISHABLE_KEY=%s\n' "$VITE_SUPABASE_URL" "$VITE_SUPABASE_PUBLISHABLE_KEY" > .env.local
 
       - name: Verify source
+        # Deployment stops if code quality, behavior, or production compilation fails.
         run: |
           npm run lint
           npm run test
@@ -52,6 +57,7 @@ jobs:
           path: dist
 
   deploy:
+    # Publishing waits for the verified build artifact from the build job.
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

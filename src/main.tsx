@@ -1,3 +1,4 @@
+/** Browser entry point: registers the PWA and mounts React into index.html. */
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
@@ -14,6 +15,7 @@ registerSW({
 })
 
 createRoot(document.getElementById('root')!).render(
+  // HashRouter keeps client-side routes working on static GitHub Pages hosting.
   <StrictMode>
     <HashRouter>
       <App />

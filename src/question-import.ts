@@ -1,3 +1,4 @@
+/** Validates questionnaire JSON and prepares safe questions for user review. */
 import type { MasteryLevel } from './types'
 
 export const QUESTION_IMPORT_FORMAT = 'reviewer-organizer-questions'
@@ -20,6 +21,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function normalizeQuestionPrompt(prompt: string) {
+  // Questions with cosmetic capitalization/spacing differences count as duplicates.
   return prompt.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
 }
 
@@ -45,6 +47,7 @@ export function parseQuestionImport(text: string): QuestionImportResult {
   const warnings: string[] = []
   const seenPrompts = new Set<string>()
 
+  // Fail on malformed questions but only warn about duplicate prompts.
   value.questions.forEach((item, index) => {
     const number = index + 1
     if (!isRecord(item)) throw new Error(`Question ${number} must be an object.`)
@@ -56,6 +59,7 @@ export function parseQuestionImport(text: string): QuestionImportResult {
     if (!Array.isArray(item.acceptedAnswers)) throw new Error(`Question ${number} must have an acceptedAnswers list.`)
 
     const acceptedAnswers = [...new Set(item.acceptedAnswers
+      // Remove non-text, blank, and repeated answers before saving.
       .filter((answer): answer is string => typeof answer === 'string')
       .map((answer) => answer.trim())
       .filter(Boolean))]

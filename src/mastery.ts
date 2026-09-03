@@ -1,3 +1,4 @@
+/** Pure study helpers used to evaluate answers and manage question progression. */
 import type { MasteryLevel, Question } from './types'
 
 export const LEVEL_NAMES: Record<MasteryLevel, string> = {
@@ -8,6 +9,7 @@ export const LEVEL_NAMES: Record<MasteryLevel, string> = {
 }
 
 export function normalizeAnswer(answer: string): string {
+  // Ignore capitalization and repeated spaces without changing answer meaning.
   return answer.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
 }
 
@@ -17,6 +19,7 @@ export function isAcceptedAnswer(answer: string, acceptedAnswers: string[]): boo
 }
 
 export function recordAnswer(question: Question, wasCorrect: boolean): Question {
+  // Return a new object so React/Dexie can reliably detect the change.
   const now = new Date().toISOString()
   return {
     ...question,
@@ -32,6 +35,7 @@ export function moveQuestion(question: Question, level: MasteryLevel): Question 
 }
 
 export function randomSelection<T>(items: T[], count: number): T[] {
+  // Fisher-Yates produces an unbiased shuffle and does not mutate the input array.
   const shuffled = [...items]
   for (let index = shuffled.length - 1; index > 0; index -= 1) {
     const randomIndex = Math.floor(Math.random() * (index + 1))

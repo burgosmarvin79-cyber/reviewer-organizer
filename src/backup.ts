@@ -1,3 +1,7 @@
+/**
+ * Creates portable backups of the local study database and restores them.
+ * PDF binary data is encoded as text because JSON cannot store Blob objects.
+ */
 import { db } from './db'
 import { resolvePdfBlob } from './pdf-storage'
 import type { BackupFile, Choice, PdfReviewer, Question } from './types'
@@ -42,6 +46,7 @@ export async function createBackup(): Promise<BackupFile> {
 }
 
 export function validateBackup(value: unknown): asserts value is BackupFile {
+  // Treat imported files as untrusted input before allowing a database write.
   if (!value || typeof value !== 'object') throw new Error('This file is not a valid backup.')
   const backup = value as Partial<BackupFile>
   if (backup.format !== 'reviewer-organizer-backup' || ![1, 2, 3].includes(backup.version ?? 0)) throw new Error('Unsupported backup format or version.')
@@ -51,12 +56,14 @@ export function validateBackup(value: unknown): asserts value is BackupFile {
 }
 
 export async function restoreBackup(backup: BackupFile) {
+  // Cloud paths belong to the old account/device, so restored PDFs start locally.
   const pdfs: PdfReviewer[] = backup.pdfs.map(({ fileDataBase64, ...pdf }) => {
     void fileDataBase64
     return { ...pdf, storagePath: undefined }
   })
   const pdfFiles = backup.pdfs.map((pdf) => ({ id: pdf.id, fileData: dataUrlToBlob(pdf.fileDataBase64) }))
   const questions: Question[] = backup.questions.map((storedQuestion) => {
+    // Convert version 1 multiple-choice backups to the current text-answer model.
     const question = { ...storedQuestion } as Question & { acceptedAnswers?: string[]; choices?: Choice[]; correctChoiceId?: string; correctStreak?: number }
     if (!question.acceptedAnswers?.length) {
       const previousAnswer = question.choices?.find((choice) => choice.id === question.correctChoiceId)?.text
@@ -68,6 +75,7 @@ export async function restoreBackup(backup: BackupFile) {
     return question
   })
   await db.transaction('rw', db.tables, async () => {
+    // A transaction makes restore all-or-nothing instead of leaving partial data.
     await Promise.all(db.tables.map((table) => table.clear()))
     await db.subjects.bulkAdd(backup.subjects)
     await db.pdfs.bulkAdd(pdfs)

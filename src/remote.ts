@@ -1,7 +1,12 @@
+/**
+ * Explicit cloud-write operations for Supabase tables.
+ * Every row includes the authenticated owner ID; Row Level Security verifies it.
+ */
 import { supabase } from './lib/supabase'
 import type { Note, Question, Subject } from './types'
 
 async function userId() {
+  // Read the verified server user instead of trusting an ID supplied by the UI.
   if (!supabase) throw new Error('Supabase is not configured.')
   const { data, error } = await supabase.auth.getUser()
   if (error || !data.user) throw new Error('Please sign in again before saving data.')
@@ -36,6 +41,7 @@ export async function deleteNote(noteId: string) {
 }
 
 function questionRow(question: Question, ownerId: string) {
+  // Translate camelCase TypeScript properties to PostgreSQL snake_case columns.
   return {
     id: question.id, user_id: ownerId, subject_id: question.subjectId, prompt: question.prompt,
     accepted_answers: question.acceptedAnswers, explanation: question.explanation, level: question.level,
@@ -51,6 +57,7 @@ export async function saveQuestion(question: Question) {
 }
 
 export async function saveQuestions(questions: Question[]) {
+  // One bulk upsert is faster and more consistent than one request per question.
   if (!questions.length) return
   const ownerId = await userId()
   const { error } = await supabase!.from('questions').upsert(questions.map((question) => questionRow(question, ownerId)))

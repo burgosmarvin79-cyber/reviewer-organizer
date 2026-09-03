@@ -1,3 +1,4 @@
+/** Regression tests for backup validation, export, and legacy-data restoration. */
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createBackup, restoreBackup } from './backup'
 import { db } from './db'

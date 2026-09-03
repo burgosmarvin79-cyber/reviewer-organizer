@@ -1,3 +1,4 @@
+/** Validates ChatGPT-generated note JSON before it reaches the database. */
 export const NOTE_IMPORT_FORMAT = 'reviewer-organizer-notes'
 export const MAX_IMPORT_NOTES = 200
 
@@ -15,10 +16,12 @@ export interface NoteImportResult {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
+  // JSON values may be primitives or arrays; an import item must be an object.
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 export function normalizeNoteTitle(title: string) {
+  // Normalized titles make duplicate detection case- and spacing-insensitive.
   return title.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
 }
 
@@ -36,6 +39,7 @@ export function parseNoteImport(text: string): NoteImportResult {
   const notes: ImportableNote[] = []
   const warnings: string[] = []
   const seenTitles = new Set<string>()
+  // Validate every field and collect safe, normalized notes for the preview screen.
   value.notes.forEach((item, index) => {
     const number = index + 1
     if (!isRecord(item)) throw new Error(`Note ${number} must be an object.`)

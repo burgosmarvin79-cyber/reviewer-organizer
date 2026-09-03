@@ -1,3 +1,7 @@
+/**
+ * Main React interface for Reviewer Organizer.
+ * The feature sections below connect screens to the local database and cloud helpers.
+ */
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
@@ -22,6 +26,7 @@ import { createPdfOpenUrl, createPdfReviewer, deletePdfReviewer, deleteSubjectPd
 const COLORS = ['#a51d25', '#7a171d', '#c74b50', '#d49a28', '#59636f', '#8b5e3c']
 const NOTE_LEVEL_NAMES: Record<NoteLevel, string> = { 1: 'Level 1 · Current', 2: 'Level 2 · Completed', 3: 'Final notes reviewer' }
 
+// Authentication gate: only a signed-in user can enter the private study workspace.
 function AuthGate() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(Boolean(supabase))
@@ -40,6 +45,7 @@ function AuthGate() {
   }, [])
   const userId = session?.user.id
   useEffect(() => {
+    // On login, isolate the cache, sync it, and keep it fresh across devices.
     if (!userId) return
     let cancelled = false
     const refresh = () => { if (!cancelled) void syncUserData(userId).catch(() => undefined) }
@@ -90,6 +96,7 @@ function dateLabel(value: string) {
 
 function Modal({ title, children, onClose, className = '' }: { title: string; children: ReactNode; onClose: () => void; className?: string }) {
   useEffect(() => {
+    // Lock the page behind the modal, then restore its previous scroll behavior.
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = previousOverflow }
@@ -108,6 +115,7 @@ function EmptyState({ icon, title, text, action }: { icon: ReactNode; title: str
   return <div className="empty-state"><span>{icon}</span><h3>{title}</h3><p>{text}</p>{action}</div>
 }
 
+// Application shell: shared navigation, account controls, sync status, and routes.
 function Layout({ userEmail }: { userEmail?: string } = {}) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(getSyncStatus())
@@ -145,6 +153,7 @@ function Layout({ userEmail }: { userEmail?: string } = {}) {
   )
 }
 
+// Dashboard and subject management ------------------------------------------------
 function Dashboard() {
   const subjects = useLiveQuery(() => db.subjects.orderBy('name').toArray(), [])
   if (!subjects) return <p>Loading your study space…</p>
@@ -157,6 +166,7 @@ function Dashboard() {
 }
 
 function SubjectCard({ subject }: { subject: Subject }) {
+  // useLiveQuery automatically redraws counts whenever these IndexedDB tables change.
   const counts = useLiveQuery(async () => ({
     pdfs: await db.pdfs.where('subjectId').equals(subject.id).count(),
     notes: await db.notes.where('subjectId').equals(subject.id).count(),
@@ -186,6 +196,7 @@ function SubjectForm({ subject, onClose }: { subject?: Subject; onClose: () => v
     if (!trimmed) return
     const now = new Date().toISOString()
     const savedSubject = { id: subject?.id ?? id(), name: trimmed, description: description.trim(), color, createdAt: subject?.createdAt ?? now, updatedAt: now }
+    // Local-first write updates the screen immediately; the cloud call persists it.
     await db.subjects.put(savedSubject)
     await saveSubject(savedSubject)
     onClose()
@@ -203,6 +214,7 @@ function SubjectsPage() {
 
 type SubjectTab = 'pdfs' | 'notes' | 'questions' | 'review'
 
+// One subject workspace groups all study resources under the same subject ID.
 function SubjectPage() {
   const { subjectId = '' } = useParams()
   const [subjectParams] = useSearchParams()
@@ -214,6 +226,7 @@ function SubjectPage() {
   if (!subject) return <EmptyState icon={<BookOpen />} title="Subject not found" text="It may have been deleted." action={<Link className="button primary" to="/subjects">Back to subjects</Link>} />
   const currentSubject = subject
   async function remove() {
+    // Typed confirmation protects against accidental cascading deletion.
     const confirmation = window.prompt(`Deleting this subject also deletes all of its PDFs, notes, questions, and test history. Type “${currentSubject.name}” to continue.`)
     if (confirmation !== currentSubject.name) return
     await deleteSubjectPdfs(currentSubject.id)
@@ -234,11 +247,13 @@ function SubjectSummary({ subjectId }: { subjectId: string }) {
   }, [subjectId])
   if (!summary) return null
   const average = summary.sessions.length ? Math.round(summary.sessions.reduce((total, session) => total + session.percentage, 0) / summary.sessions.length) : 0
+  // Progress means reaching the final-review bucket, not merely answering once.
   const nextLevel = ([1, 2, 3, 4] as MasteryLevel[]).find((level) => summary.questions.some((question) => question.level === level))
   const progress = summary.questions.length ? Math.round((summary.questions.filter((question) => question.level === 4).length / summary.questions.length) * 100) : 0
   return <section className="subject-summary" aria-label="Subject summary"><article><span className="stat-icon gold"><FileText /></span><div><strong>{summary.pdfs}</strong><small>PDF reviewers</small></div></article><article><span className="stat-icon violet"><CircleHelp /></span><div><strong>{summary.questions.length}</strong><small>Questions</small></div></article><article><span className="stat-icon green"><BarChart3 /></span><div><strong>{average}%</strong><small>Average score</small></div></article><article><span className="stat-icon blue"><Clock3 /></span><div><strong>{summary.sessions.length}</strong><small>Tests completed</small></div></article><div className="subject-progress"><div><strong>Mastery progress</strong><span>{progress}% at Final Test Reviewer</span></div><div className="bar"><i style={{ width: `${progress}%` }} /></div><small>{summary.sessions[0] ? `Last studied ${dateLabel(summary.sessions[0].completedAt)}` : 'No test completed yet'}</small>{nextLevel && <Link className="button ghost" to={`/test?subject=${subjectId}&level=${nextLevel}`}>Continue Test {nextLevel}<ChevronRight /></Link>}</div></section>
 }
 
+// Study mode launchers and flashcard-style review ---------------------------------
 function StudyModesPanel({ subjectId }: { subjectId: string }) {
   const questions = useLiveQuery(() => db.questions.where('subjectId').equals(subjectId).toArray(), [subjectId]) ?? []
   const missed = questions.filter((question) => question.totalAttempts > question.totalCorrect).length
@@ -275,6 +290,7 @@ function ReviewPage() {
   return <div className="page narrow"><Link className="back-link" to={`/subjects/${subjectId}?tab=review`}><ArrowLeft /> {subject.name} study modes</Link><header className="page-header"><div><p className="eyebrow">{mode === 'flashcards' ? 'Flashcards' : mode === 'quick' ? 'Quick review' : mode === 'missed' ? 'Missed questions' : 'Mixed test'}</p><h1>Question {index + 1} of {pool.length}</h1></div></header><section className="review-card"><p className="eyebrow">{mode === 'mixed' ? 'Type your answer' : 'Think first, then reveal'}</p><h2>{current.prompt}</h2>{mode === 'mixed' ? <form className="identification-form" onSubmit={checkMixed}><input autoFocus disabled={checked} value={typedAnswer} onChange={(event) => setTypedAnswer(event.target.value)} placeholder="Enter your answer" /><button className="button primary" disabled={checked || !typedAnswer.trim()}>Check answer</button></form> : <>{(revealed || mode === 'quick') && <div className="review-answer"><strong>{current.acceptedAnswers[0]}</strong><p>{current.explanation}</p></div>}{mode === 'flashcards' && !revealed && <button className="button primary full" onClick={() => setRevealed(true)}>Reveal answer</button>}</>}{checked && <div className={isAcceptedAnswer(typedAnswer, current.acceptedAnswers) ? 'feedback correct' : 'feedback wrong'}><strong>{isAcceptedAnswer(typedAnswer, current.acceptedAnswers) ? 'Correct!' : 'Review this answer'}</strong><p>Answer: <b>{current.acceptedAnswers[0]}</b></p><p>{current.explanation}</p></div>}{((mode !== 'mixed' && (revealed || mode === 'quick')) || checked) && <button className="button primary full" onClick={next}>{index === pool.length - 1 ? 'Finish review' : 'Next question'} <ChevronRight /></button>}</section></div>
 }
 
+// PDF, note, and question resource management ------------------------------------
 function PdfPanel({ subjectId }: { subjectId: string }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
@@ -513,6 +529,7 @@ function QuestionsPanel({ subjectId }: { subjectId: string }) {
   return <section className="panel"><div className="section-heading"><div><p className="eyebrow">Manual mastery practice</p><h2>Question bank</h2></div><div className="heading-actions"><button className="button ghost" onClick={() => { setSelecting(!selecting); if (selecting) setSelectedIds(new Set()) }}>{selecting ? 'Cancel selection' : 'Select questions'}</button><button className="button ghost" onClick={() => setImporting(true)}><Upload /> Import questions</button><button className="button primary" onClick={() => setEditing('new')}><Plus /> Add question</button></div></div><div className="test-level-grid">{([1, 2, 3, 4] as MasteryLevel[]).map((item) => { const count = questions.filter((question) => question.level === item).length; return <article key={item} className={`test-level-card level-card-${item}`}><div className={`level-pill level-${item}`}>{LEVEL_NAMES[item]}</div><strong>{count}</strong><span>{count === 1 ? 'question' : 'questions'}</span><Link className="button primary" aria-disabled={!count} to={count ? `/test?subject=${subjectId}&level=${item}` : '#'} onClick={(event) => { if (!count) event.preventDefault() }}><GraduationCap /> Start test</Link></article> })}</div>{questions.length > 0 && <div className="toolbar"><label className="search"><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search questions" /></label><select value={level} onChange={(event) => setLevel(Number(event.target.value) as MasteryLevel | 0)}><option value={0}>All levels</option>{[1, 2, 3, 4].map((item) => <option key={item} value={item}>{LEVEL_NAMES[item as MasteryLevel]}</option>)}</select></div>}{selecting && questions.length > 0 && <div className="selection-toolbar"><span>{selectedIds.size} selected</span><button className="text-button" onClick={selectVisible}>Select visible</button><button className="text-button" onClick={() => setSelectedIds(new Set())}>Clear</button><button className="button danger" disabled={!selectedIds.size} onClick={() => void removeSelected()}><Trash2 /> Delete selected</button></div>}{filtered.length ? <div className="question-list">{filtered.map((question) => <article key={question.id} className={selectedIds.has(question.id) ? 'question-selected' : ''}>{selecting && <label className="question-checkbox"><input type="checkbox" checked={selectedIds.has(question.id)} onChange={() => toggleSelected(question.id)} aria-label={`Select ${question.prompt}`} /></label>}<div className={`level-pill level-${question.level}`}>{LEVEL_NAMES[question.level]}</div><h3>{question.prompt}</h3><p>{question.acceptedAnswers.length} accepted answer{question.acceptedAnswers.length === 1 ? '' : 's'} · {question.totalAttempts} attempts</p><footer><button className="button ghost" onClick={() => setEditing(question)}><Pencil /> Edit</button>{question.level > 1 && <button className="button ghost" onClick={() => void moveSpecificQuestion(question, (question.level - 1) as MasteryLevel)}><ArrowLeft /> Move down</button>}{question.level < 4 && <button className="button primary" onClick={() => void moveSpecificQuestion(question, (question.level + 1) as MasteryLevel)}>Move up <ChevronRight /></button>}<button className="icon-button danger-text" onClick={() => window.confirm('Delete this question? Its snapshots remain in test history.') && void db.questions.delete(question.id)}><Trash2 /></button></footer></article>)}</div> : <EmptyState icon={<CircleHelp />} title={questions.length ? 'No matching questions' : 'No questions yet'} text={questions.length ? 'Adjust your search or level filter.' : 'Add or import identification questions to begin your manual mastery ladder.'} />}{editing && <Modal title={editing === 'new' ? 'New identification question' : 'Edit identification question'} onClose={() => setEditing(null)}><QuestionForm subjectId={subjectId} question={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} /></Modal>}{importing && <Modal title="Import questions" onClose={() => setImporting(false)}><QuestionImportForm subjectId={subjectId} existingQuestions={questions} onClose={() => setImporting(false)} /></Modal>}</section>
 }
 
+// Practice test runner and permanent history -------------------------------------
 function TestPage() {
   const [params] = useSearchParams()
   const subjectId = params.get('subject') ?? ''
@@ -577,6 +594,7 @@ function HistoryPage() {
   return <div className="page"><header className="page-header"><div><p className="eyebrow">Learning record</p><h1>Test history</h1><p>Review scores, typed answers, skipped questions, and manual level decisions.</p></div></header>{sessions.length ? <div className="history-list">{sessions.map((session) => <button key={session.id} onClick={() => setSelected(session)}><span className={session.percentage >= 75 ? 'score good' : 'score'}>{session.percentage}%</span><div><strong>{session.subjectName}</strong><small>{LEVEL_NAMES[session.level]} · {dateLabel(session.completedAt)}{session.skippedCount ? ` · ${session.skippedCount} skipped` : ''}</small></div><div className="history-count">{session.correctCount}/{session.questionCount}<ChevronRight /></div></button>)}</div> : <EmptyState icon={<History />} title="No test history" text="Open a subject's Question Bank and complete an identification test." action={<Link className="button primary" to="/subjects">Open subjects</Link>} />}{selected && <Modal title={`${selected.subjectName} · ${selected.percentage}%`} onClose={() => setSelected(null)}><div className="history-detail"><p>{LEVEL_NAMES[selected.level]} · {dateLabel(selected.completedAt)} · {selected.correctCount} correct · {selected.skippedCount ?? 0} skipped</p>{selected.answers.map((answer, index) => <article key={`${answer.questionId}-${index}`}><span className={answer.wasSkipped ? 'answer-mark skipped' : answer.wasCorrect ? 'answer-mark correct' : 'answer-mark wrong'}>{answer.wasSkipped ? <ChevronRight /> : answer.wasCorrect ? <Check /> : <X />}</span><div><strong>{answer.prompt}</strong><p>{answer.wasSkipped ? 'Skipped without answering' : `Your answer: ${responseText(answer)}`}</p>{!answer.wasCorrect && !answer.wasSkipped && <p>Correct answer: {correctText(answer)}</p>}<small>{answer.explanation}</small>{answer.levelBefore !== answer.levelAfter && <small className="history-move">Moved from {LEVEL_NAMES[answer.levelBefore]} to {LEVEL_NAMES[answer.levelAfter]}</small>}</div></article>)}</div></Modal>}</div>
 }
 
+// Backup and preferences ----------------------------------------------------------
 function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [message, setMessage] = useState('')
@@ -593,4 +611,5 @@ function SettingsPage() {
   return <div className="page"><header className="page-header"><div><p className="eyebrow">Data safety</p><h1>Settings & backup</h1><p>Your study records sync privately to your account, while backups provide an extra recovery copy.</p></div></header><div className="settings-grid"><section className="panel"><span className="setting-icon"><Download /></span><h2>Complete backup</h2><p>Download subjects, PDFs, notes, questions, progress, and test history into one file.</p><button className="button primary" onClick={() => void downloadBackup()}><Download /> Download backup</button></section><section className="panel"><span className="setting-icon"><Upload /></span><h2>Restore backup</h2><p>Replace the current database using a valid Reviewer Organizer backup.</p><input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(event) => void importBackup(event.target.files?.[0])} /><button className="button ghost" onClick={() => fileRef.current?.click()}><Upload /> Choose backup</button></section><section className="panel"><span className="setting-icon"><ShieldCheck /></span><h2>Storage protection</h2><p>{used}. Ask the browser to reduce the chance of automatic cleanup.</p><button className="button ghost" onClick={() => void requestPersistence()}><ShieldCheck /> Request protection</button></section></div>{message && <div className="notice">{message}</div>}<section className="panel learn-card"><h2>Important to remember</h2><p>GitHub contains the app’s public source code—not your private study records. PDFs sync through private Supabase Storage, while local browser storage supports migration and offline metadata.</p></section></div>
 }
 
+// AuthGate is the root because account isolation must happen before any page loads.
 export default function App() { return <AuthGate /> }

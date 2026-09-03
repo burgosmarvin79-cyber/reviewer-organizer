@@ -1,9 +1,14 @@
+/**
+ * Coordinates the offline-first data flow between IndexedDB and Supabase.
+ * Local edits appear instantly, then hooks and realtime events reconcile devices.
+ */
 import { db } from './db'
 import { supabase } from './lib/supabase'
 import { migratePendingPdfs } from './pdf-storage'
 import type { Note, Question, Subject, TestSession } from './types'
 
 let syncing = false
+// Module-level state prevents overlapping syncs and duplicate Dexie/realtime hooks.
 let activeUserId: string | null = null
 let hooksInstalled = false
 let realtimeChannel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null
@@ -27,11 +32,13 @@ export function subscribeToSyncStatus(listener: (status: SyncStatus) => void) {
 }
 
 function subjectRow(item: Subject, userId: string) { return { id: item.id, user_id: userId, name: item.name, description: item.description, color: item.color, created_at: item.createdAt, updated_at: item.updatedAt } }
+// These adapters translate local camelCase models to Supabase snake_case rows.
 function noteRow(item: Note, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, title: item.title, content: item.content, note_level: item.level ?? 1, created_at: item.createdAt, updated_at: item.updatedAt } }
 function questionRow(item: Question, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, prompt: item.prompt, accepted_answers: item.acceptedAnswers, explanation: item.explanation, level: item.level, total_attempts: item.totalAttempts, total_correct: item.totalCorrect, last_answered_at: item.lastAnsweredAt ?? null, created_at: item.createdAt, updated_at: item.updatedAt } }
 function sessionRow(item: TestSession, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, subject_name: item.subjectName, level: item.level, started_at: item.startedAt, completed_at: item.completedAt, question_count: item.questionCount, correct_count: item.correctCount, skipped_count: item.skippedCount ?? 0, percentage: item.percentage, answers: item.answers } }
 
 export async function switchUserCache(userId: string) {
+  // Never show the previous account's offline data after another user signs in.
   const previousOwner = localStorage.getItem(LOCAL_CACHE_OWNER_KEY)
   if (previousOwner === userId) return
   syncing = true
@@ -49,6 +56,7 @@ export function enableUserSync(userId: string) {
   activeUserId = userId
   if (hooksInstalled) return
   hooksInstalled = true
+  // Dexie hooks mirror future local creates, updates, and deletes to the cloud.
   db.subjects.hook('creating', (_key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('subjects').upsert(subjectRow(item, activeUserId)) })
   db.subjects.hook('updating', (changes, key, item) => { if (activeUserId && !syncing && supabase) void supabase.from('subjects').upsert(subjectRow({ ...item, ...changes, id: key } as Subject, activeUserId)) })
   db.subjects.hook('deleting', (key) => { if (activeUserId && !syncing && supabase) void supabase.from('subjects').delete().eq('id', key).eq('user_id', activeUserId) })
@@ -67,6 +75,7 @@ export async function syncUserData(userId: string) {
   if (!supabase) return
   if (!navigator.onLine) { setSyncStatus('offline'); return }
   if (syncing) { syncQueued = true; return }
+  // Queue one follow-up instead of allowing racing sync operations.
   syncing = true
   setSyncStatus('syncing')
   try {
@@ -82,6 +91,7 @@ export async function syncUserData(userId: string) {
     const localSubjects = await db.subjects.toArray()
     const hasRemoteData = remoteSubjects.data.length + remotePdfs.data.length + remoteNotes.data.length + remoteQuestions.data.length + remoteSessions.data.length > 0
     if (!hasRemoteData && localSubjects.length) {
+      // First cloud login migrates an existing offline library instead of erasing it.
       await Promise.all([
         supabase.from('subjects').upsert(localSubjects.map((item) => subjectRow(item, userId))),
         supabase.from('notes').upsert((await db.notes.toArray()).map((item) => noteRow(item, userId))),
@@ -96,6 +106,7 @@ export async function syncUserData(userId: string) {
     const questions = remoteQuestions.data.map((item) => ({ id: item.id, subjectId: item.subject_id, prompt: item.prompt, acceptedAnswers: item.accepted_answers, explanation: item.explanation, level: item.level, totalAttempts: item.total_attempts, totalCorrect: item.total_correct, lastAnsweredAt: item.last_answered_at ?? undefined, createdAt: item.created_at, updatedAt: item.updated_at }))
     const sessions = remoteSessions.data.map((item) => ({ id: item.id, subjectId: item.subject_id, subjectName: item.subject_name, level: item.level, startedAt: item.started_at, completedAt: item.completed_at, questionCount: item.question_count, correctCount: item.correct_count, skippedCount: item.skipped_count, percentage: Number(item.percentage), answers: item.answers }))
     await db.transaction('rw', db.subjects, db.notes, db.questions, db.testSessions, async () => {
+      // Supabase is authoritative after migration: upsert remote rows and remove stale local rows atomically.
       const [subjectKeys, noteKeys, questionKeys, sessionKeys] = await Promise.all([
         db.subjects.toCollection().primaryKeys(), db.notes.toCollection().primaryKeys(), db.questions.toCollection().primaryKeys(), db.testSessions.toCollection().primaryKeys(),
       ])
@@ -108,6 +119,7 @@ export async function syncUserData(userId: string) {
       ])
     })
     await migratePendingPdfs(userId)
+    // PDF migration can create cloud metadata, so fetch it again before reconciling.
     const { data: refreshedPdfRows, error: refreshedPdfError } = await supabase.from('pdf_reviewers').select('*').eq('user_id', userId)
     if (refreshedPdfError) throw refreshedPdfError
     const remotePdfItems = refreshedPdfRows.map((item) => ({
@@ -136,6 +148,7 @@ export function subscribeToUserChanges(userId: string) {
   if (!supabase || (realtimeChannel && realtimeUserId === userId)) return
   unsubscribeFromUserChanges()
   const refresh = () => {
+    // Debounce related realtime events into one sync to avoid request bursts.
     if (realtimeRefreshTimer) clearTimeout(realtimeRefreshTimer)
     realtimeRefreshTimer = setTimeout(() => { realtimeRefreshTimer = null; void syncUserData(userId) }, 250)
   }

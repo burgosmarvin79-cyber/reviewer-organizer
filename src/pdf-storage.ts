@@ -1,3 +1,4 @@
+/** Manages private PDF files across the offline cache and Supabase Storage. */
 import { db } from './db'
 import { supabase } from './lib/supabase'
 import type { PdfReviewer } from './types'
@@ -5,6 +6,7 @@ import type { PdfReviewer } from './types'
 const BUCKET = 'reviewer-pdfs'
 
 function storagePath(userId: string, subjectId: string, pdfId: string) {
+  // The user ID as the first folder is enforced by Storage security policies.
   return `${userId}/${subjectId}/${pdfId}.pdf`
 }
 
@@ -21,6 +23,7 @@ export async function uploadPendingPdf(pdf: PdfReviewer, userId: string) {
   if (!localFile) throw new Error(`The local file for “${pdf.name}” is unavailable.`)
   const path = storagePath(userId, pdf.subjectId, pdf.id)
   const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, localFile.fileData, { contentType: 'application/pdf', upsert: false })
+  // An existing object can mean a previous upload succeeded before metadata saved.
   if (uploadError && !uploadError.message.toLowerCase().includes('exist')) throw uploadError
   const { error: metadataError } = await supabase.from('pdf_reviewers').upsert({
     id: pdf.id, user_id: userId, subject_id: pdf.subjectId, name: pdf.name,
@@ -28,10 +31,12 @@ export async function uploadPendingPdf(pdf: PdfReviewer, userId: string) {
   })
   if (metadataError) throw metadataError
   await db.pdfs.put({ ...pdf, storagePath: path })
+  // Once safely stored in the cloud, remove the duplicate local Blob.
   await db.pdfFiles.delete(pdf.id)
 }
 
 export async function migratePendingPdfs(userId: string) {
+  // Retry offline uploads individually so one failed PDF does not block the rest.
   const pdfs = await db.pdfs.toArray()
   for (const pdf of pdfs) {
     if (!pdf.storagePath && await db.pdfFiles.get(pdf.id)) {
@@ -47,6 +52,7 @@ export async function createPdfReviewer(subjectId: string, file: File) {
     size: file.size, createdAt: new Date().toISOString(),
   }
   await db.transaction('rw', db.pdfs, db.pdfFiles, async () => {
+    // Save locally first: a failed upload can be retried without losing the file.
     await db.pdfs.add(pdf)
     await db.pdfFiles.add({ id: pdf.id, fileData: file })
   })
@@ -56,6 +62,7 @@ export async function createPdfReviewer(subjectId: string, file: File) {
 export async function createPdfOpenUrl(pdf: PdfReviewer) {
   if (!supabase || !pdf.storagePath) throw new Error('This PDF is waiting for private cloud upload. Reconnect and try again shortly.')
   const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(pdf.storagePath, 300)
+  // Signed URLs expire after five minutes and keep the storage bucket private.
   if (error) throw error
   return data.signedUrl
 }
@@ -79,6 +86,7 @@ export async function deleteSubjectPdfs(subjectId: string) {
 }
 
 export async function resolvePdfBlob(pdf: PdfReviewer) {
+  // Prefer the offline copy; download only when the Blob is no longer cached.
   const localFile = await db.pdfFiles.get(pdf.id)
   if (localFile) return localFile.fileData
   if (!supabase || !pdf.storagePath) throw new Error(`PDF data for “${pdf.name}” is unavailable.`)

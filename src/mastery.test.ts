@@ -1,3 +1,4 @@
+/** Unit tests for answer matching, statistics, mastery movement, and selection. */
 import { describe, expect, it, vi } from 'vitest'
 import { isAcceptedAnswer, moveQuestion, normalizeAnswer, randomSelection, recordAnswer } from './mastery'
 import type { Question } from './types'
