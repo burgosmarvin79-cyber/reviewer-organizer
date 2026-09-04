@@ -133,3 +133,9 @@ Skip when: You only need the active task or current state.
 - Change: Updated the ChatGPT prompt to request plain text without Markdown symbols and single quotes for HTML attribute examples.
 - Evidence: focused lint passed, all seventeen application tests passed, and the production PWA build completed.
 - Remaining risk: severely malformed or structurally ambiguous JSON remains rejected instead of being guessed.
+
+## 2026-09-04 — Repair generated questionnaire quotes
+
+- Change: Questionnaire import now repairs unescaped double quotes inside generated text values, including HTML attribute examples such as `name="value"`.
+- Evidence: the real failure pattern received from Marvin passed a focused regression test; source lint, all nineteen application tests, and the production PWA build passed.
+- Remaining risk: structurally ambiguous files remain rejected instead of being guessed.

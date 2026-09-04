@@ -26,6 +26,24 @@ describe('question import validation', () => {
     expect(() => parseQuestionImport('{"format": }')).toThrow('invalid JSON')
   })
 
+  it('repairs unescaped quotes in generated HTML attribute examples', () => {
+    const malformed = `{
+      "format": "reviewer-organizer-questions",
+      "version": 1,
+      "questions": [{
+        "prompt": "What format do HTML attributes use?",
+        "acceptedAnswers": ["Name/value pairs", "name="value""],
+        "explanation": "Attributes appear as name="value".",
+        "level": 1
+      }]
+    }`
+
+    const result = parseQuestionImport(malformed)
+
+    expect(result.questions[0].acceptedAnswers[1]).toBe('name="value"')
+    expect(result.questions[0].explanation).toBe('Attributes appear as name="value".')
+  })
+
   it('rejects a question without an accepted answer', () => {
     const input = { ...valid, questions: [{ ...valid.questions[0], acceptedAnswers: [] }] }
     expect(() => parseQuestionImport(JSON.stringify(input))).toThrow('at least one accepted answer')

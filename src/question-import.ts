@@ -32,6 +32,46 @@ function extractQuestionnaireJson(source: string) {
   return source
 }
 
+function repairUnescapedStringQuotes(source: string) {
+  let repaired = ''
+  let insideString = false
+  let escaped = false
+
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index]
+    if (!insideString) {
+      repaired += character
+      if (character === '"') insideString = true
+      continue
+    }
+
+    if (escaped) {
+      repaired += character
+      escaped = false
+      continue
+    }
+    if (character === '\\') {
+      repaired += character
+      escaped = true
+      continue
+    }
+    if (character !== '"') {
+      repaired += character
+      continue
+    }
+
+    const nextNonWhitespace = source.slice(index + 1).match(/\S/)?.[0]
+    if (nextNonWhitespace && ![',', '}', ']', ':'].includes(nextNonWhitespace)) {
+      repaired += '\\"'
+    } else {
+      repaired += character
+      insideString = false
+    }
+  }
+
+  return repaired
+}
+
 export function normalizeQuestionPrompt(prompt: string) {
   // Questions with cosmetic capitalization/spacing differences count as duplicates.
   return prompt.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
@@ -43,7 +83,9 @@ export function parseQuestionImport(text: string): QuestionImportResult {
 
   let value: unknown
   try {
-    value = JSON.parse(extractQuestionnaireJson(source))
+    const extracted = extractQuestionnaireJson(source)
+    try { value = JSON.parse(extracted) }
+    catch { value = JSON.parse(repairUnescapedStringQuotes(extracted)) }
   } catch {
     throw new Error('This questionnaire contains invalid JSON. Download it again from ChatGPT or fix the highlighted file content.')
   }
