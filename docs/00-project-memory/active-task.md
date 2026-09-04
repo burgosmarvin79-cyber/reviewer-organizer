@@ -66,11 +66,11 @@ Skip when: The task is unrelated to the current execution context.
 - Last Failure: none
 - Failure Class: none
 - Attempted Fix: none
-- Next Concrete Action: Confirm the deployed tolerant import with Marvin's real ChatGPT output
+- Next Concrete Action: Confirm the deployed full-coverage Notes Generator workflow with Marvin's real PDF
 
 ## Record
 
-- Verification Evidence: On 2026-09-04, questionnaire import accepted ChatGPT commentary, Markdown fences, and unescaped HTML attribute quotes; all 19 app tests, source lint, TypeScript build, and PWA generation passed locally. Live acceptance of the quote repair remains pending.
+- Verification Evidence: On 2026-09-04, importer repairs and the in-app full-coverage Notes Generator prompt passed all 19 app tests, source lint, TypeScript build, and PWA generation. Live notes-generation acceptance remains pending.
 - Delivery Status: deployed after Marvin's explicit publication request
 - Delivery Evidence: GitHub Pages workflow 33846147157 completed successfully and the live bundle contained the repaired importer on 2026-09-04.
 - Docs Updated: pending

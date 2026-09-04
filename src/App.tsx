@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   AlertCircle, ArrowLeft, BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, CircleHelp, Clock3, CloudOff, RefreshCw,
-  Download,
+  Copy, Download,
   FileText, GraduationCap, History, Home, Menu, NotebookPen, Pencil, Plus, Search,
   Settings, ShieldCheck, Trash2, Upload, X,
 } from 'lucide-react'
@@ -22,6 +22,7 @@ import { enableUserSync, getSyncStatus, subscribeToSyncStatus, subscribeToUserCh
 import type { Session } from '@supabase/supabase-js'
 import { deleteNote, deleteQuestions, deleteSubject, saveNote, saveQuestion, saveQuestions, saveSubject } from './remote'
 import { createPdfOpenUrl, createPdfReviewer, deletePdfReviewer, deleteSubjectPdfs } from './pdf-storage'
+import noteGeneratorPrompt from '../templates/chatgpt-notes-import-prompt.txt?raw'
 
 const COLORS = ['#a51d25', '#7a171d', '#c74b50', '#d49a28', '#59636f', '#8b5e3c']
 const NOTE_LEVEL_NAMES: Record<NoteLevel, string> = { 1: 'Level 1 · Current', 2: 'Level 2 · Completed', 3: 'Final notes reviewer' }
@@ -375,6 +376,16 @@ function NoteImportForm({ subjectId, existingNotes, onClose }: { subjectId: stri
   const [warnings, setWarnings] = useState<string[]>([])
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [promptCopied, setPromptCopied] = useState(false)
+  async function copyGeneratorPrompt() {
+    try {
+      await navigator.clipboard.writeText(noteGeneratorPrompt)
+      setPromptCopied(true)
+      setError('')
+    } catch {
+      setError('Could not copy automatically. Allow clipboard access in your browser and try again.')
+    }
+  }
   function review(value = text) {
     try {
       const result = parseNoteImport(value)
@@ -397,7 +408,7 @@ function NoteImportForm({ subjectId, existingNotes, onClose }: { subjectId: stri
     catch (reason) { setSaving(false); setError(reason instanceof Error ? reason.message : 'The notes could not be imported.') }
   }
   if (preview.length) return <div className="note-import form"><div className="import-summary"><Check /><div><strong>{preview.length} notes ready</strong><small>{selected.size} selected for this subject</small></div></div>{warnings.length > 0 && <div className="import-warnings"><strong>Review notes</strong>{warnings.map((warning) => <p key={warning}>{warning}</p>)}</div>}<div className="import-select-actions"><button type="button" className="text-button" onClick={() => setSelected(new Set(preview.map((_, index) => index)))}>Select all</button><button type="button" className="text-button" onClick={() => setSelected(new Set())}>Clear all</button></div><div className="import-preview">{preview.map((note, index) => <label key={`${note.title}-${index}`} className={selected.has(index) ? 'selected' : ''}><input type="checkbox" checked={selected.has(index)} onChange={() => setSelected((current) => { const next = new Set(current); if (next.has(index)) next.delete(index); else next.add(index); return next })} /><div><strong>{note.title}</strong><small>{note.content}</small></div></label>)}</div>{error && <p className="form-error">{error}</p>}<div className="form-actions"><button type="button" className="button ghost" onClick={() => { setPreview([]); setError('') }}>Back</button><button type="button" className="button primary" disabled={saving || !selected.size} onClick={() => void importNotes()}><Upload /> {saving ? 'Importing…' : `Import ${selected.size} notes`}</button></div></div>
-  return <div className="note-import form"><div className="import-guide"><NotebookPen /><div><strong>Upload organized notes from ChatGPT</strong><p>Use the included prompt with your PDF and raw notes. Upload the resulting JSON file here.</p></div></div><label className="file-drop"><Upload /><strong>{fileName || 'Choose notes file'}</strong><span>.txt or .json · maximum 4 MB</span><input type="file" accept=".txt,.json,text/plain,application/json" onChange={(event) => void chooseFile(event.target.files?.[0])} /></label><div className="import-divider"><span>or paste the JSON</span></div><label>Notes JSON<textarea className="large-textarea" value={text} onChange={(event) => { setText(event.target.value); setFileName('') }} placeholder={'{\n  "format": "reviewer-organizer-notes",\n  "version": 1,\n  "notes": [...]\n}'} /></label>{error && <p className="form-error">{error}</p>}<div className="form-actions"><button type="button" className="button ghost" onClick={onClose}>Cancel</button><button type="button" className="button primary" disabled={!text.trim()} onClick={() => review()}><Check /> Review notes</button></div></div>
+  return <div className="note-import form"><div className="import-guide"><NotebookPen /><div><strong>Generate complete notes with ChatGPT</strong><p>Copy the full-coverage prompt, paste it into ChatGPT, and attach your PDF. It asks ChatGPT to check every page and include all important material.</p><button type="button" className="button ghost" onClick={() => void copyGeneratorPrompt()}><Copy /> {promptCopied ? 'Prompt copied' : 'Copy full-coverage prompt'}</button></div></div><label className="file-drop"><Upload /><strong>{fileName || 'Choose generated notes file'}</strong><span>.txt or .json · maximum 4 MB</span><input type="file" accept=".txt,.json,text/plain,application/json" onChange={(event) => void chooseFile(event.target.files?.[0])} /></label><div className="import-divider"><span>or paste the generated JSON</span></div><label>Notes JSON<textarea className="large-textarea" value={text} onChange={(event) => { setText(event.target.value); setFileName('') }} placeholder={'{\n  "format": "reviewer-organizer-notes",\n  "version": 1,\n  "notes": [...]\n}'} /></label>{error && <p className="form-error">{error}</p>}<div className="form-actions"><button type="button" className="button ghost" onClick={onClose}>Cancel</button><button type="button" className="button primary" disabled={!text.trim()} onClick={() => review()}><Check /> Review notes</button></div></div>
 }
 
 function QuestionForm({ subjectId, question, onClose }: { subjectId: string; question?: Question; onClose: () => void }) {

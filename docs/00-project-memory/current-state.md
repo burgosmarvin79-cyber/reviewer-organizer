@@ -26,6 +26,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 - IndexedDB database for subjects, PDFs, notes, questions, settings, and test-history snapshots.
 - Subject, PDF, note, question-bank, practice-test, dashboard, history, and backup interfaces.
 - Question Bank bulk import for `.txt` or `.json` questionnaires, including strict validation, duplicate filtering, and selectable review before saving.
+- Notes import includes an in-app full-coverage ChatGPT prompt that requests page-by-page PDF review before producing import-ready notes.
 - Main dashboard now presents subjects only; each subject workspace contains its own PDF, question, mastery, score, and test summary.
 - Question Bank supports selecting visible questions and deleting a confirmed batch from Supabase and local storage.
 - Subject workspaces include Study modes for flashcards, quick review, missed questions, and mixed practice.

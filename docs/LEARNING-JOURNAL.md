@@ -72,6 +72,10 @@ A data contract is an agreed structure that both ChatGPT and Reviewer Organizer 
 
 The source notes and PDF belong in ChatGPT; only the generated questionnaire belongs in the app's import screen. Keeping those steps separate avoids placing an AI API key in the browser while still making question entry much faster.
 
+## 2026-09-04 — Put workflow instructions where they are used
+
+A feature is incomplete when its required prompt exists only as a project file that the user cannot easily reach. The Notes import screen now exposes the full-coverage prompt directly. This reduces missed steps while keeping AI generation outside the app, so no AI API key or additional paid integration is required.
+
 ## 2026-08-31 — A local save is not proof of cloud synchronization
 
 Question imports can contain many records, so starting unobserved background uploads creates a false-success risk: the dialog may close even if Supabase rejects the request or the phone loses its connection. The import workflow now waits for one authenticated batch upsert to succeed before writing the same questions into the local browser database. Manual question saves follow the same confirmation rule.

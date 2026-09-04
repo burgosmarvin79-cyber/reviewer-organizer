@@ -139,3 +139,9 @@ Skip when: You only need the active task or current state.
 - Change: Questionnaire import now repairs unescaped double quotes inside generated text values, including HTML attribute examples such as `name="value"`.
 - Evidence: the real failure pattern received from Marvin passed a focused regression test; source lint, all nineteen application tests, and the production PWA build passed.
 - Remaining risk: structurally ambiguous files remain rejected instead of being guessed.
+
+## 2026-09-04 — Expose the full-coverage notes prompt
+
+- Change: Added a copyable Notes Generator prompt inside the Notes import screen so the desktop workflow asks ChatGPT to review every PDF page and capture all important material.
+- Evidence: source lint, all nineteen application tests, and the production PWA build passed.
+- Remaining risk: AI-generated coverage still requires student review against the original PDF; the app cannot guarantee that an external model omitted nothing.
