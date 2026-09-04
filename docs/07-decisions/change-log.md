@@ -126,3 +126,10 @@ Skip when: You only need the active task or current state.
 - Change: Review modes are separate from mastery tests; they help recall and practice without changing a question's mastery level automatically.
 - Evidence: lint, twelve automated tests, TypeScript checking, and production build passed.
 - Remaining risk: mixed practice currently provides immediate feedback but does not create a formal test-history record.
+
+## 2026-09-04 — Repair common ChatGPT note JSON
+
+- Change: Note import now safely repairs complete JSON code fences and unescaped double quotes inside note content immediately followed by the required level field.
+- Change: Updated the ChatGPT prompt to request plain text without Markdown symbols and single quotes for HTML attribute examples.
+- Evidence: focused lint passed, all seventeen application tests passed, and the production PWA build completed.
+- Remaining risk: severely malformed or structurally ambiguous JSON remains rejected instead of being guessed.

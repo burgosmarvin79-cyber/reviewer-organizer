@@ -14,8 +14,16 @@ describe('question import validation', () => {
     }])
   })
 
-  it('rejects non-JSON ChatGPT commentary', () => {
-    expect(() => parseQuestionImport(`Here you go:\n${JSON.stringify(valid)}`)).toThrow('not valid JSON')
+  it('accepts JSON wrapped in common ChatGPT commentary', () => {
+    expect(parseQuestionImport(`Here you go:\n${JSON.stringify(valid)}\nLet me know if you need more.`).questions).toHaveLength(1)
+  })
+
+  it('accepts JSON inside a Markdown code fence', () => {
+    expect(parseQuestionImport(`\`\`\`json\n${JSON.stringify(valid)}\n\`\`\``).questions).toHaveLength(1)
+  })
+
+  it('still rejects malformed JSON', () => {
+    expect(() => parseQuestionImport('{"format": }')).toThrow('invalid JSON')
   })
 
   it('rejects a question without an accepted answer', () => {

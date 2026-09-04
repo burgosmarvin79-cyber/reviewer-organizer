@@ -20,6 +20,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+function extractQuestionnaireJson(source: string) {
+  const fencedMatch = source.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+  if (fencedMatch) return fencedMatch[1].trim()
+
+  // ChatGPT sometimes adds a short sentence before or after an otherwise valid object.
+  const objectStart = source.indexOf('{')
+  const objectEnd = source.lastIndexOf('}')
+  if (objectStart >= 0 && objectEnd > objectStart) return source.slice(objectStart, objectEnd + 1)
+
+  return source
+}
+
 export function normalizeQuestionPrompt(prompt: string) {
   // Questions with cosmetic capitalization/spacing differences count as duplicates.
   return prompt.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
@@ -31,9 +43,9 @@ export function parseQuestionImport(text: string): QuestionImportResult {
 
   let value: unknown
   try {
-    value = JSON.parse(source)
+    value = JSON.parse(extractQuestionnaireJson(source))
   } catch {
-    throw new Error('This is not valid JSON. Ask ChatGPT to return JSON only, without headings or ``` marks.')
+    throw new Error('This questionnaire contains invalid JSON. Download it again from ChatGPT or fix the highlighted file content.')
   }
 
   if (!isRecord(value)) throw new Error('The file must contain one questionnaire object.')

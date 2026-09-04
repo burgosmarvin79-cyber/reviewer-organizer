@@ -41,7 +41,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 ## What Works
 
 - Lint, seven automated tests, and production build pass after the 2026-08-31 interface update.
-- Questionnaire import validation is covered by four focused tests; the complete suite now contains twelve passing tests.
+- Questionnaire and note import validation are covered by focused tests; the application suite now contains seventeen passing tests.
 - Production output serves the application shell, service worker, and install manifest successfully.
 - GitHub Pages deploys automatically from `main` and the live HTTPS site returns the app shell, PWA manifest, and service worker successfully.
 
@@ -61,4 +61,4 @@ Complete and validate the private Supabase workflow while refining the applicati
 
 ## Last Updated
 
-2026-08-31
+2026-09-04

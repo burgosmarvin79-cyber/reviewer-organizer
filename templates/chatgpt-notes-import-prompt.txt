@@ -1,21 +1,36 @@
 You are preparing study notes for my Reviewer Organizer app.
 
-I will attach:
-1. A PDF containing the source material.
-2. A text file containing my raw notes.
+I will attach a PDF containing the source material. This text file contains only the instructions for the task; do not treat it as raw study notes and do not ask me to upload another notes file.
 
-Read both files. Use the PDF as the source of truth, while preserving useful details from my raw notes. Create clear, accurate, beginner-friendly notes. Do not invent information. If the files disagree, follow the PDF and mention the correction briefly in the note.
+Read the complete PDF from the first page through the last page and use it as the source of truth. Create clear, accurate, beginner-friendly study notes directly from the PDF. Cover every important topic, concept, definition, process, classification, formula, rule, example, exception, person, name, and date needed to understand or review the material. Do not omit important content merely to make the response shorter. Do not invent information. If I optionally attach a separate file clearly identified as raw notes, preserve its useful details but follow the PDF whenever the sources disagree.
 
-Organize the output into separate notes. Each note should cover one logical topic, lesson, process, or group of related ideas. Use useful titles that make searching easy. Inside each note, use clean Markdown with this structure when appropriate:
+Before writing the JSON, silently review the PDF page by page and make a coverage checklist. After drafting the notes, silently compare them with that checklist and add any important material that was missed. Combine closely related ideas into one well-structured note, but do not combine unrelated topics or reduce important explanations to vague summaries.
+
+Organize the output into separate notes. Each note should cover one logical topic, lesson, process, or group of related ideas. Use useful titles that make searching easy.
+
+Write each note's content using this consistent Markdown structure:
 
 ## Overview
-## Key concepts
-- concise explanation of each important idea
-## Important details
-## Example or application
-## Quick recap
+A short, clear explanation of the topic.
 
-Skip headings that do not apply. Keep technical terms, definitions, formulas, steps, names, and dates accurate. Explain difficult terms in simple language. Remove repetition, filler, greetings, and unsupported claims. Preserve important exceptions and distinctions. Do not turn the notes into identification questions; this request is for study notes only.
+## Key concepts
+- Important concept with a simple explanation.
+- Another important concept with a simple explanation.
+
+## Important details
+Include accurate rules, steps, definitions, formulas, exceptions, names, or dates when relevant.
+
+## Example or application
+Give a practical example when it helps explain the topic.
+
+## Quick recap
+Summarize the most important point in one or two sentences.
+
+Always include Overview, Key concepts, and Quick recap. Include Important details and Example or application only when they add useful information. Do not repeat the note title inside the content. Do not use triple backticks or decorative symbols beyond the required headings and bullet points.
+
+When showing HTML attributes inside a content value, use single quotation marks, such as name='value' and type='text'. Never place an unescaped double quotation mark inside a content value.
+
+Keep technical terms, definitions, formulas, steps, names, and dates accurate. Explain difficult terms in simple language. Remove repetition, filler, greetings, and unsupported claims. Preserve important exceptions and distinctions. Do not turn the notes into identification questions; this request is for study notes only.
 
 Your response MUST be valid JSON only. Do not add an introduction, comments, Markdown code fences, or text outside the JSON.
 
@@ -26,16 +41,18 @@ Use exactly this format:
   "notes": [
     {
       "title": "Clear topic title",
-      "content": "Markdown-formatted notes for this topic",
+      "content": "## Overview\nA short explanation of the topic.\n\n## Key concepts\n- First important concept.\n- Second important concept.\n\n## Quick recap\nA concise summary of the topic.",
       "level": 1
     }
   ]
 }
 
 Quality rules:
-- Return at most 30 notes.
+- Return as many notes as needed for complete coverage, up to 200 notes, which is the application's import limit.
 - Every note must have a non-empty title and content.
 - Set every new note's level to 1.
 - Keep each note focused and readable on a phone.
-- Use plain text newlines inside the content string; escape JSON characters correctly.
+- Keep every content value on one valid JSON string. Represent line breaks with the escaped characters \n, not literal line breaks inside the string.
+- Escape quotation marks inside a content value as \".
+- Before responding, verify that the complete response can be parsed by JSON.parse without any cleanup.
 - Return JSON that can be parsed directly by an app.

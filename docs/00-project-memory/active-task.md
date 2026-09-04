@@ -66,14 +66,14 @@ Skip when: The task is unrelated to the current execution context.
 - Last Failure: none
 - Failure Class: none
 - Attempted Fix: none
-- Next Concrete Action: Have Marvin test a real ChatGPT questionnaire import, then deploy the verified import and sync changes when requested
+- Next Concrete Action: Confirm the deployed tolerant import with Marvin's real ChatGPT output
 
 ## Record
 
-- Verification Evidence: Questionnaire importer lint, twelve-test suite, TypeScript production build, and PWA generation passed locally on 2026-08-31; live acceptance remains pending.
-- Delivery Status: not-requested
-- Delivery Evidence: pending
+- Verification Evidence: On 2026-09-04, questionnaire import accepted ChatGPT commentary and Markdown fences in six focused tests; all 17 app tests, source lint, TypeScript build, and PWA generation passed locally. Live acceptance remains pending.
+- Delivery Status: in progress after Marvin's explicit deployment request
+- Delivery Evidence: awaiting GitHub Pages workflow completion
 - Docs Updated: pending
-- Remaining Risk: pending verification.
+- Remaining Risk: Live acceptance with Marvin's original questionnaire remains pending.
 - Memory Promotion Decision: pending
 - Last Updated: 2026-08-30T17:10:59Z
