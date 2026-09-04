@@ -71,8 +71,8 @@ Skip when: The task is unrelated to the current execution context.
 ## Record
 
 - Verification Evidence: On 2026-09-04, questionnaire import accepted ChatGPT commentary and Markdown fences in six focused tests; all 17 app tests, source lint, TypeScript build, and PWA generation passed locally. Live acceptance remains pending.
-- Delivery Status: in progress after Marvin's explicit deployment request
-- Delivery Evidence: awaiting GitHub Pages workflow completion
+- Delivery Status: deployed after Marvin's explicit publication request
+- Delivery Evidence: GitHub Pages workflow 33846147157 completed successfully and the live bundle contained the repaired importer on 2026-09-04.
 - Docs Updated: pending
 - Remaining Risk: Live acceptance with Marvin's original questionnaire remains pending.
 - Memory Promotion Decision: pending
