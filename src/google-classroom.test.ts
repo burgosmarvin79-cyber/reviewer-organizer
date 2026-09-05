@@ -27,4 +27,12 @@ describe('Google Classroom import helpers', () => {
     ])
     expect(fetchApi).toHaveBeenCalledWith(expect.stringContaining('/announcements?'))
   })
+
+  it('keeps readable attachments when one Classroom content type is blocked', async () => {
+    const fetchApi = vi.fn()
+      .mockResolvedValueOnce({ courseWork: [{ title: 'Lesson', materials: [{ driveFile: { driveFile: { id: 'pdf-1', title: 'Lesson.pdf' } } }] }] })
+      .mockResolvedValueOnce({ courseWorkMaterial: [] })
+      .mockRejectedValueOnce(new Error('Announcements scope missing'))
+    await expect(listCourseAttachments(fetchApi, 'course-1')).resolves.toHaveLength(1)
+  })
 })

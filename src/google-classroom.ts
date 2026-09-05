@@ -50,10 +50,15 @@ export function extractDriveAttachments(items: ClassroomItem[]) {
 }
 
 export async function listCourseAttachments(fetchApi: ClassroomFetcher, courseId: string) {
-  const [coursework, materials, announcements] = await Promise.all([
+  const results = await Promise.allSettled([
     listCourseItems(fetchApi, courseId, 'courseWork'),
     listCourseItems(fetchApi, courseId, 'courseWorkMaterials'),
     listCourseItems(fetchApi, courseId, 'announcements'),
   ])
-  return extractDriveAttachments([...coursework, ...materials, ...announcements])
+  const available = results.flatMap((result) => result.status === 'fulfilled' ? result.value : [])
+  if (results.every((result) => result.status === 'rejected')) {
+    const firstFailure = results[0]
+    if (firstFailure.status === 'rejected') throw firstFailure.reason
+  }
+  return extractDriveAttachments(available)
 }
