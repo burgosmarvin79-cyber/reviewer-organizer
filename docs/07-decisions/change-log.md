@@ -11,6 +11,7 @@ Skip when: You only need the active task or current state.
 - Deployment: GitHub Pages reads the public OAuth Client ID from the repository Actions variable `VITE_GOOGLE_CLIENT_ID`.
 - Evidence: lint, 21 automated tests, production build, and a local HTTP app-shell smoke test passed.
 - Remaining risk: real Google consent, school-admin policy, course listing, and PDF download require Marvin's manual acceptance before deployment.
+- Acceptance repair: The first real course returned no Coursework or Classwork Material attachments because PDFs may also be posted to the Classroom Stream. Announcement attachments are now included through the additional read-only `classroom.announcements.readonly` scope.
 
 ## 2026-08-31 — Make note synchronization observable and resilient
 

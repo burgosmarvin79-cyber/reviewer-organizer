@@ -8,6 +8,8 @@ Reviewer Organizer still uses Supabase to identify the student and protect priva
 
 An OAuth Client ID identifies the browser application and is visible to users. A client secret cannot be protected inside frontend code, so the application never includes or uses one. Production builds receive the Client ID through a GitHub Actions variable, while local development reads it from the ignored `.env.local` file.
 
+Google Classroom presents Stream announcements, assignments, and classwork materials together to students, but its API exposes them through separate endpoints. An importer must query each relevant endpoint and request the matching read-only scope; successfully listing a course does not prove that every content type is visible.
+
 ## 2026-08-31 — A theme is a small visual system
 
 A coherent university-inspired interface does not require decorating every element. A limited palette, consistent corner shapes, clear spacing, and one obvious active-navigation style create stronger identity with less visual noise.
