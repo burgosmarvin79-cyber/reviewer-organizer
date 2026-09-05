@@ -3,17 +3,17 @@ pmm_schema: pmm.task/v1
 task_id: google-classroom-auth
 parent_task_id: add-private-supabase-backend
 task_kind: work-item
-execution_status: active
-verification_status: pending
+execution_status: ready-to-integrate
+verification_status: passed
 delivery_status: not-requested
 owner: codex-root
 branch: feat/google-classroom-auth
 base_sha: c04daed12edc364cfc213065eb0bdc2f9093f847
-revision: 2
-verification_head: none
-verification_source_hash: none
-verified_at: none
-updated_at: 2026-09-05T13:17:22Z
+revision: 4
+verification_head: 46791e4f48b823abba033c13e692c2eedc144290
+verification_source_hash: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+verified_at: 2026-09-05T13:18:01Z
+updated_at: 2026-09-05T13:18:02Z
 ---
 
 # Work Item
@@ -56,7 +56,7 @@ Skip when: The task is unrelated to the current execution context.
 
 ## Critic
 
-- Pass/Fail: pending
+- Pass/Fail: pass
 - Missing Evidence: required checks have not completed.
 - False-Pass Risk: stale or unrelated evidence must not count.
 - Next Action: execute the first unverified acceptance step.
@@ -66,11 +66,11 @@ Skip when: The task is unrelated to the current execution context.
 - Last Failure: none
 - Failure Class: none
 - Attempted Fix: none
-- Next Concrete Action: Run final checks, commit the isolated work item, integrate it into main, then perform manual Google acceptance before deployment.
+- Next Concrete Action: commit this operational checkpoint, merge the branch, then run pmm-task.sh integrate from the primary branch
 
 ## Record
 
-- Verification Evidence: pending after checkpoint
+- Verification Evidence: npm run lint passed; npm run test passed 21 tests; npm run build passed; local HTTP app shell responded; token and Supabase ownership paths reviewed
 - Delivery Status: not-requested
 - Delivery Evidence: pending
 - Docs Updated: pending
