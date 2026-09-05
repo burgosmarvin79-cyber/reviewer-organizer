@@ -13,6 +13,7 @@ Skip when: You only need the active task or current state.
 - Remaining risk: real Google consent, school-admin policy, course listing, and PDF download require Marvin's manual acceptance before deployment.
 - Acceptance repair: The first real course returned no Coursework or Classwork Material attachments because PDFs may also be posted to the Classroom Stream. Announcement attachments are now included through the additional read-only `classroom.announcements.readonly` scope.
 - Root cause repair: Real Classroom attachment metadata nests the file under `material.driveFile.driveFile`; the initial parser incorrectly expected `material.driveFile.id`, so it silently discarded valid attachments. Tests now use the real nested API shape.
+- Acceptance: Marvin confirmed that the repaired local application successfully reads the PDF attachment from his real Google Classroom course.
 
 ## 2026-08-31 — Make note synchronization observable and resilient
 

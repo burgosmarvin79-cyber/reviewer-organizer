@@ -9,11 +9,11 @@ delivery_status: not-requested
 owner: codex-root
 branch: main
 base_sha: 5b51133c1658acec4e09e2994ea49ebd7d00c489
-revision: 9
+revision: 10
 verification_head: none
 verification_source_hash: none
 verified_at: none
-updated_at: 2026-09-05T13:21:08Z
+updated_at: 2026-09-05T13:41:18Z
 ---
 
 # Active Task
@@ -66,7 +66,7 @@ Skip when: The task is unrelated to the current execution context.
 - Last Failure: none
 - Failure Class: none
 - Attempted Fix: none
-- Next Concrete Action: Manually test Google consent, Classroom course listing, and one PDF import locally; then set the GitHub Actions VITE_GOOGLE_CLIENT_ID variable before any authorized deployment.
+- Next Concrete Action: Set the GitHub Actions VITE_GOOGLE_CLIENT_ID repository variable, then push and deploy only when Marvin explicitly requests publication; complete remaining Supabase cross-device and RLS acceptance checks.
 
 ## Record
 

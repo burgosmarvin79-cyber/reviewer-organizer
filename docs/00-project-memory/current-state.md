@@ -36,6 +36,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 - Automated mastery-rule tests and production build configuration.
 - Email authentication, per-user Supabase study-data synchronization, deletion synchronization, and realtime subscriptions.
 - Private Supabase PDF upload, cross-device metadata synchronization, signed five-minute open links, cloud deletion, and automatic migration of legacy browser PDFs.
+- Local Google Classroom integration can authorize a test user, list active courses, discover Drive PDF attachments from coursework, classwork materials, and Stream announcements, and import a selected PDF through the existing private Supabase storage workflow.
 - Awaited note persistence, foreground/online resynchronization, and Supabase Realtime publication for subjects, PDF metadata, notes, questions, and test history.
 - BatStateU-inspired red, white, and warm-neutral application shell using the university seal already provided for the project.
 
@@ -44,6 +45,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 - Lint, seven automated tests, and production build pass after the 2026-08-31 interface update.
 - Questionnaire and note import validation are covered by focused tests; the application suite now contains nineteen passing tests.
 - Production output serves the application shell, service worker, and install manifest successfully.
+- Marvin confirmed the real Google consent, course selection, and Classroom PDF discovery flow locally on 2026-09-05.
 - GitHub Pages deploys automatically from `main` and the live HTTPS site returns the app shell, PWA manifest, and service worker successfully.
 
 ## Known Issues
