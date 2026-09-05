@@ -4,6 +4,14 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-09-05 — Google Classroom PDF import foundation
+
+- Change: Added read-only Google OAuth, active-course discovery, Classroom attachment selection, Drive PDF validation, and import into the existing private Supabase PDF workflow.
+- Security: Google access tokens remain only in React memory and are cleared on disconnect, refresh, expiry, or an unauthorized response. No Google client secret is used or stored.
+- Deployment: GitHub Pages reads the public OAuth Client ID from the repository Actions variable `VITE_GOOGLE_CLIENT_ID`.
+- Evidence: lint, 21 automated tests, production build, and a local HTTP app-shell smoke test passed.
+- Remaining risk: real Google consent, school-admin policy, course listing, and PDF download require Marvin's manual acceptance before deployment.
+
 ## 2026-08-31 — Make note synchronization observable and resilient
 
 - Change: Note creation and editing now await direct Supabase persistence, display a saving state, preserve the local copy on failure, and surface the cloud error instead of silently closing.
