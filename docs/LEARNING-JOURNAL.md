@@ -2,6 +2,12 @@
 
 This journal records practical concepts learned while building the project. It intentionally excludes credentials, private student data, and noisy command logs.
 
+## 2026-09-05 — OAuth permission is separate from app login
+
+Reviewer Organizer still uses Supabase to identify the student and protect private study records. Google OAuth grants a separate, temporary read-only permission to fetch Classroom and Drive materials. The access token stays in browser memory, so refreshing or disconnecting removes it; imported PDFs then follow the existing Supabase ownership and storage rules.
+
+An OAuth Client ID identifies the browser application and is visible to users. A client secret cannot be protected inside frontend code, so the application never includes or uses one. Production builds receive the Client ID through a GitHub Actions variable, while local development reads it from the ignored `.env.local` file.
+
 ## 2026-08-31 — A theme is a small visual system
 
 A coherent university-inspired interface does not require decorating every element. A limited palette, consistent corner shapes, clear spacing, and one obvious active-navigation style create stronger identity with less visual noise.
