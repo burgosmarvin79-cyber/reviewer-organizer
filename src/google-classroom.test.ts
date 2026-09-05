@@ -4,8 +4,8 @@ import { extractDriveAttachments, listActiveCourses, listCourseAttachments } fro
 describe('Google Classroom import helpers', () => {
   it('deduplicates Drive attachments across Classroom items', () => {
     expect(extractDriveAttachments([
-      { title: 'Week 1', materials: [{ driveFile: { id: 'pdf-1', title: 'Lesson.pdf' } }] },
-      { title: 'Week 2', materials: [{ driveFile: { id: 'pdf-1', title: 'Lesson.pdf' } }, { driveFile: { id: 'pdf-2', title: 'Quiz.pdf' } }] },
+      { title: 'Week 1', materials: [{ driveFile: { driveFile: { id: 'pdf-1', title: 'Lesson.pdf' } } }] },
+      { title: 'Week 2', materials: [{ driveFile: { driveFile: { id: 'pdf-1', title: 'Lesson.pdf' } } }, { driveFile: { driveFile: { id: 'pdf-2', title: 'Quiz.pdf' } } }] },
     ])).toEqual([
       { fileId: 'pdf-1', title: 'Lesson.pdf', sourceTitle: 'Week 1' },
       { fileId: 'pdf-2', title: 'Quiz.pdf', sourceTitle: 'Week 2' },
@@ -21,7 +21,7 @@ describe('Google Classroom import helpers', () => {
     const fetchApi = vi.fn()
       .mockResolvedValueOnce({ courseWork: [] })
       .mockResolvedValueOnce({ courseWorkMaterial: [] })
-      .mockResolvedValueOnce({ announcements: [{ text: 'Read this', materials: [{ driveFile: { id: 'stream-pdf', title: 'Stream lesson.pdf' } }] }] })
+      .mockResolvedValueOnce({ announcements: [{ text: 'Read this', materials: [{ driveFile: { driveFile: { id: 'stream-pdf', title: 'Stream lesson.pdf' } } }] }] })
     await expect(listCourseAttachments(fetchApi, 'course-1')).resolves.toEqual([
       { fileId: 'stream-pdf', title: 'Stream lesson.pdf', sourceTitle: 'Classroom material' },
     ])

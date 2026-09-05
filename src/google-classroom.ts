@@ -1,6 +1,6 @@
 export interface ClassroomCourse { id: string; name: string; section?: string }
 
-interface ClassroomDriveFile { driveFile?: { id?: string; title?: string } }
+interface ClassroomDriveFile { driveFile?: { driveFile?: { id?: string; title?: string } } }
 interface ClassroomItem { title?: string; materials?: ClassroomDriveFile[] }
 interface CourseListResponse { courses?: ClassroomCourse[]; nextPageToken?: string }
 interface ItemListResponse { courseWork?: ClassroomItem[]; courseWorkMaterial?: ClassroomItem[]; announcements?: ClassroomItem[]; nextPageToken?: string }
@@ -39,10 +39,11 @@ export function extractDriveAttachments(items: ClassroomItem[]) {
   const seen = new Set<string>()
   for (const item of items) {
     for (const material of item.materials ?? []) {
-      const fileId = material.driveFile?.id
+      const file = material.driveFile?.driveFile
+      const fileId = file?.id
       if (!fileId || seen.has(fileId)) continue
       seen.add(fileId)
-      attachments.push({ fileId, title: material.driveFile?.title?.trim() || 'Classroom attachment', sourceTitle: item.title?.trim() || 'Classroom material' })
+      attachments.push({ fileId, title: file.title?.trim() || 'Classroom attachment', sourceTitle: item.title?.trim() || 'Classroom material' })
     }
   }
   return attachments
