@@ -53,3 +53,16 @@ Purpose: Append-only compact summaries of closed tasks.
 - Delivery State: ready
 - Verification Evidence: lint passed; 7 identification/manual-level and version-1 backup migration tests passed; TypeScript and production PWA build passed; production npm audit found 0 vulnerabilities; PMM doctor passed
 - Closed At: 2026-08-30T17:02:43Z
+
+## 2026-09-05 google-classroom-auth
+
+<!-- pmm-task-id: google-classroom-auth -->
+
+- Status: done
+- Parent Task: add-private-supabase-backend
+- Title: Connect Google Classroom imports
+- Execution State: done
+- Verification State: passed
+- Delivery State: not-requested
+- Verification Evidence: npm run lint passed; npm run test passed 21 tests; npm run build passed; local HTTP app shell responded; token and Supabase ownership paths reviewed
+- Closed At: 2026-09-05T13:18:50Z

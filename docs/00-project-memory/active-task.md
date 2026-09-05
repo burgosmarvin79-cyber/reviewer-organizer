@@ -9,11 +9,11 @@ delivery_status: not-requested
 owner: codex-root
 branch: main
 base_sha: 5b51133c1658acec4e09e2994ea49ebd7d00c489
-revision: 7
+revision: 9
 verification_head: none
 verification_source_hash: none
 verified_at: none
-updated_at: 2026-08-31T05:05:12Z
+updated_at: 2026-09-05T13:21:08Z
 ---
 
 # Active Task
@@ -66,11 +66,11 @@ Skip when: The task is unrelated to the current execution context.
 - Last Failure: none
 - Failure Class: none
 - Attempted Fix: none
-- Next Concrete Action: Confirm the deployed full-coverage Notes Generator workflow with Marvin's real PDF
+- Next Concrete Action: Manually test Google consent, Classroom course listing, and one PDF import locally; then set the GitHub Actions VITE_GOOGLE_CLIENT_ID variable before any authorized deployment.
 
 ## Record
 
-- Verification Evidence: On 2026-09-04, importer repairs and the in-app full-coverage Notes Generator prompt passed all 19 app tests, source lint, TypeScript build, and PWA generation. Live notes-generation acceptance remains pending.
+- Verification Evidence: pending after checkpoint
 - Delivery Status: deployed after Marvin's explicit publication request
 - Delivery Evidence: GitHub Pages workflow 33846147157 completed successfully and the live bundle contained the repaired importer on 2026-09-04.
 - Docs Updated: pending
