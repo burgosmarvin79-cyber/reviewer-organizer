@@ -42,6 +42,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 
 ## What Works
 
+- Google OAuth now lists active Classroom courses and imports Drive PDFs from coursework, classwork materials, or Stream announcements into the signed-in student's private PDF library. Marvin confirmed the real local course/PDF flow before deployment on 2026-09-05.
 - Lint, seven automated tests, and production build pass after the 2026-08-31 interface update.
 - Questionnaire and note import validation are covered by focused tests; the application suite now contains nineteen passing tests.
 - Production output serves the application shell, service worker, and install manifest successfully.

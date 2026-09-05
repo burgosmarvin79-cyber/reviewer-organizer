@@ -5,15 +5,15 @@ parent_task_id: none
 task_kind: primary
 execution_status: active
 verification_status: pending
-delivery_status: not-requested
+delivery_status: deployed
 owner: codex-root
 branch: main
 base_sha: 5b51133c1658acec4e09e2994ea49ebd7d00c489
-revision: 10
+revision: 11
 verification_head: none
 verification_source_hash: none
 verified_at: none
-updated_at: 2026-09-05T13:41:18Z
+updated_at: 2026-09-05T13:50:45Z
 ---
 
 # Active Task
@@ -71,8 +71,8 @@ Skip when: The task is unrelated to the current execution context.
 ## Record
 
 - Verification Evidence: pending after checkpoint
-- Delivery Status: deployed after Marvin's explicit publication request
-- Delivery Evidence: GitHub Pages workflow 33846147157 completed successfully and the live bundle contained the repaired importer on 2026-09-04.
+- Delivery Status: deployed
+- Delivery Evidence: GitHub Pages workflow 33969982633 passed for commit 736e3ee; live bundle contains Google Classroom import UI and announcement scope.
 - Docs Updated: pending
 - Remaining Risk: Live acceptance with Marvin's original questionnaire remains pending.
 - Memory Promotion Decision: pending
