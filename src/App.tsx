@@ -13,7 +13,7 @@ import {
 import { Link, NavLink, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { createBackup, restoreBackup, validateBackup } from './backup'
 import { db, deleteSubjectCascade } from './db'
-import { isAcceptedAnswer, LEVEL_NAMES, moveQuestion, randomSelection, recordAnswer } from './mastery'
+import { createFlashcardSession, isAcceptedAnswer, LEVEL_NAMES, moveQuestion, randomSelection, recordAnswer } from './mastery'
 import { normalizeQuestionPrompt, parseQuestionImport, type ImportableQuestion } from './question-import'
 import { normalizeNoteTitle, parseNoteImport, type ImportableNote } from './note-import'
 import type { MasteryLevel, Note, NoteLevel, Question, Subject, TestAnswer, TestSession } from './types'
@@ -260,12 +260,11 @@ function StudyModesPanel({ subjectId }: { subjectId: string }) {
   const questions = useLiveQuery(() => db.questions.where('subjectId').equals(subjectId).toArray(), [subjectId]) ?? []
   const missed = questions.filter((question) => question.totalAttempts > question.totalCorrect).length
   const modes = [
-    { mode: 'flashcards', title: 'Flashcards', text: 'Reveal the answer when you are ready.', icon: <BookOpen /> },
     { mode: 'quick', title: 'Quick review', text: 'See prompts, answers, and explanations at your own pace.', icon: <RefreshCw /> },
     { mode: 'missed', title: 'Missed questions', text: `${missed} question${missed === 1 ? '' : 's'} to revisit from past tests.`, icon: <CircleHelp /> },
     { mode: 'mixed', title: 'Mixed test', text: 'Practice questions from every mastery level in one session.', icon: <GraduationCap /> },
   ] as const
-  return <section className="panel"><div className="section-heading"><div><p className="eyebrow">Choose your study style</p><h2>Study modes</h2></div><span className="study-mode-hint">{questions.length} question{questions.length === 1 ? '' : 's'} available</span></div><div className="study-mode-grid">{modes.map((item) => <Link key={item.mode} className="study-mode-card" to={`/review?subject=${subjectId}&mode=${item.mode}`}><span>{item.icon}</span><div><h3>{item.title}</h3><p>{item.text}</p></div><ChevronRight /></Link>)}</div></section>
+  return <div className="study-sections"><section className="panel flashcard-feature"><div className="flashcard-feature-copy"><span className="flashcard-feature-icon"><BookOpen /></span><div><p className="eyebrow">Flashcard practice</p><h2>Build a focused card session</h2><p>Choose your mastery tiers, decide how many cards to review, and shuffle the questions before you begin.</p></div></div><div className="flashcard-feature-meta"><span>{questions.length} card{questions.length === 1 ? '' : 's'} available</span><Link className="button primary" to={`/review?subject=${subjectId}&mode=flashcards`}>Set up flashcards <ChevronRight /></Link></div></section><section className="panel"><div className="section-heading"><div><p className="eyebrow">More ways to practice</p><h2>Other study modes</h2></div></div><div className="study-mode-grid">{modes.map((item) => <Link key={item.mode} className="study-mode-card" to={`/review?subject=${subjectId}&mode=${item.mode}`}><span>{item.icon}</span><div><h3>{item.title}</h3><p>{item.text}</p></div><ChevronRight /></Link>)}</div></section></div>
 }
 
 type ReviewMode = 'flashcards' | 'quick' | 'missed' | 'mixed'
@@ -277,31 +276,54 @@ function ReviewPage() {
   const mode: ReviewMode = requestedMode && ['flashcards', 'quick', 'missed', 'mixed'].includes(requestedMode) ? requestedMode : 'flashcards'
   const subject = useLiveQuery(() => subjectId ? db.subjects.get(subjectId) : undefined, [subjectId])
   const questions = useLiveQuery(() => subjectId ? db.questions.where('subjectId').equals(subjectId).toArray() : Promise.resolve([] as Question[]), [subjectId]) ?? []
-  const pool = questions.filter((question) => mode !== 'missed' || question.totalAttempts > question.totalCorrect)
+  const [flashcardLevels, setFlashcardLevels] = useState<MasteryLevel[]>([1, 2, 3, 4])
+  const [flashcardCount, setFlashcardCount] = useState(10)
+  const [shuffleFlashcards, setShuffleFlashcards] = useState(true)
+  const [flashcardSession, setFlashcardSession] = useState<Question[] | null>(null)
+  const flashcardCandidates = questions.filter((question) => flashcardLevels.includes(question.level))
+  const pool = mode === 'flashcards' ? (flashcardSession ?? []) : questions.filter((question) => mode !== 'missed' || question.totalAttempts > question.totalCorrect)
   const [index, setIndex] = useState(0)
   const [revealed, setRevealed] = useState(false)
   const [typedAnswer, setTypedAnswer] = useState('')
   const [checked, setChecked] = useState(false)
   const [correctCount, setCorrectCount] = useState(0)
-  const [movingLevel, setMovingLevel] = useState(false)
+  const [savingLevel, setSavingLevel] = useState(false)
+  const [levelError, setLevelError] = useState('')
   const current = pool[index]
-  function next() { setIndex((value) => value + 1); setRevealed(false); setTypedAnswer(''); setChecked(false); setMovingLevel(false) }
-  async function moveCurrentQuestion(targetLevel: MasteryLevel) {
-    if (!current || current.level === targetLevel || movingLevel) return
-    setMovingLevel(true)
-    try {
-      const updated = moveQuestion(current, targetLevel)
-      await db.questions.put(updated)
-      await saveQuestion(updated)
-    } catch (error) {
-      window.alert(error instanceof Error ? error.message : 'Could not update this question level.')
-    } finally { setMovingLevel(false) }
-  }
+  function next() { setIndex((value) => value + 1); setRevealed(false); setTypedAnswer(''); setChecked(false); setLevelError('') }
   function checkMixed(event: FormEvent) { event.preventDefault(); if (!current || checked || !typedAnswer.trim()) return; setChecked(true); if (isAcceptedAnswer(typedAnswer, current.acceptedAnswers)) setCorrectCount((value) => value + 1) }
+  function toggleFlashcardLevel(level: MasteryLevel) {
+    setFlashcardLevels((levels) => levels.includes(level) ? levels.filter((item) => item !== level) : [...levels, level])
+  }
+  function startFlashcards() {
+    if (!flashcardCandidates.length) return
+    setFlashcardSession(createFlashcardSession(questions, flashcardLevels, flashcardCount, shuffleFlashcards))
+    setIndex(0)
+    setRevealed(false)
+  }
+  async function chooseFlashcardLevel(targetLevel: MasteryLevel) {
+    if (!current || mode !== 'flashcards' || !revealed || savingLevel) return
+    setSavingLevel(true)
+    setLevelError('')
+    try {
+      if (targetLevel !== current.level) {
+        const updated = moveQuestion(current, targetLevel)
+        await saveQuestion(updated)
+        await db.questions.put(updated)
+        setFlashcardSession((session) => session?.map((question) => question.id === updated.id ? updated : question) ?? null)
+      }
+      next()
+    } catch (error) {
+      setLevelError(error instanceof Error ? error.message : 'Could not update this question level.')
+    } finally {
+      setSavingLevel(false)
+    }
+  }
   if (!subject) return <div className="page"><p>Loading study mode…</p></div>
+  if (mode === 'flashcards' && !flashcardSession) return <div className="page narrow flashcard-setup-page"><Link className="back-link" to={`/subjects/${subjectId}?tab=review`}><ArrowLeft /> Study modes</Link><header className="page-header flashcard-setup-header"><div><p className="eyebrow">Flashcard setup</p><h1>Choose what to review</h1><p>Build a card set that matches where you are in your mastery journey.</p></div></header><section className="panel flashcard-setup"><div className="setup-step"><div className="setup-step-heading"><span>1</span><div><h2>Select mastery tiers</h2><p>You can combine one or more tiers in the same session.</p></div></div><div className="flashcard-level-grid">{([1, 2, 3, 4] as MasteryLevel[]).map((level) => { const count = questions.filter((question) => question.level === level).length; const selected = flashcardLevels.includes(level); return <button key={level} type="button" className={`flashcard-level-option level-card-${level}${selected ? ' selected' : ''}`} aria-pressed={selected} disabled={!count} onClick={() => toggleFlashcardLevel(level)}><span className={`level-pill level-${level}`}>Tier {level}</span><strong>{LEVEL_NAMES[level]}</strong><small>{count} card{count === 1 ? '' : 's'}</small><i>{selected ? <Check /> : null}</i></button> })}</div></div><div className="setup-step"><div className="setup-step-heading"><span>2</span><div><h2>Set your session</h2><p>{flashcardCandidates.length} card{flashcardCandidates.length === 1 ? '' : 's'} available from the selected tiers.</p></div></div><div className="flashcard-options"><label><span>Number of cards</span><input type="number" inputMode="numeric" min={1} max={Math.max(flashcardCandidates.length, 1)} value={Math.min(flashcardCount, Math.max(flashcardCandidates.length, 1))} disabled={!flashcardCandidates.length} onChange={(event) => setFlashcardCount(Math.max(1, Number(event.target.value) || 1))} /></label><label className="shuffle-option"><input type="checkbox" checked={shuffleFlashcards} onChange={(event) => setShuffleFlashcards(event.target.checked)} /><span><strong>Shuffle questions</strong><small>Show the cards in a fresh random order.</small></span></label></div></div><button className="button primary full flashcard-start" disabled={!flashcardCandidates.length} onClick={startFlashcards}><BookOpen /> Start {Math.min(flashcardCount, flashcardCandidates.length)} flashcard{Math.min(flashcardCount, flashcardCandidates.length) === 1 ? '' : 's'}</button>{!flashcardCandidates.length && <p className="form-error flashcard-empty">Select a tier that contains at least one question.</p>}</section></div>
   if (!pool.length) return <div className="page narrow"><Link className="back-link" to={`/subjects/${subjectId}?tab=review`}><ArrowLeft /> Study modes</Link><EmptyState icon={<CircleHelp />} title={mode === 'missed' ? 'No missed questions' : 'No questions yet'} text={mode === 'missed' ? 'Great work—there are no questions marked incorrect from past tests.' : 'Add questions to this subject before starting a review mode.'} /></div>
   if (!current) return <div className="page narrow"><Link className="back-link" to={`/subjects/${subjectId}?tab=review`}><ArrowLeft /> Study modes</Link><section className="result-card"><span className="result-icon"><GraduationCap /></span><p className="eyebrow">Review complete</p><h1>{mode === 'mixed' ? `${correctCount}/${pool.length}` : pool.length}</h1><p>{mode === 'mixed' ? 'correct answers in this mixed practice session' : 'questions reviewed'}</p><Link className="button primary" to={`/subjects/${subjectId}?tab=review`}>Back to study modes</Link></section></div>
-  return <div className="page narrow"><Link className="back-link" to={`/subjects/${subjectId}?tab=review`}><ArrowLeft /> {subject.name} study modes</Link><header className="page-header"><div><p className="eyebrow">{mode === 'flashcards' ? 'Flashcards' : mode === 'quick' ? 'Quick review' : mode === 'missed' ? 'Missed questions' : 'Mixed test'}</p><h1>Question {index + 1} of {pool.length}</h1></div></header><section className="review-card"><p className="eyebrow">{mode === 'mixed' ? 'Type your answer' : 'Think first, then reveal'}</p><h2>{current.prompt}</h2>{mode === 'mixed' ? <form className="identification-form" onSubmit={checkMixed}><input autoFocus disabled={checked} value={typedAnswer} onChange={(event) => setTypedAnswer(event.target.value)} placeholder="Enter your answer" /><button className="button primary" disabled={checked || !typedAnswer.trim()}>Check answer</button></form> : <>{(revealed || mode === 'quick') && <div className="review-answer"><strong>{current.acceptedAnswers[0]}</strong><p>{current.explanation}</p></div>}{mode === 'flashcards' && !revealed && <button className="button primary full" onClick={() => setRevealed(true)}>Reveal answer</button>}</>}{checked && <div className={isAcceptedAnswer(typedAnswer, current.acceptedAnswers) ? 'feedback correct' : 'feedback wrong'}><strong>{isAcceptedAnswer(typedAnswer, current.acceptedAnswers) ? 'Correct!' : 'Review this answer'}</strong><p>Answer: <b>{current.acceptedAnswers[0]}</b></p><p>{current.explanation}</p></div>}{mode === 'flashcards' && revealed && <div className="flashcard-level-controls"><div className="flashcard-level-copy"><span className="eyebrow">Mastery level</span><strong>{LEVEL_NAMES[current.level]}</strong><small>Move this question as your confidence changes.</small></div><div className="flashcard-level-actions"><button className="button ghost" disabled={movingLevel || current.level === 1} onClick={() => void moveCurrentQuestion((current.level - 1) as MasteryLevel)}><ArrowLeft /><span>Previous level</span></button><span className="flashcard-level-badge">Level {current.level}</span><button className="button primary" disabled={movingLevel || current.level === 4} onClick={() => void moveCurrentQuestion((current.level + 1) as MasteryLevel)}><span>Next level</span><ChevronRight /></button></div></div>}{((mode !== 'mixed' && (revealed || mode === 'quick')) || checked) && <div className="flashcard-next-action"><button className="button primary flashcard-next" onClick={next}><span>{index === pool.length - 1 ? 'Finish flashcards' : 'Next question'}</span><small>{index === pool.length - 1 ? 'Return to study modes' : `Question ${index + 2} of ${pool.length}`} <ChevronRight /></small></button></div>}</section></div>
+  return <div className="page narrow"><Link className="back-link" to={`/subjects/${subjectId}?tab=review`}><ArrowLeft /> {subject.name} study modes</Link><header className="page-header"><div><p className="eyebrow">{mode === 'flashcards' ? 'Flashcards' : mode === 'quick' ? 'Quick review' : mode === 'missed' ? 'Missed questions' : 'Mixed test'}</p><h1>Question {index + 1} of {pool.length}</h1></div></header><section className="review-card"><p className="eyebrow">{mode === 'mixed' ? 'Type your answer' : 'Think first, then reveal'}</p><h2>{current.prompt}</h2>{mode === 'mixed' ? <form className="identification-form" onSubmit={checkMixed}><input autoFocus disabled={checked} value={typedAnswer} onChange={(event) => setTypedAnswer(event.target.value)} placeholder="Enter your answer" /><button className="button primary" disabled={checked || !typedAnswer.trim()}>Check answer</button></form> : <>{(revealed || mode === 'quick') && <div className="review-answer"><strong>{current.acceptedAnswers[0]}</strong><p>{current.explanation}</p></div>}{mode === 'flashcards' && !revealed && <button className="button primary full" onClick={() => setRevealed(true)}>Reveal answer</button>}</>}{checked && <div className={isAcceptedAnswer(typedAnswer, current.acceptedAnswers) ? 'feedback correct' : 'feedback wrong'}><strong>{isAcceptedAnswer(typedAnswer, current.acceptedAnswers) ? 'Correct!' : 'Review this answer'}</strong><p>Answer: <b>{current.acceptedAnswers[0]}</b></p><p>{current.explanation}</p></div>}{mode === 'flashcards' && revealed && <div className="flashcard-level-controls"><div><p>Where should this card go next?</p><span className={`level-pill level-${current.level}`}>{LEVEL_NAMES[current.level]}</span></div><div className="flashcard-level-actions"><button className="button ghost" disabled={savingLevel || current.level === 1} onClick={() => void chooseFlashcardLevel((current.level - 1) as MasteryLevel)}><ArrowLeft /> Previous level</button><button className="button ghost" disabled={savingLevel} onClick={() => void chooseFlashcardLevel(current.level)}>{index === pool.length - 1 ? 'Keep & finish' : 'Keep here'}</button><button className="button primary" disabled={savingLevel || current.level === 4} onClick={() => void chooseFlashcardLevel((current.level + 1) as MasteryLevel)}>Next level <ChevronRight /></button></div>{levelError && <p className="form-error">{levelError}</p>}</div>}{(mode === 'quick' || (mode === 'mixed' && checked)) && <button className="button primary full" onClick={next}>{index === pool.length - 1 ? 'Finish review' : 'Next question'} <ChevronRight /></button>}</section></div>
 }
 
 // PDF, note, and question resource management ------------------------------------

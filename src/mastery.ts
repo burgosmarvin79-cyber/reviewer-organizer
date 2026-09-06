@@ -43,3 +43,9 @@ export function randomSelection<T>(items: T[], count: number): T[] {
   }
   return shuffled.slice(0, Math.min(Math.max(count, 1), shuffled.length))
 }
+
+export function createFlashcardSession(questions: Question[], levels: MasteryLevel[], count: number, shuffle: boolean): Question[] {
+  const eligible = questions.filter((question) => levels.includes(question.level))
+  const sessionSize = Math.min(Math.max(count, 1), eligible.length)
+  return shuffle ? randomSelection(eligible, sessionSize) : eligible.slice(0, sessionSize)
+}

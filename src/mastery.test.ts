@@ -1,6 +1,6 @@
 /** Unit tests for answer matching, statistics, mastery movement, and selection. */
 import { describe, expect, it, vi } from 'vitest'
-import { isAcceptedAnswer, moveQuestion, normalizeAnswer, randomSelection, recordAnswer } from './mastery'
+import { createFlashcardSession, isAcceptedAnswer, moveQuestion, normalizeAnswer, randomSelection, recordAnswer } from './mastery'
 import type { Question } from './types'
 
 function question(overrides: Partial<Question> = {}): Question {
@@ -39,5 +39,19 @@ describe('random selection', () => {
     const result = randomSelection(items, 3)
     expect(new Set(result).size).toBe(3)
     expect(items).toEqual([1, 2, 3, 4])
+  })
+
+  it('builds a flashcard session only from the selected mastery tiers', () => {
+    const questions = [
+      question({ id: 'q1', level: 1 }),
+      question({ id: 'q2', level: 2 }),
+      question({ id: 'q3', level: 2 }),
+      question({ id: 'q4', level: 4 }),
+    ]
+
+    const session = createFlashcardSession(questions, [2, 4], 2, false)
+
+    expect(session.map((item) => item.id)).toEqual(['q2', 'q3'])
+    expect(questions.map((item) => item.id)).toEqual(['q1', 'q2', 'q3', 'q4'])
   })
 })

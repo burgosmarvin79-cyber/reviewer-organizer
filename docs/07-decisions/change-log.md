@@ -157,3 +157,11 @@ Skip when: You only need the active task or current state.
 - Change: Added a copyable Notes Generator prompt inside the Notes import screen so the desktop workflow asks ChatGPT to review every PDF page and capture all important material.
 - Evidence: source lint, all nineteen application tests, and the production PWA build passed.
 - Remaining risk: AI-generated coverage still requires student review against the original PDF; the app cannot guarantee that an external model omitted nothing.
+
+## 2026-09-07 — Add configurable flashcard sessions
+
+- Change: Made Flashcards a separate featured section within Study Modes and added a pre-session setup for mastery-tier selection, card count, and optional question shuffling.
+- Change: Restored the post-reveal Previous level, Keep here, and Next level decisions, with cloud persistence before an updated card advances.
+- Change: Added phone-focused layouts with single-column controls, larger tap targets, and a clearer two-step setup flow.
+- Evidence: source lint, all 24 application tests including selected-tier session coverage, and the production PWA build passed.
+- Remaining risk: final visual acceptance still needs testing on Marvin's target phone browser.

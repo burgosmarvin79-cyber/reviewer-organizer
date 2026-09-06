@@ -29,7 +29,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 - Notes import includes an in-app full-coverage ChatGPT prompt that requests page-by-page PDF review before producing import-ready notes.
 - Main dashboard now presents subjects only; each subject workspace contains its own PDF, question, mastery, score, and test summary.
 - Question Bank supports selecting visible questions and deleting a confirmed batch from Supabase and local storage.
-- Subject workspaces include Study modes for flashcards, quick review, missed questions, and mixed practice.
+- Subject workspaces include Study modes for flashcards, quick review, missed questions, and mixed practice. Flashcards have a separate mobile-friendly setup where students choose mastery tiers, card count, and whether to shuffle the session; after revealing an answer, they can keep or manually move the card one tier.
 - Authenticated account switches clear the previous account's IndexedDB cache before hydrating the new account, preventing cross-account local-data leakage.
 - Subject workspaces now show mastery progress, last-study date, and a Continue Test action; the sidebar shows offline, syncing, synced, or error status and retries on reconnect/focus.
 - Manual and bulk question saves now wait for confirmed private Supabase persistence before updating the local question bank, preventing phone uploads from appearing successful before cloud synchronization finishes.
@@ -65,4 +65,4 @@ Complete and validate the private Supabase workflow while refining the applicati
 
 ## Last Updated
 
-2026-09-04
+2026-09-07

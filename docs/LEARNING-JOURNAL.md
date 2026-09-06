@@ -109,3 +109,9 @@ Selection mode makes a destructive action understandable: the student first choo
 ## 2026-08-31 — Cloud privacy also needs local privacy
 
 Row Level Security protects rows when the app asks Supabase for data, but a browser's IndexedDB cache is local and does not automatically know which account is currently signed in. The app now stores only a small account-owner identifier and clears the previous user's local study cache before loading another user's records. This closes the gap where a new account could briefly see old cached data while synchronization was starting.
+
+## 2026-09-07 — Session setup turns one feature into many useful study paths
+
+A flashcard session becomes more useful when the student chooses its scope before starting. Tier filters decide which questions are eligible, the card count controls session length, and shuffle changes only their order. The original question bank remains unchanged, so each new session can safely create a different temporary study set.
+
+For mobile design, the setup follows one decision per section and uses full-width controls with large tap areas. This reduces accidental taps and makes the next action clear on a narrow screen.

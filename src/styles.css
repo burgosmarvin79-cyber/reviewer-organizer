@@ -129,6 +129,8 @@ h2 { font-size: 1.25rem; margin-bottom: .4rem; }
 }
 
 .study-mode-hint { color: var(--muted); font-size: .8rem; }.study-mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }.study-mode-card { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 13px; padding: 17px; color: inherit; border: 1px solid var(--border); border-radius: 13px; background: #fffdfc; transition: .2s ease; }.study-mode-card:hover { border-color: var(--red); background: #fff8f7; transform: translateY(-1px); }.study-mode-card > span { width: 42px; height: 42px; display: grid; place-items: center; color: var(--red); background: var(--red-soft); border-radius: 11px; }.study-mode-card > span svg, .study-mode-card > svg { width: 20px; }.study-mode-card h3 { margin: 0 0 4px; font-size: .98rem; }.study-mode-card p { margin: 0; color: var(--muted); font-size: .76rem; line-height: 1.4; }.study-mode-card > svg { color: var(--muted); }.review-card { background: white; border: 1px solid var(--border); border-radius: 20px; padding: clamp(24px, 5vw, 44px); }.review-card h2 { font-size: clamp(1.4rem, 3vw, 2rem); line-height: 1.35; margin: 14px 0 28px; }.review-answer { margin: 20px 0; padding: 18px; color: #126a4d; background: #e9f9f2; border-radius: 12px; }.review-answer strong { font-size: 1.25rem; }.review-answer p { margin: 7px 0 0; color: #27674f; }
+.study-sections { display: grid; gap: 18px; }.flashcard-feature { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 24px; overflow: hidden; background: linear-gradient(135deg, #fff 0%, #fff6f5 100%); border-color: #e9c6c8; }.flashcard-feature-copy { display: flex; align-items: flex-start; gap: 16px; }.flashcard-feature-copy p:last-child { max-width: 620px; margin: 7px 0 0; color: var(--muted); line-height: 1.55; }.flashcard-feature-icon { flex: 0 0 auto; width: 54px; height: 54px; display: grid; place-items: center; border-radius: 15px; color: white; background: var(--red); box-shadow: 0 10px 24px #8e171f2b; }.flashcard-feature-icon svg { width: 25px; }.flashcard-feature-meta { display: grid; justify-items: end; gap: 10px; }.flashcard-feature-meta > span { color: var(--muted); font-size: .76rem; font-weight: 700; }.flashcard-setup-header { margin-bottom: 20px; }.flashcard-setup { display: grid; gap: 24px; }.setup-step { display: grid; gap: 14px; }.setup-step + .setup-step { padding-top: 22px; border-top: 1px solid var(--border); }.setup-step-heading { display: flex; align-items: flex-start; gap: 11px; }.setup-step-heading > span { flex: 0 0 auto; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: white; background: var(--red); font-size: .78rem; font-weight: 800; }.setup-step-heading h2 { margin: 2px 0 4px; }.setup-step-heading p { margin: 0; color: var(--muted); font-size: .8rem; }.flashcard-level-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }.flashcard-level-option { position: relative; min-width: 0; min-height: 112px; display: flex; flex-direction: column; align-items: flex-start; gap: 7px; padding: 14px 42px 14px 14px; text-align: left; border: 2px solid var(--border); border-radius: 13px; background: #fffdfc; color: inherit; cursor: pointer; }.flashcard-level-option:hover { border-color: #c98e92; }.flashcard-level-option.selected { border-color: var(--red); background: var(--red-soft); }.flashcard-level-option:disabled { opacity: .45; cursor: not-allowed; }.flashcard-level-option > strong { font-size: .88rem; line-height: 1.3; }.flashcard-level-option > small { color: var(--muted); }.flashcard-level-option > i { position: absolute; top: 13px; right: 13px; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; color: white; background: var(--red); }.flashcard-level-option > i:empty { background: transparent; }.flashcard-level-option > i svg { width: 15px; }.flashcard-options { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); gap: 12px; }.flashcard-options > label { min-height: 82px; padding: 13px; border: 1px solid var(--border); border-radius: 12px; background: #faf9f7; }.flashcard-options > label > span:first-child { display: block; margin-bottom: 8px; font-size: .76rem; font-weight: 800; }.flashcard-options input[type='number'] { width: 100%; min-height: 42px; padding: 0 12px; border: 1px solid #d5cfd0; border-radius: 9px; background: white; }.shuffle-option { display: flex; align-items: center; gap: 12px; cursor: pointer; }.shuffle-option input { flex: 0 0 auto; width: 21px; height: 21px; accent-color: var(--red); }.shuffle-option span strong, .shuffle-option span small { display: block; }.shuffle-option span strong { font-size: .85rem; }.shuffle-option span small { margin-top: 4px; color: var(--muted); font-size: .73rem; line-height: 1.4; }.flashcard-start { min-height: 50px; }.flashcard-empty { margin: -13px 0 0; text-align: center; }
+.flashcard-level-controls { display: grid; gap: 13px; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }.flashcard-level-controls > div:first-child { display: flex; align-items: center; justify-content: space-between; gap: 12px; }.flashcard-level-controls p { margin: 0; font-weight: 750; }.flashcard-level-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }.flashcard-level-actions .button { min-width: 0; padding-inline: 10px; }
 
 /* Keep study-mode cards readable on narrow phone screens. These rules come
    after the shared card styles so the mobile layout cannot be overridden by
@@ -136,6 +138,9 @@ h2 { font-size: 1.25rem; margin-bottom: .4rem; }
 @media (max-width: 850px) {
   .study-mode-grid { grid-template-columns: 1fr; }
   .study-mode-card { min-height: 92px; padding: 16px; }
+  .flashcard-feature { grid-template-columns: 1fr; }
+  .flashcard-feature-meta { justify-items: stretch; }
+  .flashcard-feature-meta > span { text-align: left; }
 }
 @media (max-width: 560px) {
   .panel { padding: 18px 14px; }
@@ -144,6 +149,16 @@ h2 { font-size: 1.25rem; margin-bottom: .4rem; }
   .study-mode-card { grid-template-columns: auto minmax(0, 1fr) auto; gap: 11px; }
   .study-mode-card h3 { font-size: 1rem; }
   .study-mode-card p { font-size: .8rem; }
+  .flashcard-feature-copy { flex-direction: column; }
+  .flashcard-feature-icon { width: 48px; height: 48px; }
+  .flashcard-level-grid, .flashcard-options { grid-template-columns: 1fr; }
+  .flashcard-level-option { min-height: 104px; }
+  .flashcard-setup-page .page-header h1 { font-size: 2rem; }
+  .flashcard-setup { padding: 18px 14px; }
+  .review-card { padding: 22px 16px; border-radius: 16px; }
+  .review-card .button { min-height: 48px; }
+  .flashcard-level-actions { grid-template-columns: 1fr; }
+  .flashcard-level-actions .button { width: 100%; }
 }
 @media (max-height: 560px) and (max-width: 850px) {
   .sidebar { padding-block: 18px; overflow-y: auto; }
