@@ -4,6 +4,18 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-09-05 — Google Classroom PDF import foundation
+
+- Change: Added read-only Google OAuth, active-course discovery, Classroom attachment selection, Drive PDF validation, and import into the existing private Supabase PDF workflow.
+- Security: Google access tokens remain only in React memory and are cleared on disconnect, refresh, expiry, or an unauthorized response. No Google client secret is used or stored.
+- Deployment: GitHub Pages reads the public OAuth Client ID from the repository Actions variable `VITE_GOOGLE_CLIENT_ID`.
+- Evidence: lint, 21 automated tests, production build, and a local HTTP app-shell smoke test passed.
+- Remaining risk: real Google consent, school-admin policy, course listing, and PDF download require Marvin's manual acceptance before deployment.
+- Acceptance repair: The first real course returned no Coursework or Classwork Material attachments because PDFs may also be posted to the Classroom Stream. Announcement attachments are now included through the additional read-only `classroom.announcements.readonly` scope.
+- Root cause repair: Real Classroom attachment metadata nests the file under `material.driveFile.driveFile`; the initial parser incorrectly expected `material.driveFile.id`, so it silently discarded valid attachments. Tests now use the real nested API shape.
+- Delivery: GitHub Pages workflow `33969982633` deployed commit `736e3ee` successfully, and the live bundle was verified to contain the Classroom import UI and announcement scope.
+- Acceptance: Marvin confirmed that the repaired local application successfully reads the PDF attachment from his real Google Classroom course.
+
 ## 2026-08-31 — Make note synchronization observable and resilient
 
 - Change: Note creation and editing now await direct Supabase persistence, display a saving state, preserve the local copy on failure, and surface the cloud error instead of silently closing.
@@ -126,3 +138,22 @@ Skip when: You only need the active task or current state.
 - Change: Review modes are separate from mastery tests; they help recall and practice without changing a question's mastery level automatically.
 - Evidence: lint, twelve automated tests, TypeScript checking, and production build passed.
 - Remaining risk: mixed practice currently provides immediate feedback but does not create a formal test-history record.
+
+## 2026-09-04 — Repair common ChatGPT note JSON
+
+- Change: Note import now safely repairs complete JSON code fences and unescaped double quotes inside note content immediately followed by the required level field.
+- Change: Updated the ChatGPT prompt to request plain text without Markdown symbols and single quotes for HTML attribute examples.
+- Evidence: focused lint passed, all seventeen application tests passed, and the production PWA build completed.
+- Remaining risk: severely malformed or structurally ambiguous JSON remains rejected instead of being guessed.
+
+## 2026-09-04 — Repair generated questionnaire quotes
+
+- Change: Questionnaire import now repairs unescaped double quotes inside generated text values, including HTML attribute examples such as `name="value"`.
+- Evidence: the real failure pattern received from Marvin passed a focused regression test; source lint, all nineteen application tests, and the production PWA build passed.
+- Remaining risk: structurally ambiguous files remain rejected instead of being guessed.
+
+## 2026-09-04 — Expose the full-coverage notes prompt
+
+- Change: Added a copyable Notes Generator prompt inside the Notes import screen so the desktop workflow asks ChatGPT to review every PDF page and capture all important material.
+- Evidence: source lint, all nineteen application tests, and the production PWA build passed.
+- Remaining risk: AI-generated coverage still requires student review against the original PDF; the app cannot guarantee that an external model omitted nothing.

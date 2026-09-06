@@ -1,5 +1,11 @@
 # Reviewer Organizer
 
+## Browser configuration
+
+Copy `.env.example` to `.env.local` and provide the Supabase values plus the Google OAuth web Client ID. The Google Client ID is a public browser identifier; never add a Google client secret to this repository.
+
+GitHub Pages reads the Client ID from the repository Actions variable `VITE_GOOGLE_CLIENT_ID` during its verified build.
+
 An offline-first study organizer for subjects, PDF reviewers, notes, identification question banks, manual mastery levels, and test history.
 
 ## Live application

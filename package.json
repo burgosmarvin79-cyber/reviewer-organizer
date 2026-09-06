@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-oauth/google": "^0.13.5",
     "@supabase/supabase-js": "^2.112.4",
     "dexie": "^4.0.11",
     "dexie-react-hooks": "^1.1.7",

@@ -5,15 +5,15 @@ parent_task_id: none
 task_kind: primary
 execution_status: active
 verification_status: pending
-delivery_status: not-requested
+delivery_status: deployed
 owner: codex-root
 branch: main
 base_sha: 5b51133c1658acec4e09e2994ea49ebd7d00c489
-revision: 7
+revision: 11
 verification_head: none
 verification_source_hash: none
 verified_at: none
-updated_at: 2026-08-31T05:05:12Z
+updated_at: 2026-09-05T13:50:45Z
 ---
 
 # Active Task
@@ -66,14 +66,14 @@ Skip when: The task is unrelated to the current execution context.
 - Last Failure: none
 - Failure Class: none
 - Attempted Fix: none
-- Next Concrete Action: Have Marvin test a real ChatGPT questionnaire import, then deploy the verified import and sync changes when requested
+- Next Concrete Action: Set the GitHub Actions VITE_GOOGLE_CLIENT_ID repository variable, then push and deploy only when Marvin explicitly requests publication; complete remaining Supabase cross-device and RLS acceptance checks.
 
 ## Record
 
-- Verification Evidence: Questionnaire importer lint, twelve-test suite, TypeScript production build, and PWA generation passed locally on 2026-08-31; live acceptance remains pending.
-- Delivery Status: not-requested
-- Delivery Evidence: pending
+- Verification Evidence: pending after checkpoint
+- Delivery Status: deployed
+- Delivery Evidence: GitHub Pages workflow 33969982633 passed for commit 736e3ee; live bundle contains Google Classroom import UI and announcement scope.
 - Docs Updated: pending
-- Remaining Risk: pending verification.
+- Remaining Risk: Live acceptance with Marvin's original questionnaire remains pending.
 - Memory Promotion Decision: pending
 - Last Updated: 2026-08-30T17:10:59Z

@@ -20,6 +20,25 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+function repairChatGptJson(text: string) {
+  // ChatGPT sometimes wraps JSON in a code fence or forgets to escape quotes in
+  // note content containing HTML examples. Limit repair to content immediately
+  // followed by the required level field so structural JSON stays strict.
+  const source = text.trim()
+  const fencedMatch = source.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+  const objectStart = source.indexOf('{')
+  const objectEnd = source.lastIndexOf('}')
+  const unwrapped = fencedMatch?.[1].trim()
+    ?? (objectStart >= 0 && objectEnd > objectStart ? source.slice(objectStart, objectEnd + 1) : source)
+  return unwrapped.replace(
+    /("content"\s*:\s*")([\s\S]*?)("\s*,\s*"level"\s*:\s*[123])/g,
+    (_match, start: string, content: string, end: string) => {
+      const escapedContent = content.replace(/(^|[^\\])"/g, '$1\\"')
+      return `${start}${escapedContent}${end}`
+    },
+  )
+}
+
 export function normalizeNoteTitle(title: string) {
   // Normalized titles make duplicate detection case- and spacing-insensitive.
   return title.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
@@ -28,7 +47,11 @@ export function normalizeNoteTitle(title: string) {
 export function parseNoteImport(text: string): NoteImportResult {
   if (!text.trim()) throw new Error('The selected file is empty.')
   let value: unknown
-  try { value = JSON.parse(text) } catch { throw new Error('This is not valid JSON. Ask ChatGPT to return JSON only, without headings or ``` marks.') }
+  try { value = JSON.parse(text) }
+  catch {
+    try { value = JSON.parse(repairChatGptJson(text)) }
+    catch { throw new Error('This notes file contains invalid JSON. Download it again from ChatGPT or fix the file content.') }
+  }
   if (!isRecord(value)) throw new Error('The file must contain one notes object.')
   if (value.format !== NOTE_IMPORT_FORMAT) throw new Error(`The format must be “${NOTE_IMPORT_FORMAT}”.`)
   if (value.version !== 1) throw new Error('Only notes version 1 is currently supported.')

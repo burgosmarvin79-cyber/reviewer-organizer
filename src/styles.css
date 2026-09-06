@@ -150,3 +150,21 @@ h2 { font-size: 1.25rem; margin-bottom: .4rem; }
   .brand { padding-bottom: 16px; }
   .offline-badge { margin-top: 16px; }
 }
+
+.classroom-import { display: grid; gap: 16px; margin-top: 18px; padding: clamp(18px, 3vw, 28px); border: 1px solid var(--border); border-radius: 16px; background: white; }
+.classroom-import-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
+.classroom-import-heading h3 { margin: 2px 0 5px; }
+.classroom-import-heading p:last-child, .classroom-privacy, .classroom-files small { color: var(--muted); }
+.classroom-course { display: grid; gap: 7px; font-size: .8rem; font-weight: 700; }
+.classroom-course select { width: 100%; padding: 11px 13px; border: 1px solid var(--border); border-radius: 10px; background: white; color: var(--text); }
+.classroom-status { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.classroom-status svg { width: 18px; }
+.classroom-files { display: grid; gap: 8px; max-height: 340px; overflow-y: auto; }
+.classroom-files label { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 11px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
+.classroom-files label.selected { border-color: var(--red); background: var(--red-soft); }
+.classroom-files input { accent-color: var(--red); }
+.classroom-files strong, .classroom-files small { display: block; }
+.classroom-files small { margin-top: 3px; }
+.classroom-files svg { width: 18px; color: var(--red); }
+.classroom-unavailable { margin-top: 18px; }
+@media (max-width: 560px) { .classroom-import-heading { flex-direction: column; }.classroom-import-heading .button { width: 100%; } }

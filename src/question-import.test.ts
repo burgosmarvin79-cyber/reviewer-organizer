@@ -14,8 +14,34 @@ describe('question import validation', () => {
     }])
   })
 
-  it('rejects non-JSON ChatGPT commentary', () => {
-    expect(() => parseQuestionImport(`Here you go:\n${JSON.stringify(valid)}`)).toThrow('not valid JSON')
+  it('accepts JSON wrapped in common ChatGPT commentary', () => {
+    expect(parseQuestionImport(`Here you go:\n${JSON.stringify(valid)}\nLet me know if you need more.`).questions).toHaveLength(1)
+  })
+
+  it('accepts JSON inside a Markdown code fence', () => {
+    expect(parseQuestionImport(`\`\`\`json\n${JSON.stringify(valid)}\n\`\`\``).questions).toHaveLength(1)
+  })
+
+  it('still rejects malformed JSON', () => {
+    expect(() => parseQuestionImport('{"format": }')).toThrow('invalid JSON')
+  })
+
+  it('repairs unescaped quotes in generated HTML attribute examples', () => {
+    const malformed = `{
+      "format": "reviewer-organizer-questions",
+      "version": 1,
+      "questions": [{
+        "prompt": "What format do HTML attributes use?",
+        "acceptedAnswers": ["Name/value pairs", "name="value""],
+        "explanation": "Attributes appear as name="value".",
+        "level": 1
+      }]
+    }`
+
+    const result = parseQuestionImport(malformed)
+
+    expect(result.questions[0].acceptedAnswers[1]).toBe('name="value"')
+    expect(result.questions[0].explanation).toBe('Attributes appear as name="value".')
   })
 
   it('rejects a question without an accepted answer', () => {

@@ -26,6 +26,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 - IndexedDB database for subjects, PDFs, notes, questions, settings, and test-history snapshots.
 - Subject, PDF, note, question-bank, practice-test, dashboard, history, and backup interfaces.
 - Question Bank bulk import for `.txt` or `.json` questionnaires, including strict validation, duplicate filtering, and selectable review before saving.
+- Notes import includes an in-app full-coverage ChatGPT prompt that requests page-by-page PDF review before producing import-ready notes.
 - Main dashboard now presents subjects only; each subject workspace contains its own PDF, question, mastery, score, and test summary.
 - Question Bank supports selecting visible questions and deleting a confirmed batch from Supabase and local storage.
 - Subject workspaces include Study modes for flashcards, quick review, missed questions, and mixed practice.
@@ -35,14 +36,17 @@ Complete and validate the private Supabase workflow while refining the applicati
 - Automated mastery-rule tests and production build configuration.
 - Email authentication, per-user Supabase study-data synchronization, deletion synchronization, and realtime subscriptions.
 - Private Supabase PDF upload, cross-device metadata synchronization, signed five-minute open links, cloud deletion, and automatic migration of legacy browser PDFs.
+- Local Google Classroom integration can authorize a test user, list active courses, discover Drive PDF attachments from coursework, classwork materials, and Stream announcements, and import a selected PDF through the existing private Supabase storage workflow.
 - Awaited note persistence, foreground/online resynchronization, and Supabase Realtime publication for subjects, PDF metadata, notes, questions, and test history.
 - BatStateU-inspired red, white, and warm-neutral application shell using the university seal already provided for the project.
 
 ## What Works
 
+- Google OAuth now lists active Classroom courses and imports Drive PDFs from coursework, classwork materials, or Stream announcements into the signed-in student's private PDF library. Marvin confirmed the real local course/PDF flow before deployment on 2026-09-05.
 - Lint, seven automated tests, and production build pass after the 2026-08-31 interface update.
-- Questionnaire import validation is covered by four focused tests; the complete suite now contains twelve passing tests.
+- Questionnaire and note import validation are covered by focused tests; the application suite now contains nineteen passing tests.
 - Production output serves the application shell, service worker, and install manifest successfully.
+- Marvin confirmed the real Google consent, course selection, and Classroom PDF discovery flow locally on 2026-09-05.
 - GitHub Pages deploys automatically from `main` and the live HTTPS site returns the app shell, PWA manifest, and service worker successfully.
 
 ## Known Issues
@@ -61,4 +65,4 @@ Complete and validate the private Supabase workflow while refining the applicati
 
 ## Last Updated
 
-2026-08-31
+2026-09-04

@@ -6,5 +6,7 @@ export default defineConfig({
     // jsdom supplies document/window; setup.ts supplies the IndexedDB test double.
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
+    // Keep unrelated tools in Marvin's workspace out of the application suite.
+    include: ['src/**/*.test.ts'],
   },
 })

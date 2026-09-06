@@ -2,6 +2,14 @@
 
 This journal records practical concepts learned while building the project. It intentionally excludes credentials, private student data, and noisy command logs.
 
+## 2026-09-05 — OAuth permission is separate from app login
+
+Reviewer Organizer still uses Supabase to identify the student and protect private study records. Google OAuth grants a separate, temporary read-only permission to fetch Classroom and Drive materials. The access token stays in browser memory, so refreshing or disconnecting removes it; imported PDFs then follow the existing Supabase ownership and storage rules.
+
+An OAuth Client ID identifies the browser application and is visible to users. A client secret cannot be protected inside frontend code, so the application never includes or uses one. Production builds receive the Client ID through a GitHub Actions variable, while local development reads it from the ignored `.env.local` file.
+
+Google Classroom presents Stream announcements, assignments, and classwork materials together to students, but its API exposes them through separate endpoints. An importer must query each relevant endpoint and request the matching read-only scope; successfully listing a course does not prove that every content type is visible.
+
 ## 2026-08-31 — A theme is a small visual system
 
 A coherent university-inspired interface does not require decorating every element. A limited palette, consistent corner shapes, clear spacing, and one obvious active-navigation style create stronger identity with less visual noise.
@@ -71,6 +79,10 @@ Changing stored data shapes requires a database migration. Existing multiple-cho
 A data contract is an agreed structure that both ChatGPT and Reviewer Organizer understand. Here, ChatGPT produces versioned JSON containing a prompt, accepted answers, explanation, and mastery level. The app does not blindly trust that output: it validates every field, rejects malformed files, detects duplicates, and asks the student to review selected questions before saving.
 
 The source notes and PDF belong in ChatGPT; only the generated questionnaire belongs in the app's import screen. Keeping those steps separate avoids placing an AI API key in the browser while still making question entry much faster.
+
+## 2026-09-04 — Put workflow instructions where they are used
+
+A feature is incomplete when its required prompt exists only as a project file that the user cannot easily reach. The Notes import screen now exposes the full-coverage prompt directly. This reduces missed steps while keeping AI generation outside the app, so no AI API key or additional paid integration is required.
 
 ## 2026-08-31 — A local save is not proof of cloud synchronization
 
