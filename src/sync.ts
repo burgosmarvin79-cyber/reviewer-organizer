@@ -103,7 +103,22 @@ export async function syncUserData(userId: string) {
     }
     const subjects = remoteSubjects.data.map((item) => ({ id: item.id, name: item.name, description: item.description, color: item.color, createdAt: item.created_at, updatedAt: item.updated_at }))
     const notes = remoteNotes.data.map((item) => ({ id: item.id, subjectId: item.subject_id, title: item.title, content: item.content, level: ([1, 2, 3].includes(Number(item.note_level)) ? Number(item.note_level) : 1) as Note['level'], createdAt: item.created_at, updatedAt: item.updated_at }))
-    const questions = remoteQuestions.data.map((item) => ({ id: item.id, subjectId: item.subject_id, prompt: item.prompt, acceptedAnswers: item.accepted_answers, explanation: item.explanation, level: item.level, totalAttempts: item.total_attempts, totalCorrect: item.total_correct, lastAnsweredAt: item.last_answered_at ?? undefined, createdAt: item.created_at, updatedAt: item.updated_at }))
+    const localQuestions = await db.questions.toArray()
+    const localQuestionsById = new Map(localQuestions.map((item) => [item.id, item]))
+    const newerLocalQuestions = localQuestions.filter((local) => {
+      const remote = remoteQuestions.data.find((item) => item.id === local.id)
+      return remote && local.updatedAt > remote.updated_at
+    })
+    if (newerLocalQuestions.length) {
+      const { error } = await supabase.from('questions').upsert(newerLocalQuestions.map((item) => questionRow(item, userId)))
+      if (error) throw error
+    }
+    const questions = remoteQuestions.data.map((item) => {
+      const local = localQuestionsById.get(item.id)
+      // Keep a newer local edit instead of replacing it with stale cloud data.
+      if (local && local.updatedAt > item.updated_at) return local
+      return { id: item.id, subjectId: item.subject_id, prompt: item.prompt, acceptedAnswers: item.accepted_answers, explanation: item.explanation, level: item.level, totalAttempts: item.total_attempts, totalCorrect: item.total_correct, lastAnsweredAt: item.last_answered_at ?? undefined, createdAt: item.created_at, updatedAt: item.updated_at }
+    })
     const sessions = remoteSessions.data.map((item) => ({ id: item.id, subjectId: item.subject_id, subjectName: item.subject_name, level: item.level, startedAt: item.started_at, completedAt: item.completed_at, questionCount: item.question_count, correctCount: item.correct_count, skippedCount: item.skipped_count, percentage: Number(item.percentage), answers: item.answers }))
     await db.transaction('rw', db.subjects, db.notes, db.questions, db.testSessions, async () => {
       // Supabase is authoritative after migration: upsert remote rows and remove stale local rows atomically.
