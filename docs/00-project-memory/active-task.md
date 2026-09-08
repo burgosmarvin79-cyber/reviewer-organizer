@@ -5,15 +5,15 @@ parent_task_id: none
 task_kind: primary
 execution_status: active
 verification_status: pending
-delivery_status: ready
+delivery_status: deployed
 owner: codex-root
 branch: main
 base_sha: 5b51133c1658acec4e09e2994ea49ebd7d00c489
-revision: 36
+revision: 37
 verification_head: none
 verification_source_hash: none
 verified_at: none
-updated_at: 2026-09-08T16:24:03Z
+updated_at: 2026-09-08T16:32:27Z
 ---
 
 # Active Task
@@ -71,8 +71,8 @@ Skip when: The task is unrelated to the current execution context.
 ## Record
 
 - Verification Evidence: 38 tests, ESLint, TypeScript production build, PWA generation, and diff validation pass locally for the no-wait non-Easy queue checkpoint.
-- Delivery Status: ready
-- Delivery Evidence: The verified no-wait revision is ready to push after GitHub CLI is authenticated as `marvmarv08`.
+- Delivery Status: deployed
+- Delivery Evidence: GitHub Pages workflow 34251493694 successfully deployed no-wait queue commit f24a3c1.
 - Docs Updated: PRD, current state, change log, and active task.
 - Remaining Risk: Live phone acceptance of the revised no-wait queue remains pending.
 - Memory Promotion Decision: pending

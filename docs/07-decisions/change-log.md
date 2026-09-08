@@ -11,7 +11,7 @@ Skip when: You only need the active task or current state.
 - Persistence: The selected 1-minute, 5-minute, 45-minute, or adaptive interval remains saved for future due-card scheduling.
 - UX: Removed the blocking `Next card queued` countdown and clarified the rating guidance beneath the buttons.
 - Evidence: all 38 automated tests, ESLint, TypeScript production build, PWA generation, and diff validation pass locally; phone acceptance remains pending.
-- Delivery: not yet deployed.
+- Delivery: GitHub Pages workflow `34251493694` successfully deployed commit `f24a3c1`.
 
 ## 2026-09-08 — Keep Easy cards out of the active session
 
