@@ -10,7 +10,8 @@ Skip when: You only need the active task or current state.
 - Change: Active flashcard sessions now check due times every second and move an elapsed Again retry directly behind the card currently being answered, ahead of unanswered cards.
 - UX: A card never interrupts the question already on screen. If the normal queue finishes before the minute expires, a visible countdown waits and opens the retry automatically without refreshing.
 - Evidence: focused scheduling tests cover the 59-second waiting state, 60-second queue promotion, and stable simultaneous retries; all 35 tests, ESLint, TypeScript, the production build, PWA generation, and diff validation pass locally.
-- Remaining risk: real browser timing and background-tab behavior still require Marvin's acceptance after deployment.
+- Delivery: GitHub Pages workflow `34232164964` successfully deployed commit `93c6d79`.
+- Remaining risk: real browser timing and background-tab behavior still require Marvin's acceptance.
 
 ## 2026-09-08 — Delete questions during Flashcard and Quick Review
 

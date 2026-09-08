@@ -59,7 +59,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 - Complete two-account RLS isolation, live note and PDF cross-device behavior, offline conflict behavior, and recovery paths still require verification.
 - Manual desktop and phone visual acceptance of the BatStateU-inspired interface remains required.
 - An iPhone Safari subject-route crash was reported. A local repair now cleans up Realtime channels, coalesces cloud events, incrementally reconciles IndexedDB, and removes `color-mix()` from subject surfaces; live iPhone verification remains pending deployment.
-- The timed Again queue repair passes local verification but still requires deployment and real phone acceptance.
+- The timed Again queue repair is deployed on GitHub Pages and still requires real phone timing acceptance.
 
 ## Current Blockers
 

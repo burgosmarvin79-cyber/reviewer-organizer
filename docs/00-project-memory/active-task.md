@@ -9,11 +9,11 @@ delivery_status: deployed
 owner: codex-root
 branch: main
 base_sha: 5b51133c1658acec4e09e2994ea49ebd7d00c489
-revision: 26
+revision: 28
 verification_head: none
 verification_source_hash: none
 verified_at: none
-updated_at: 2026-09-08T13:25:19Z
+updated_at: 2026-09-08T13:29:37Z
 ---
 
 # Active Task
@@ -66,13 +66,13 @@ Skip when: The task is unrelated to the current execution context.
 - Last Failure: none
 - Failure Class: none
 - Attempted Fix: none
-- Next Concrete Action: Deploy the verified timed Again queue after Marvin authorizes the GitHub push, then perform real phone timing acceptance.
+- Next Concrete Action: Have Marvin verify on phone that an Again card becomes next after one minute without exhausting the remaining queue or refreshing.
 
 ## Record
 
 - Verification Evidence: pending after checkpoint
 - Delivery Status: deployed
-- Delivery Evidence: GitHub Pages workflow 34186773367 deployed commit b0c67a4; the live bundle contains confirmed Flashcard and minimal Quick Review deletion controls.
+- Delivery Evidence: GitHub Pages workflow 34232164964 deployed flashcard timing commit 93c6d79 successfully.
 - Docs Updated: pending
 - Remaining Risk: Live acceptance with Marvin's original questionnaire remains pending.
 - Memory Promotion Decision: pending
