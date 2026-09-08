@@ -61,9 +61,9 @@ export function flashcardIntervals(question: Question) {
   const ease = Math.min(3.5, Math.max(1.3, question.reviewEase ?? 2.3))
   return {
     again: MINUTES.minute,
-    hard: current ? Math.max(8 * MINUTES.hour, Math.round(current * 1.2)) : 8 * MINUTES.hour,
-    good: current ? Math.max(MINUTES.day, Math.round(current * ease)) : MINUTES.day,
-    easy: current ? Math.max(2 * MINUTES.day, Math.round(current * ease * 1.3)) : 2 * MINUTES.day,
+    hard: current ? Math.max(5, Math.round(current * 1.2)) : 5,
+    good: current ? Math.max(45, Math.round(current * ease)) : 45,
+    easy: current ? Math.max(MINUTES.day, Math.round(current * ease * 1.3)) : MINUTES.day,
   } satisfies Record<ReviewRating, number>
 }
 

@@ -59,8 +59,8 @@ describe('random selection', () => {
 describe('adaptive flashcard scheduling', () => {
   const now = new Date('2026-09-08T08:00:00.000Z')
 
-  it('starts with a two-day-friendly review cycle', () => {
-    expect(flashcardIntervals(question())).toEqual({ again: 1, hard: 480, good: 1440, easy: 2880 })
+  it('starts with the requested short new-card review cycle', () => {
+    expect(flashcardIntervals(question())).toEqual({ again: 1, hard: 5, good: 45, easy: 1440 })
   })
 
   it('grows successful intervals instead of keeping fixed button times', () => {
@@ -73,7 +73,7 @@ describe('adaptive flashcard scheduling', () => {
     const updated = scheduleFlashcard(question({ level: 2 }), 'easy', now)
     expect(updated.level).toBe(2)
     expect(updated.reviewState).toBe('review')
-    expect(updated.reviewDueAt).toBe('2026-09-10T08:00:00.000Z')
+    expect(updated.reviewDueAt).toBe('2026-09-09T08:00:00.000Z')
     expect(updated.totalAttempts).toBe(1)
     expect(updated.totalCorrect).toBe(1)
   })
