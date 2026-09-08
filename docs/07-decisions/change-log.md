@@ -11,6 +11,7 @@ Skip when: You only need the active task or current state.
 - UX: If the available cards finish before the next interval, the session shows a live countdown and opens the scheduled card automatically without a refresh.
 - Persistence: The existing Supabase due time, interval, ease, repetition, lapse, and mastery updates remain unchanged; this change only improves current-session queue handling.
 - Evidence: focused scheduling tests cover before-due, after-due, simultaneous, and all-rating scheduled cards; all 36 tests, ESLint, TypeScript, the production build, PWA generation, and diff validation pass locally.
+- Delivery: GitHub Pages workflow `34233701930` successfully deployed commit `7b54c82`.
 - Remaining risk: a one-day Easy interval can intentionally leave a countdown if the student keeps the same session open; returning to Study modes remains the practical way to stop waiting.
 
 ## 2026-09-08 — Honor Again timing during active flashcard sessions
