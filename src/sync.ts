@@ -31,7 +31,7 @@ export function subscribeToSyncStatus(listener: (status: SyncStatus) => void) {
   return () => { syncStatusListeners.delete(listener) }
 }
 
-function subjectRow(item: Subject, userId: string) { return { id: item.id, user_id: userId, name: item.name, description: item.description, color: item.color, created_at: item.createdAt, updated_at: item.updatedAt } }
+function subjectRow(item: Subject, userId: string) { return { id: item.id, user_id: userId, name: item.name, description: item.description, color: item.color, google_classroom_course_id: item.googleClassroomCourseId ?? null, created_at: item.createdAt, updated_at: item.updatedAt } }
 // These adapters translate local camelCase models to Supabase snake_case rows.
 function noteRow(item: Note, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, title: item.title, content: item.content, note_level: item.level ?? 1, created_at: item.createdAt, updated_at: item.updatedAt } }
 function questionRow(item: Question, userId: string) { return { id: item.id, user_id: userId, subject_id: item.subjectId, prompt: item.prompt, accepted_answers: item.acceptedAnswers, explanation: item.explanation, level: item.level, total_attempts: item.totalAttempts, total_correct: item.totalCorrect, last_answered_at: item.lastAnsweredAt ?? null, created_at: item.createdAt, updated_at: item.updatedAt } }
@@ -101,7 +101,7 @@ export async function syncUserData(userId: string) {
       await migratePendingPdfs(userId)
       return
     }
-    const subjects = remoteSubjects.data.map((item) => ({ id: item.id, name: item.name, description: item.description, color: item.color, createdAt: item.created_at, updatedAt: item.updated_at }))
+    const subjects = remoteSubjects.data.map((item) => ({ id: item.id, name: item.name, description: item.description, color: item.color, googleClassroomCourseId: item.google_classroom_course_id ?? undefined, createdAt: item.created_at, updatedAt: item.updated_at }))
     const notes = remoteNotes.data.map((item) => ({ id: item.id, subjectId: item.subject_id, title: item.title, content: item.content, level: ([1, 2, 3].includes(Number(item.note_level)) ? Number(item.note_level) : 1) as Note['level'], createdAt: item.created_at, updatedAt: item.updated_at }))
     const localQuestions = await db.questions.toArray()
     const localQuestionsById = new Map(localQuestions.map((item) => [item.id, item]))

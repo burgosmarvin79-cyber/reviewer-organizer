@@ -3,6 +3,7 @@ import { useGoogleLogin, type TokenResponse } from '@react-oauth/google'
 
 const SCOPES = [
   'https://www.googleapis.com/auth/classroom.courses.readonly',
+  'https://www.googleapis.com/auth/classroom.rosters.readonly',
   'https://www.googleapis.com/auth/classroom.coursework.me.readonly',
   'https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly',
   'https://www.googleapis.com/auth/classroom.announcements.readonly',

@@ -186,4 +186,17 @@ h2 { font-size: 1.25rem; margin-bottom: .4rem; }
 .classroom-files small { margin-top: 3px; }
 .classroom-files svg { width: 18px; color: var(--red); }
 .classroom-unavailable { margin-top: 18px; }
+.classroom-connect-panel { display: grid; gap: 18px; }
+.classroom-connect-intro { display: flex; align-items: flex-start; gap: 13px; }
+.classroom-connect-intro > svg { width: 28px; color: var(--red); }
+.classroom-connect-intro h2 { margin-bottom: 4px; }
+.classroom-connect-intro p { margin: 0; color: var(--muted); }
+.classroom-course-list { display: grid; gap: 10px; }
+.classroom-course-list label { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--border); border-radius: 11px; cursor: pointer; }
+.classroom-course-list label.selected { border-color: var(--red); background: var(--red-soft); }
+.classroom-course-list input { width: 18px; height: 18px; accent-color: var(--red); }
+.classroom-course-list strong, .classroom-course-list small { display: block; }
+.classroom-course-list small { margin-top: 4px; color: var(--muted); }
+.classroom-course-list em { display: inline-flex; align-items: center; gap: 4px; color: #08714a; font-size: .72rem; font-style: normal; font-weight: 800; }
+.classroom-course-list em svg { width: 16px; }
 @media (max-width: 560px) { .classroom-import-heading { flex-direction: column; }.classroom-import-heading .button { width: 100%; } }

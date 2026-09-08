@@ -7,7 +7,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import {
   AlertCircle, ArrowLeft, BarChart3, BookOpen, Check, CheckCircle2, ChevronRight, CircleHelp, Clock3, CloudOff, RefreshCw,
   Copy, Download,
-  FileText, GraduationCap, History, Home, Menu, NotebookPen, Pencil, Plus, Search,
+  FileText, GraduationCap, History, Home, Menu, NotebookPen, Pencil, Plus, School, Search,
   Settings, ShieldCheck, Trash2, Upload, X,
 } from 'lucide-react'
 import { Link, NavLink, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -24,6 +24,7 @@ import { deleteNote, deleteQuestions, deleteSubject, saveNote, saveQuestion, sav
 import { createPdfOpenUrl, createPdfReviewer, deletePdfReviewer, deleteSubjectPdfs } from './pdf-storage'
 import noteGeneratorPrompt from '../templates/chatgpt-notes-import-prompt.txt?raw'
 import { GoogleClassroomImport } from './GoogleClassroomImport'
+import { GoogleClassroomConnect } from './GoogleClassroomConnect'
 
 const COLORS = ['#a51d25', '#7a171d', '#c74b50', '#d49a28', '#59636f', '#8b5e3c']
 const NOTE_LEVEL_NAMES: Record<NoteLevel, string> = { 1: 'Level 1 · Current', 2: 'Level 2 · Completed', 3: 'Final notes reviewer' }
@@ -178,6 +179,7 @@ function Layout({ userEmail }: { userEmail?: string } = {}) {
     { to: '/', label: 'Dashboard', icon: <Home /> },
     { to: '/subjects', label: 'Subjects', icon: <BookOpen /> },
     { to: '/history', label: 'Test history', icon: <History /> },
+    { to: '/classroom', label: 'Connect Google Classroom', icon: <School /> },
     { to: '/settings', label: 'Settings & backup', icon: <Settings /> },
   ]
   return (
@@ -200,6 +202,7 @@ function Layout({ userEmail }: { userEmail?: string } = {}) {
           <Route path="/test" element={<TestPage />} />
           <Route path="/review" element={<ReviewPage />} />
           <Route path="/history" element={<HistoryPage />} />
+          <Route path="/classroom" element={<GoogleClassroomConnect />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </main>
@@ -249,7 +252,7 @@ function SubjectForm({ subject, onClose }: { subject?: Subject; onClose: () => v
     const trimmed = name.trim()
     if (!trimmed) return
     const now = new Date().toISOString()
-    const savedSubject = { id: subject?.id ?? id(), name: trimmed, description: description.trim(), color, createdAt: subject?.createdAt ?? now, updatedAt: now }
+    const savedSubject = { id: subject?.id ?? id(), name: trimmed, description: description.trim(), color, googleClassroomCourseId: subject?.googleClassroomCourseId, createdAt: subject?.createdAt ?? now, updatedAt: now }
     // Local-first write updates the screen immediately; the cloud call persists it.
     await db.subjects.put(savedSubject)
     await saveSubject(savedSubject)

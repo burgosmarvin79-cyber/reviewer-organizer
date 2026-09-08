@@ -6,6 +6,7 @@ export interface Subject {
   name: string
   description: string
   color: string
+  googleClassroomCourseId?: string
   createdAt: string
   updatedAt: string
 }

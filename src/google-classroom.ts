@@ -1,8 +1,10 @@
 export interface ClassroomCourse { id: string; name: string; section?: string }
+export interface ClassroomCourseWithTeachers extends ClassroomCourse { instructorNames: string[] }
 
 interface ClassroomDriveFile { driveFile?: { driveFile?: { id?: string; title?: string } } }
 interface ClassroomItem { title?: string; materials?: ClassroomDriveFile[] }
 interface CourseListResponse { courses?: ClassroomCourse[]; nextPageToken?: string }
+interface TeacherListResponse { teachers?: Array<{ profile?: { name?: { fullName?: string } } }>; nextPageToken?: string }
 interface ItemListResponse { courseWork?: ClassroomItem[]; courseWorkMaterial?: ClassroomItem[]; announcements?: ClassroomItem[]; nextPageToken?: string }
 
 export interface ClassroomAttachment { fileId: string; title: string; sourceTitle: string }
@@ -19,6 +21,26 @@ export async function listActiveCourses(fetchApi: ClassroomFetcher) {
     pageToken = data.nextPageToken ?? ''
   } while (pageToken)
   return courses
+}
+
+export async function listCourseInstructorNames(fetchApi: ClassroomFetcher, courseId: string) {
+  const names: string[] = []
+  let pageToken = ''
+  do {
+    const params = new URLSearchParams({ pageSize: '100' })
+    if (pageToken) params.set('pageToken', pageToken)
+    const data = await fetchApi<TeacherListResponse>(`courses/${encodeURIComponent(courseId)}/teachers?${params}`)
+    for (const teacher of data.teachers ?? []) {
+      const name = teacher.profile?.name?.fullName?.trim()
+      if (name && !names.includes(name)) names.push(name)
+    }
+    pageToken = data.nextPageToken ?? ''
+  } while (pageToken)
+  return names
+}
+
+export function classroomInstructorDescription(names: string[]) {
+  return names.length ? `Instructor${names.length === 1 ? '' : 's'}: ${names.join(', ')}` : 'Instructor information unavailable'
 }
 
 async function listCourseItems(fetchApi: ClassroomFetcher, courseId: string, resource: 'courseWork' | 'courseWorkMaterials' | 'announcements') {

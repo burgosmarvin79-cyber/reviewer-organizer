@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { extractDriveAttachments, listActiveCourses, listCourseAttachments } from './google-classroom'
+import { classroomInstructorDescription, extractDriveAttachments, listActiveCourses, listCourseAttachments, listCourseInstructorNames } from './google-classroom'
 
 describe('Google Classroom import helpers', () => {
   it('deduplicates Drive attachments across Classroom items', () => {
@@ -15,6 +15,19 @@ describe('Google Classroom import helpers', () => {
     const fetchApi = vi.fn().mockResolvedValueOnce({ courses: [{ id: '1', name: 'Math' }], nextPageToken: 'next' }).mockResolvedValueOnce({ courses: [{ id: '2', name: 'Science' }] })
     await expect(listActiveCourses(fetchApi)).resolves.toHaveLength(2)
     expect(fetchApi).toHaveBeenLastCalledWith(expect.stringContaining('pageToken=next'))
+  })
+
+  it('collects and deduplicates instructor names across pages', async () => {
+    const fetchApi = vi.fn()
+      .mockResolvedValueOnce({ teachers: [{ profile: { name: { fullName: 'Dr. Ana Cruz' } } }], nextPageToken: 'next' })
+      .mockResolvedValueOnce({ teachers: [{ profile: { name: { fullName: 'Dr. Ana Cruz' } } }, { profile: { name: { fullName: 'Prof. Ben Lim' } } }] })
+    await expect(listCourseInstructorNames(fetchApi, 'course/1')).resolves.toEqual(['Dr. Ana Cruz', 'Prof. Ben Lim'])
+    expect(fetchApi).toHaveBeenLastCalledWith(expect.stringContaining('pageToken=next'))
+  })
+
+  it('formats teacher names for the subject description', () => {
+    expect(classroomInstructorDescription(['Dr. Ana Cruz'])).toBe('Instructor: Dr. Ana Cruz')
+    expect(classroomInstructorDescription(['Dr. Ana Cruz', 'Prof. Ben Lim'])).toBe('Instructors: Dr. Ana Cruz, Prof. Ben Lim')
   })
 
   it('includes attachments posted as Classroom announcements', async () => {

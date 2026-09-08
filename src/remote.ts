@@ -15,7 +15,7 @@ async function userId() {
 
 export async function saveSubject(subject: Subject) {
   const id = await userId()
-  const { error } = await supabase!.from('subjects').upsert({ id: subject.id, user_id: id, name: subject.name, description: subject.description, color: subject.color, created_at: subject.createdAt, updated_at: subject.updatedAt })
+  const { error } = await supabase!.from('subjects').upsert({ id: subject.id, user_id: id, name: subject.name, description: subject.description, color: subject.color, google_classroom_course_id: subject.googleClassroomCourseId ?? null, created_at: subject.createdAt, updated_at: subject.updatedAt })
   if (error) throw error
 }
 
