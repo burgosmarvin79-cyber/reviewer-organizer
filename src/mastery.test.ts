@@ -1,6 +1,6 @@
 /** Unit tests for answer matching, statistics, mastery movement, and selection. */
 import { describe, expect, it, vi } from 'vitest'
-import { createFlashcardSession, flashcardIntervals, formatReviewInterval, isAcceptedAnswer, isFlashcardRepeatAt, isQuestionDue, moveQuestion, normalizeAnswer, prioritizeDueFlashcardRepeat, randomSelection, recordAnswer, scheduleFlashcard } from './mastery'
+import { createFlashcardSession, flashcardIntervals, formatReviewInterval, isAcceptedAnswer, isFlashcardRepeatAt, isQuestionDue, moveQuestion, normalizeAnswer, prioritizeDueFlashcardRepeat, randomSelection, recordAnswer, scheduleFlashcard, updateFlashcardSessionAfterRating } from './mastery'
 import type { Question } from './types'
 
 function question(overrides: Partial<Question> = {}): Question {
@@ -138,5 +138,17 @@ describe('adaptive flashcard scheduling', () => {
 
       expect(prioritizeDueFlashcardRepeat(session, 0, dueTime).map((card) => card.id)).toEqual([current.id, current.id, `next-${rating}`])
     }
+  })
+
+  it('removes Easy from the active session while preserving its scheduled due time', () => {
+    const current = question({ id: 'q1' })
+    const updated = scheduleFlashcard(current, 'easy', now)
+    const session = [current, question({ id: 'q2' })]
+
+    const nextSession = updateFlashcardSessionAfterRating(session, 0, updated, 'easy')
+
+    expect(nextSession.map((card) => card.id)).toEqual(['q1', 'q2'])
+    expect(nextSession[0].reviewDueAt).toBe(updated.reviewDueAt)
+    expect(isFlashcardRepeatAt(nextSession, 0)).toBe(false)
   })
 })

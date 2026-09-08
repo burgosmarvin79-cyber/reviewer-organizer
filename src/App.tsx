@@ -13,7 +13,7 @@ import {
 import { Link, NavLink, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { createBackup, restoreBackup, validateBackup } from './backup'
 import { db, deleteSubjectCascade } from './db'
-import { createFlashcardSession, flashcardIntervals, formatReviewInterval, isAcceptedAnswer, isFlashcardRepeatAt, isQuestionDue, LEVEL_NAMES, moveQuestion, prioritizeDueFlashcardRepeat, randomSelection, recordAnswer, scheduleFlashcard } from './mastery'
+import { createFlashcardSession, flashcardIntervals, formatReviewInterval, isAcceptedAnswer, isFlashcardRepeatAt, isQuestionDue, LEVEL_NAMES, moveQuestion, prioritizeDueFlashcardRepeat, randomSelection, recordAnswer, scheduleFlashcard, updateFlashcardSessionAfterRating } from './mastery'
 import { normalizeQuestionPrompt, parseQuestionImport, type ImportableQuestion } from './question-import'
 import { normalizeNoteTitle, parseNoteImport, type ImportableNote } from './note-import'
 import type { MasteryLevel, Note, NoteLevel, Question, ReviewRating, Subject, TestAnswer, TestSession } from './types'
@@ -384,12 +384,7 @@ function ReviewPage() {
       const updated = scheduleFlashcard(current, rating)
       await saveQuestion(updated)
       await db.questions.put(updated)
-      setFlashcardSession((session) => {
-        if (!session) return null
-        const updatedSession = session.map((question, position) => position === index ? updated : question)
-        const withoutFutureDuplicate = updatedSession.filter((question, position) => position <= index || question.id !== updated.id)
-        return [...withoutFutureDuplicate, updated]
-      })
+      setFlashcardSession((session) => session ? updateFlashcardSessionAfterRating(session, index, updated, rating) : null)
       next()
     } catch (error) {
       setLevelError(error instanceof Error ? error.message : 'Could not update this question level.')

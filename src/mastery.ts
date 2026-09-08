@@ -77,6 +77,12 @@ export function prioritizeDueFlashcardRepeat(session: Question[], currentIndex: 
   return reordered
 }
 
+export function updateFlashcardSessionAfterRating(session: Question[], currentIndex: number, updated: Question, rating: ReviewRating) {
+  const updatedSession = session.map((question, position) => position === currentIndex ? updated : question)
+  const withoutFutureDuplicate = updatedSession.filter((question, position) => position <= currentIndex || question.id !== updated.id)
+  return rating === 'easy' ? withoutFutureDuplicate : [...withoutFutureDuplicate, updated]
+}
+
 export function flashcardIntervals(question: Question) {
   const current = Math.max(0, question.reviewIntervalMinutes ?? 0)
   const ease = Math.min(3.5, Math.max(1.3, question.reviewEase ?? 2.3))

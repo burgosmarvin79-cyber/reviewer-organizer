@@ -4,6 +4,14 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-09-08 — Keep Easy cards out of the active session
+
+- Change: Choosing Easy now removes the card from the current session instead of scheduling a same-session return.
+- Persistence: Easy still saves its one-day due time and one-tier mastery promotion, so it appears in a future due-card session.
+- Other ratings: Again, Hard, and Good continue returning automatically in the active session at their selected intervals.
+- Evidence: the Easy-removal regression test and the existing timed-queue tests pass; all 37 tests, ESLint, TypeScript, the production build, PWA generation, and diff validation pass locally.
+- Remaining risk: final phone acceptance is still required after deployment.
+
 ## 2026-09-08 — Return every flashcard rating during the active session
 
 - Change: Again, Hard, Good, and Easy ratings now all remain in the active session and return automatically when their saved intervals expire.
