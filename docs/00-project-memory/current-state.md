@@ -29,7 +29,8 @@ Complete and validate the private Supabase workflow while refining the applicati
 - Notes import includes an in-app full-coverage ChatGPT prompt that requests page-by-page PDF review before producing import-ready notes.
 - Main dashboard now presents subjects only; each subject workspace contains its own PDF, question, mastery, score, and test summary.
 - Question Bank supports selecting visible questions and deleting a confirmed batch from Supabase and local storage.
-- Subject workspaces include Study modes for flashcards, quick review, missed questions, and mixed practice. Flashcards have a separate mobile-friendly setup where students choose mastery tiers, card count, and whether to shuffle the session; after revealing an answer, they can keep or manually move the card one tier.
+- Subject workspaces include Study modes for flashcards, quick review, missed questions, and mixed practice. Flashcards have a separate mobile-friendly setup where students choose mastery tiers, card count, and whether to shuffle the session; Again, Hard, Good, and Easy schedule the next review, while Easy also advances mastery by one tier.
+- During an active flashcard session, an Again card is checked every second and moved ahead of unanswered cards once its one-minute delay expires. If the student finishes the available cards first, a countdown waits for the retry and opens it automatically without a refresh.
 - An active Flashcard or Quick Review question can be deleted with confirmation; deletion is synchronized to Supabase and local storage, preserves test-history snapshots, and keeps the remaining session position valid.
 - Authenticated account switches clear the previous account's IndexedDB cache before hydrating the new account, preventing cross-account local-data leakage.
 - Subject workspaces now show mastery progress, last-study date, and a Continue Test action; the sidebar shows offline, syncing, synced, or error status and retries on reconnect/focus.
@@ -50,6 +51,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 - Production output serves the application shell, service worker, and install manifest successfully.
 - Marvin confirmed the real Google consent, course selection, and Classroom PDF discovery flow locally on 2026-09-05.
 - GitHub Pages deploys automatically from `main` and the live HTTPS site returns the app shell, PWA manifest, and service worker successfully.
+- The active-session Again queue is covered by focused before-due, after-due, and simultaneous-retry tests; the full application suite contains 35 passing tests.
 
 ## Known Issues
 
@@ -57,6 +59,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 - Complete two-account RLS isolation, live note and PDF cross-device behavior, offline conflict behavior, and recovery paths still require verification.
 - Manual desktop and phone visual acceptance of the BatStateU-inspired interface remains required.
 - An iPhone Safari subject-route crash was reported. A local repair now cleans up Realtime channels, coalesces cloud events, incrementally reconciles IndexedDB, and removes `color-mix()` from subject surfaces; live iPhone verification remains pending deployment.
+- The timed Again queue repair passes local verification but still requires deployment and real phone acceptance.
 
 ## Current Blockers
 
@@ -68,4 +71,4 @@ Complete and validate the private Supabase workflow while refining the applicati
 
 ## Last Updated
 
-2026-09-07
+2026-09-08

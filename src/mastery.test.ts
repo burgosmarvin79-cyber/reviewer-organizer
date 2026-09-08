@@ -1,6 +1,6 @@
 /** Unit tests for answer matching, statistics, mastery movement, and selection. */
 import { describe, expect, it, vi } from 'vitest'
-import { createFlashcardSession, flashcardIntervals, formatReviewInterval, isAcceptedAnswer, isQuestionDue, moveQuestion, normalizeAnswer, randomSelection, recordAnswer, scheduleFlashcard } from './mastery'
+import { createFlashcardSession, flashcardIntervals, formatReviewInterval, isAcceptedAnswer, isFlashcardRetryAt, isQuestionDue, moveQuestion, normalizeAnswer, prioritizeDueFlashcardRetry, randomSelection, recordAnswer, scheduleFlashcard } from './mastery'
 import type { Question } from './types'
 
 function question(overrides: Partial<Question> = {}): Question {
@@ -94,5 +94,38 @@ describe('adaptive flashcard scheduling', () => {
     expect(updated.reviewRepetitions).toBe(0)
     expect(updated.reviewLapses).toBe(1)
     expect(isQuestionDue(updated, new Date('2026-09-08T08:01:00.000Z'))).toBe(true)
+  })
+
+  it('moves a due Again retry ahead of unanswered cards without interrupting the current card', () => {
+    const current = question({ id: 'q1' })
+    const retry = scheduleFlashcard(current, 'again', now)
+    const session = [current, question({ id: 'q2' }), question({ id: 'q3' }), retry]
+
+    const reordered = prioritizeDueFlashcardRetry(session, 0, new Date('2026-09-08T08:01:00.000Z'))
+
+    expect(reordered.map((card) => card.id)).toEqual(['q1', 'q1', 'q2', 'q3'])
+    expect(isFlashcardRetryAt(reordered, 1)).toBe(true)
+    expect(session.map((card) => card.id)).toEqual(['q1', 'q2', 'q3', 'q1'])
+  })
+
+  it('keeps an Again retry waiting until its one-minute due time', () => {
+    const current = question({ id: 'q1' })
+    const retry = scheduleFlashcard(current, 'again', now)
+    const session = [current, question({ id: 'q2' }), retry]
+
+    expect(prioritizeDueFlashcardRetry(session, 0, new Date('2026-09-08T08:00:59.000Z'))).toBe(session)
+  })
+
+  it('keeps the next due retry stable when another retry is also due', () => {
+    const first = question({ id: 'q1' })
+    const second = question({ id: 'q2' })
+    const session = [first, second, scheduleFlashcard(first, 'again', now), scheduleFlashcard(second, 'again', now)]
+    const dueTime = new Date('2026-09-08T08:01:00.000Z')
+
+    const once = prioritizeDueFlashcardRetry(session, 1, dueTime)
+    const twice = prioritizeDueFlashcardRetry(once, 1, dueTime)
+
+    expect(once).toBe(session)
+    expect(twice).toBe(once)
   })
 })

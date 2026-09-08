@@ -56,6 +56,27 @@ export function isQuestionDue(question: Question, now = new Date()) {
   return !question.reviewDueAt || new Date(question.reviewDueAt).getTime() <= now.getTime()
 }
 
+export function isFlashcardRetryAt(session: Question[], index: number) {
+  const card = session[index]
+  return Boolean(card && session.slice(0, index).some((earlierCard) => earlierCard.id === card.id))
+}
+
+export function prioritizeDueFlashcardRetry(session: Question[], currentIndex: number, now = new Date()) {
+  const nextIndex = currentIndex + 1
+  const nextCardIsDueRetry = isFlashcardRetryAt(session, nextIndex) && isQuestionDue(session[nextIndex], now)
+  if (nextCardIsDueRetry) return session
+
+  const dueRetryIndex = session.findIndex((card, index) =>
+    index > nextIndex && isFlashcardRetryAt(session, index) && isQuestionDue(card, now),
+  )
+  if (dueRetryIndex < 0) return session
+
+  const reordered = [...session]
+  const [dueRetry] = reordered.splice(dueRetryIndex, 1)
+  reordered.splice(nextIndex, 0, dueRetry)
+  return reordered
+}
+
 export function flashcardIntervals(question: Question) {
   const current = Math.max(0, question.reviewIntervalMinutes ?? 0)
   const ease = Math.min(3.5, Math.max(1.3, question.reviewEase ?? 2.3))

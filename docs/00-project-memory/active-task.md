@@ -9,11 +9,11 @@ delivery_status: deployed
 owner: codex-root
 branch: main
 base_sha: 5b51133c1658acec4e09e2994ea49ebd7d00c489
-revision: 24
+revision: 26
 verification_head: none
 verification_source_hash: none
 verified_at: none
-updated_at: 2026-09-08T09:39:44Z
+updated_at: 2026-09-08T13:25:19Z
 ---
 
 # Active Task
@@ -66,7 +66,7 @@ Skip when: The task is unrelated to the current execution context.
 - Last Failure: none
 - Failure Class: none
 - Attempted Fix: none
-- Next Concrete Action: Apply the additive spaced-repetition migration after Marvin confirms, then deploy and verify the Anki-style flashcard experience.
+- Next Concrete Action: Deploy the verified timed Again queue after Marvin authorizes the GitHub push, then perform real phone timing acceptance.
 
 ## Record
 

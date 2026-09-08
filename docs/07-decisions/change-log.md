@@ -4,6 +4,14 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-09-08 — Honor Again timing during active flashcard sessions
+
+- Root cause: Again retries were appended to the fixed end of the session, while the due-time clock stopped after the session began. The stored one-minute schedule therefore could not affect the active queue.
+- Change: Active flashcard sessions now check due times every second and move an elapsed Again retry directly behind the card currently being answered, ahead of unanswered cards.
+- UX: A card never interrupts the question already on screen. If the normal queue finishes before the minute expires, a visible countdown waits and opens the retry automatically without refreshing.
+- Evidence: focused scheduling tests cover the 59-second waiting state, 60-second queue promotion, and stable simultaneous retries; all 35 tests, ESLint, TypeScript, the production build, PWA generation, and diff validation pass locally.
+- Remaining risk: real browser timing and background-tab behavior still require Marvin's acceptance after deployment.
+
 ## 2026-09-08 — Delete questions during Flashcard and Quick Review
 
 - Change: Added a confirmed Delete this question action to every active flashcard, before and after answer reveal.

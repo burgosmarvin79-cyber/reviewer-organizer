@@ -134,4 +134,6 @@ An Anki-style scheduler answers “when should I see this card again?” while a
 
 The displayed Again, Hard, Good, and Easy times are calculated from the card's current interval and ease. A new card begins at 1 minute, 5 minutes, 45 minutes, or 1 day, then those choices change after every answer. A forgotten card returns quickly; successful cards gradually wait longer. The due date, interval, repetitions, and lapses must be cloud fields—not temporary screen state—so the schedule survives restarts and follows the student to another device.
 
-Time passing does not automatically cause React to render again. A due-card screen therefore needs a small clock signal: Reviewer Organizer recalculates while the setup screen is open and as soon as the app returns from the background. The timer stops during an active session and when the screen closes, avoiding unnecessary work.
+Time passing does not automatically cause React to render again. A due-card screen therefore needs a small clock signal: Reviewer Organizer recalculates every five seconds during setup, every second during an active session, and immediately when the app returns from the background.
+
+A saved due time and an active-session queue solve different problems. The database remembers *when* a card is due across restarts and devices, while the queue decides *where* that card appears on the current screen. A timed Again retry must use both: wait until its due time, then move ahead of unanswered cards without interrupting the card the student is already reading.
