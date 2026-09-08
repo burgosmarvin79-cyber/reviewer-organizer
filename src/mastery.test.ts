@@ -1,6 +1,6 @@
 /** Unit tests for answer matching, statistics, mastery movement, and selection. */
 import { describe, expect, it, vi } from 'vitest'
-import { createFlashcardSession, flashcardIntervals, formatReviewInterval, isAcceptedAnswer, isFlashcardRetryAt, isQuestionDue, moveQuestion, normalizeAnswer, prioritizeDueFlashcardRetry, randomSelection, recordAnswer, scheduleFlashcard } from './mastery'
+import { createFlashcardSession, flashcardIntervals, formatReviewInterval, isAcceptedAnswer, isFlashcardRepeatAt, isQuestionDue, moveQuestion, normalizeAnswer, prioritizeDueFlashcardRepeat, randomSelection, recordAnswer, scheduleFlashcard } from './mastery'
 import type { Question } from './types'
 
 function question(overrides: Partial<Question> = {}): Question {
@@ -101,10 +101,10 @@ describe('adaptive flashcard scheduling', () => {
     const retry = scheduleFlashcard(current, 'again', now)
     const session = [current, question({ id: 'q2' }), question({ id: 'q3' }), retry]
 
-    const reordered = prioritizeDueFlashcardRetry(session, 0, new Date('2026-09-08T08:01:00.000Z'))
+    const reordered = prioritizeDueFlashcardRepeat(session, 0, new Date('2026-09-08T08:01:00.000Z'))
 
     expect(reordered.map((card) => card.id)).toEqual(['q1', 'q1', 'q2', 'q3'])
-    expect(isFlashcardRetryAt(reordered, 1)).toBe(true)
+    expect(isFlashcardRepeatAt(reordered, 1)).toBe(true)
     expect(session.map((card) => card.id)).toEqual(['q1', 'q2', 'q3', 'q1'])
   })
 
@@ -113,7 +113,7 @@ describe('adaptive flashcard scheduling', () => {
     const retry = scheduleFlashcard(current, 'again', now)
     const session = [current, question({ id: 'q2' }), retry]
 
-    expect(prioritizeDueFlashcardRetry(session, 0, new Date('2026-09-08T08:00:59.000Z'))).toBe(session)
+    expect(prioritizeDueFlashcardRepeat(session, 0, new Date('2026-09-08T08:00:59.000Z'))).toBe(session)
   })
 
   it('keeps the next due retry stable when another retry is also due', () => {
@@ -122,10 +122,21 @@ describe('adaptive flashcard scheduling', () => {
     const session = [first, second, scheduleFlashcard(first, 'again', now), scheduleFlashcard(second, 'again', now)]
     const dueTime = new Date('2026-09-08T08:01:00.000Z')
 
-    const once = prioritizeDueFlashcardRetry(session, 1, dueTime)
-    const twice = prioritizeDueFlashcardRetry(once, 1, dueTime)
+    const once = prioritizeDueFlashcardRepeat(session, 1, dueTime)
+    const twice = prioritizeDueFlashcardRepeat(once, 1, dueTime)
 
     expect(once).toBe(session)
     expect(twice).toBe(once)
+  })
+
+  it('returns every rating to the active session when its interval expires', () => {
+    for (const rating of ['again', 'hard', 'good', 'easy'] as const) {
+      const current = question({ id: `q-${rating}` })
+      const scheduled = scheduleFlashcard(current, rating, now)
+      const session = [current, question({ id: `next-${rating}` }), scheduled]
+      const dueTime = new Date(now.getTime() + flashcardIntervals(current)[rating] * 60_000)
+
+      expect(prioritizeDueFlashcardRepeat(session, 0, dueTime).map((card) => card.id)).toEqual([current.id, current.id, `next-${rating}`])
+    }
   })
 })

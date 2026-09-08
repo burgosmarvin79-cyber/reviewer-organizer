@@ -4,6 +4,15 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-09-08 — Return every flashcard rating during the active session
+
+- Change: Again, Hard, Good, and Easy ratings now all remain in the active session and return automatically when their saved intervals expire.
+- Queue behavior: A due scheduled card moves behind the card currently being answered and ahead of unanswered cards; a not-yet-due card never appears early.
+- UX: If the available cards finish before the next interval, the session shows a live countdown and opens the scheduled card automatically without a refresh.
+- Persistence: The existing Supabase due time, interval, ease, repetition, lapse, and mastery updates remain unchanged; this change only improves current-session queue handling.
+- Evidence: focused scheduling tests cover before-due, after-due, simultaneous, and all-rating scheduled cards; all 36 tests, ESLint, TypeScript, the production build, PWA generation, and diff validation pass locally.
+- Remaining risk: a one-day Easy interval can intentionally leave a countdown if the student keeps the same session open; returning to Study modes remains the practical way to stop waiting.
+
 ## 2026-09-08 — Honor Again timing during active flashcard sessions
 
 - Root cause: Again retries were appended to the fixed end of the session, while the due-time clock stopped after the session began. The stored one-minute schedule therefore could not affect the active queue.

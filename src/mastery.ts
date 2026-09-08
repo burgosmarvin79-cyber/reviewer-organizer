@@ -56,24 +56,24 @@ export function isQuestionDue(question: Question, now = new Date()) {
   return !question.reviewDueAt || new Date(question.reviewDueAt).getTime() <= now.getTime()
 }
 
-export function isFlashcardRetryAt(session: Question[], index: number) {
+export function isFlashcardRepeatAt(session: Question[], index: number) {
   const card = session[index]
   return Boolean(card && session.slice(0, index).some((earlierCard) => earlierCard.id === card.id))
 }
 
-export function prioritizeDueFlashcardRetry(session: Question[], currentIndex: number, now = new Date()) {
+export function prioritizeDueFlashcardRepeat(session: Question[], currentIndex: number, now = new Date()) {
   const nextIndex = currentIndex + 1
-  const nextCardIsDueRetry = isFlashcardRetryAt(session, nextIndex) && isQuestionDue(session[nextIndex], now)
-  if (nextCardIsDueRetry) return session
+  const nextCardIsDueRepeat = isFlashcardRepeatAt(session, nextIndex) && isQuestionDue(session[nextIndex], now)
+  if (nextCardIsDueRepeat) return session
 
-  const dueRetryIndex = session.findIndex((card, index) =>
-    index > nextIndex && isFlashcardRetryAt(session, index) && isQuestionDue(card, now),
+  const dueRepeatIndex = session.findIndex((card, index) =>
+    index > nextIndex && isFlashcardRepeatAt(session, index) && isQuestionDue(card, now),
   )
-  if (dueRetryIndex < 0) return session
+  if (dueRepeatIndex < 0) return session
 
   const reordered = [...session]
-  const [dueRetry] = reordered.splice(dueRetryIndex, 1)
-  reordered.splice(nextIndex, 0, dueRetry)
+  const [dueRepeat] = reordered.splice(dueRepeatIndex, 1)
+  reordered.splice(nextIndex, 0, dueRepeat)
   return reordered
 }
 

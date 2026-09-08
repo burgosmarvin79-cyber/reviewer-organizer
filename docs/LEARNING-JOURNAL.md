@@ -136,4 +136,4 @@ The displayed Again, Hard, Good, and Easy times are calculated from the card's c
 
 Time passing does not automatically cause React to render again. A due-card screen therefore needs a small clock signal: Reviewer Organizer recalculates every five seconds during setup, every second during an active session, and immediately when the app returns from the background.
 
-A saved due time and an active-session queue solve different problems. The database remembers *when* a card is due across restarts and devices, while the queue decides *where* that card appears on the current screen. A timed Again retry must use both: wait until its due time, then move ahead of unanswered cards without interrupting the card the student is already reading.
+A saved due time and an active-session queue solve different problems. The database remembers *when* a card is due across restarts and devices, while the queue decides *where* that card appears on the current screen. Every rating uses both: wait until its selected due time, then move ahead of unanswered cards without interrupting the card the student is already reading.
