@@ -1,5 +1,7 @@
 /** Shared data contracts used by the interface, local database, and cloud sync. */
 export type MasteryLevel = 1 | 2 | 3 | 4
+export type ReviewRating = 'again' | 'hard' | 'good' | 'easy'
+export type ReviewState = 'new' | 'learning' | 'review' | 'mastered'
 
 export interface Subject {
   id: string
@@ -54,6 +56,12 @@ export interface Question {
   totalAttempts: number
   totalCorrect: number
   lastAnsweredAt?: string
+  reviewState?: ReviewState
+  reviewIntervalMinutes?: number
+  reviewEase?: number
+  reviewDueAt?: string
+  reviewRepetitions?: number
+  reviewLapses?: number
   createdAt: string
   updatedAt: string
 }

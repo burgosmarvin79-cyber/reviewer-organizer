@@ -1,6 +1,6 @@
 /** Unit tests for answer matching, statistics, mastery movement, and selection. */
 import { describe, expect, it, vi } from 'vitest'
-import { createFlashcardSession, isAcceptedAnswer, moveQuestion, normalizeAnswer, randomSelection, recordAnswer } from './mastery'
+import { createFlashcardSession, flashcardIntervals, formatReviewInterval, isAcceptedAnswer, isQuestionDue, moveQuestion, normalizeAnswer, randomSelection, recordAnswer, scheduleFlashcard } from './mastery'
 import type { Question } from './types'
 
 function question(overrides: Partial<Question> = {}): Question {
@@ -53,5 +53,36 @@ describe('random selection', () => {
 
     expect(session.map((item) => item.id)).toEqual(['q2', 'q3'])
     expect(questions.map((item) => item.id)).toEqual(['q1', 'q2', 'q3', 'q4'])
+  })
+})
+
+describe('adaptive flashcard scheduling', () => {
+  const now = new Date('2026-09-08T08:00:00.000Z')
+
+  it('starts with a two-day-friendly review cycle', () => {
+    expect(flashcardIntervals(question())).toEqual({ again: 1, hard: 480, good: 1440, easy: 2880 })
+  })
+
+  it('grows successful intervals instead of keeping fixed button times', () => {
+    const reviewed = question({ reviewIntervalMinutes: 1440, reviewEase: 2.3 })
+    expect(flashcardIntervals(reviewed)).toEqual({ again: 1, hard: 1728, good: 3312, easy: 4306 })
+    expect(formatReviewInterval(4306)).toBe('3 days')
+  })
+
+  it('schedules easy cards later and records progress without changing mastery tier', () => {
+    const updated = scheduleFlashcard(question({ level: 2 }), 'easy', now)
+    expect(updated.level).toBe(2)
+    expect(updated.reviewState).toBe('review')
+    expect(updated.reviewDueAt).toBe('2026-09-10T08:00:00.000Z')
+    expect(updated.totalAttempts).toBe(1)
+    expect(updated.totalCorrect).toBe(1)
+  })
+
+  it('resets a forgotten card to learning and makes it due in one minute', () => {
+    const updated = scheduleFlashcard(question({ reviewIntervalMinutes: 10080, reviewRepetitions: 4 }), 'again', now)
+    expect(updated.reviewState).toBe('learning')
+    expect(updated.reviewRepetitions).toBe(0)
+    expect(updated.reviewLapses).toBe(1)
+    expect(isQuestionDue(updated, new Date('2026-09-08T08:01:00.000Z'))).toBe(true)
   })
 })

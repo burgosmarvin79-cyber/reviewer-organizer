@@ -46,7 +46,10 @@ function questionRow(question: Question, ownerId: string) {
     id: question.id, user_id: ownerId, subject_id: question.subjectId, prompt: question.prompt,
     accepted_answers: question.acceptedAnswers, explanation: question.explanation, level: question.level,
     total_attempts: question.totalAttempts, total_correct: question.totalCorrect,
-    last_answered_at: question.lastAnsweredAt ?? null, created_at: question.createdAt, updated_at: question.updatedAt,
+    last_answered_at: question.lastAnsweredAt ?? null, review_state: question.reviewState ?? 'new',
+    review_interval_minutes: question.reviewIntervalMinutes ?? 0, review_ease: question.reviewEase ?? 2.3,
+    review_due_at: question.reviewDueAt ?? null, review_repetitions: question.reviewRepetitions ?? 0,
+    review_lapses: question.reviewLapses ?? 0, created_at: question.createdAt, updated_at: question.updatedAt,
   }
 }
 

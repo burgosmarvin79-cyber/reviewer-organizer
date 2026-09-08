@@ -1,5 +1,5 @@
 /** Pure study helpers used to evaluate answers and manage question progression. */
-import type { MasteryLevel, Question } from './types'
+import type { MasteryLevel, Question, ReviewRating, ReviewState } from './types'
 
 export const LEVEL_NAMES: Record<MasteryLevel, string> = {
   1: 'Test 1 · New',
@@ -48,4 +48,53 @@ export function createFlashcardSession(questions: Question[], levels: MasteryLev
   const eligible = questions.filter((question) => levels.includes(question.level))
   const sessionSize = Math.min(Math.max(count, 1), eligible.length)
   return shuffle ? randomSelection(eligible, sessionSize) : eligible.slice(0, sessionSize)
+}
+
+const MINUTES = { minute: 1, hour: 60, day: 1440 }
+
+export function isQuestionDue(question: Question, now = new Date()) {
+  return !question.reviewDueAt || new Date(question.reviewDueAt).getTime() <= now.getTime()
+}
+
+export function flashcardIntervals(question: Question) {
+  const current = Math.max(0, question.reviewIntervalMinutes ?? 0)
+  const ease = Math.min(3.5, Math.max(1.3, question.reviewEase ?? 2.3))
+  return {
+    again: MINUTES.minute,
+    hard: current ? Math.max(8 * MINUTES.hour, Math.round(current * 1.2)) : 8 * MINUTES.hour,
+    good: current ? Math.max(MINUTES.day, Math.round(current * ease)) : MINUTES.day,
+    easy: current ? Math.max(2 * MINUTES.day, Math.round(current * ease * 1.3)) : 2 * MINUTES.day,
+  } satisfies Record<ReviewRating, number>
+}
+
+export function formatReviewInterval(minutes: number) {
+  if (minutes < 60) return `${minutes} min`
+  if (minutes < MINUTES.day) return `${Math.round(minutes / 60)} hr`
+  const days = Math.round(minutes / MINUTES.day)
+  if (days < 30) return `${days} day${days === 1 ? '' : 's'}`
+  const months = Math.round(days / 30)
+  return `${months} mo`
+}
+
+export function scheduleFlashcard(question: Question, rating: ReviewRating, now = new Date()): Question {
+  const intervals = flashcardIntervals(question)
+  const interval = intervals[rating]
+  const previousEase = question.reviewEase ?? 2.3
+  const ease = Math.min(3.5, Math.max(1.3, previousEase + (rating === 'again' ? -0.2 : rating === 'hard' ? -0.15 : rating === 'easy' ? 0.15 : 0)))
+  const repetitions = rating === 'again' ? 0 : (question.reviewRepetitions ?? 0) + 1
+  const state: ReviewState = rating === 'again' ? 'learning' : interval >= 30 * MINUTES.day ? 'mastered' : interval >= MINUTES.day ? 'review' : 'learning'
+  const due = new Date(now.getTime() + interval * 60_000).toISOString()
+  return {
+    ...question,
+    reviewState: state,
+    reviewIntervalMinutes: interval,
+    reviewEase: ease,
+    reviewDueAt: due,
+    reviewRepetitions: repetitions,
+    reviewLapses: (question.reviewLapses ?? 0) + (rating === 'again' ? 1 : 0),
+    lastAnsweredAt: now.toISOString(),
+    totalAttempts: question.totalAttempts + 1,
+    totalCorrect: question.totalCorrect + (rating === 'again' ? 0 : 1),
+    updatedAt: now.toISOString(),
+  }
 }

@@ -127,3 +127,9 @@ Row Level Security protects rows when the app asks Supabase for data, but a brow
 A flashcard session becomes more useful when the student chooses its scope before starting. Tier filters decide which questions are eligible, the card count controls session length, and shuffle changes only their order. The original question bank remains unchanged, so each new session can safely create a different temporary study set.
 
 For mobile design, the setup follows one decision per section and uses full-width controls with large tap areas. This reduces accidental taps and makes the next action clear on a narrow screen.
+
+## 2026-09-08 — Spaced repetition schedules memory, not mastery
+
+An Anki-style scheduler answers “when should I see this card again?” while a mastery tier answers “where do I personally classify this question?” Keeping those decisions separate lets automatic timing help without taking away the student's manual control.
+
+The displayed Again, Hard, Good, and Easy times are calculated from the card's current interval and ease. They begin with a short two-day review cycle, then change after every answer. A forgotten card returns quickly; successful cards gradually wait longer. The due date, interval, repetitions, and lapses must be cloud fields—not temporary screen state—so the schedule survives restarts and follows the student to another device.

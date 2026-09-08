@@ -184,3 +184,11 @@ Skip when: You only need the active task or current state.
 - Change: Added phone-focused layouts with single-column controls, larger tap targets, and a clearer two-step setup flow.
 - Evidence: source lint, all 24 application tests including selected-tier session coverage, and the production PWA build passed.
 - Remaining risk: final visual acceptance still needs testing on Marvin's target phone browser.
+
+## 2026-09-08 — Add adaptive spaced-repetition scheduling
+
+- Change: Replaced manual post-card tier movement with Again, Hard, Good, and Easy ratings whose displayed intervals adapt to each card's review history.
+- Change: Added due-only sessions, due/learning/mastered summaries, same-session requeue for forgotten cards, and a compact responsive rating layout while preserving manual mastery tiers.
+- Persistence: Added additive question scheduling fields for state, due time, interval, ease, repetitions, and lapses, protected by the existing per-user Row Level Security policy.
+- Evidence: source lint, all 30 automated tests, TypeScript checking, and the production PWA build passed locally.
+- Remaining risk: the additive production Supabase migration and real-device visual acceptance are pending.
