@@ -10,7 +10,8 @@ Skip when: You only need the active task or current state.
 - Redirects: Signup confirmation and password-reset requests now explicitly return to the application base URL instead of relying only on the Supabase default Site URL.
 - Security: Recovery uses Supabase's temporary authenticated session and never handles a service-role key or stores a password outside the submitted form state.
 - Evidence: ESLint, 24 automated tests, TypeScript production build, PWA generation, dependency audit, diff validation, and local app-shell HTTP smoke test passed.
-- Remaining risk: A real delivered reset email and the complete recovery link flow require manual acceptance before deployment is considered verified.
+- Delivery: GitHub Pages workflow `34183851166` deployed commit `4c3a580`; the live app shell and published bundle contain the reset request and new-password screens.
+- Remaining risk: A real delivered reset email and the complete recovery link flow require manual acceptance.
 
 ## 2026-09-05 — Google Classroom PDF import foundation
 

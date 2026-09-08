@@ -52,7 +52,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 
 ## Known Issues
 
-- The password-recovery flow passes local code checks but still requires a real reset-email acceptance test after deployment.
+- The password-recovery flow is deployed and passes local code plus live-bundle checks, but still requires a real reset-email acceptance test.
 - Complete two-account RLS isolation, live note and PDF cross-device behavior, offline conflict behavior, and recovery paths still require verification.
 - Manual desktop and phone visual acceptance of the BatStateU-inspired interface remains required.
 - An iPhone Safari subject-route crash was reported. A local repair now cleans up Realtime channels, coalesces cloud events, incrementally reconciles IndexedDB, and removes `color-mix()` from subject surfaces; live iPhone verification remains pending deployment.
