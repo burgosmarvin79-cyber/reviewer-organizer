@@ -336,8 +336,18 @@ function ReviewPage() {
   const [shuffleFlashcards, setShuffleFlashcards] = useState(true)
   const [dueOnly, setDueOnly] = useState(true)
   const [flashcardSession, setFlashcardSession] = useState<Question[] | null>(null)
-  const dueCount = questions.filter((question) => isQuestionDue(question)).length
-  const flashcardCandidates = questions.filter((question) => flashcardLevels.includes(question.level) && (!dueOnly || isQuestionDue(question)))
+  const [reviewNow, setReviewNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (mode !== 'flashcards' || flashcardSession !== null) return
+    const refreshDueCards = () => setReviewNow(Date.now())
+    const timer = window.setInterval(refreshDueCards, 5_000)
+    const refreshWhenVisible = () => { if (document.visibilityState === 'visible') refreshDueCards() }
+    document.addEventListener('visibilitychange', refreshWhenVisible)
+    return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', refreshWhenVisible) }
+  }, [mode, flashcardSession])
+  const dueTime = new Date(reviewNow)
+  const dueCount = questions.filter((question) => isQuestionDue(question, dueTime)).length
+  const flashcardCandidates = questions.filter((question) => flashcardLevels.includes(question.level) && (!dueOnly || isQuestionDue(question, dueTime)))
   const pool = mode === 'flashcards' ? (flashcardSession ?? []) : questions.filter((question) => mode !== 'missed' || question.totalAttempts > question.totalCorrect)
   const [index, setIndex] = useState(0)
   const [revealed, setRevealed] = useState(false)
