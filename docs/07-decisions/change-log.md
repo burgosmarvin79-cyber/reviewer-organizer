@@ -10,6 +10,7 @@ Skip when: You only need the active task or current state.
 - Persistence: Easy still saves its one-day due time and one-tier mastery promotion, so it appears in a future due-card session.
 - Other ratings: Again, Hard, and Good continue returning automatically in the active session at their selected intervals.
 - Evidence: the Easy-removal regression test and the existing timed-queue tests pass; all 37 tests, ESLint, TypeScript, the production build, PWA generation, and diff validation pass locally.
+- Delivery: GitHub Pages workflow `34236423227` successfully deployed commit `c419ab8`.
 - Remaining risk: final phone acceptance is still required after deployment.
 
 ## 2026-09-08 — Return every flashcard rating during the active session

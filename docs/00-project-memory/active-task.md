@@ -9,11 +9,11 @@ delivery_status: deployed
 owner: codex-root
 branch: main
 base_sha: 5b51133c1658acec4e09e2994ea49ebd7d00c489
-revision: 32
+revision: 34
 verification_head: none
 verification_source_hash: none
 verified_at: none
-updated_at: 2026-09-08T13:52:01Z
+updated_at: 2026-09-08T14:11:35Z
 ---
 
 # Active Task
@@ -66,13 +66,13 @@ Skip when: The task is unrelated to the current execution context.
 - Last Failure: none
 - Failure Class: none
 - Attempted Fix: none
-- Next Concrete Action: Deploy the verified Easy queue exclusion after Marvin authorizes the GitHub push, then perform real phone acceptance.
+- Next Concrete Action: Have Marvin verify on phone that Easy removes the card from the active queue while Again, Hard, and Good still return after their intervals.
 
 ## Record
 
 - Verification Evidence: pending after checkpoint
 - Delivery Status: deployed
-- Delivery Evidence: GitHub Pages workflow 34233701930 deployed all-rating active-session queue commit 7b54c82 successfully.
+- Delivery Evidence: GitHub Pages workflow 34236423227 deployed Easy queue exclusion commit c419ab8 successfully.
 - Docs Updated: pending
 - Remaining Risk: Live acceptance with Marvin's original questionnaire remains pending.
 - Memory Promotion Decision: pending
