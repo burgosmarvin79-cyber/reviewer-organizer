@@ -2,6 +2,12 @@
 
 This journal records practical concepts learned while building the project. It intentionally excludes credentials, private student data, and noisy command logs.
 
+## 2026-09-08 — Deleting from a study session affects two views
+
+A flashcard session is a temporary snapshot of questions selected from the permanent question bank. Deleting the active card must therefore remove both the stored question and its copy in the session. Quick Review reads the live question bank instead, but still needs its position adjusted after deletion. Keeping the same array position naturally advances to the next question, while deleting the last question requires moving the position back so the view never points past its end.
+
+Cloud deletion happens before local removal. If Supabase rejects the request, the app retains the card and shows the failure instead of making one device appear successful while another still contains the question. Historical test snapshots remain because they record what happened during an earlier test rather than representing the current question bank.
+
 ## 2026-09-08 — Password recovery is an authenticated handoff
 
 A password-reset email does more than open the website. Supabase verifies the one-time link, creates a temporary recovery session in the browser, and then the app uses that session to update the password. The app should recognize this recovery event before showing the private workspace, ask the user to type the new password twice, and end the temporary session after the change.

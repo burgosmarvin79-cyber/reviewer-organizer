@@ -4,6 +4,15 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-09-08 — Delete questions during Flashcard and Quick Review
+
+- Change: Added a confirmed Delete this question action to every active flashcard, before and after answer reveal.
+- Change: Added a minimal trash-icon Delete action beside Next question in Quick Review.
+- Synchronization: The action removes the question from Supabase first, then local IndexedDB and the current card session; test-history snapshots remain unchanged.
+- Session behavior: The next card stays in the current position, deleting the final card ends the session cleanly, and cloud failures leave the card available with an error message.
+- Evidence: ESLint, 24 automated tests, TypeScript production build, PWA generation, and diff validation pass locally.
+- Remaining risk: Marvin must manually accept both review layouts, the confirmation dialog, next-question behavior, and cross-device deletion before deployment.
+
 ## 2026-09-08 — Add secure password recovery
 
 - Change: Added a Forgot Password screen, Supabase reset-email request, recovery-session detection, matching new-password confirmation, password update, and sign-out after recovery.

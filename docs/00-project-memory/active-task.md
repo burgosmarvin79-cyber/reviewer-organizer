@@ -9,11 +9,11 @@ delivery_status: deployed
 owner: codex-root
 branch: main
 base_sha: 5b51133c1658acec4e09e2994ea49ebd7d00c489
-revision: 18
+revision: 21
 verification_head: none
 verification_source_hash: none
 verified_at: none
-updated_at: 2026-09-08T03:37:51Z
+updated_at: 2026-09-08T04:08:10Z
 ---
 
 # Active Task
@@ -66,7 +66,7 @@ Skip when: The task is unrelated to the current execution context.
 - Last Failure: none
 - Failure Class: none
 - Attempted Fix: none
-- Next Concrete Action: Password recovery is implemented and locally verified; obtain Marvin's visual acceptance, then deploy with confirmation and run a real reset-email recovery test.
+- Next Concrete Action: Extend confirmed per-question deletion to Quick Review with a minimal control and valid next-card navigation.
 
 ## Record
 
