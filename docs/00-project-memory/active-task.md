@@ -9,11 +9,11 @@ delivery_status: deployed
 owner: codex-root
 branch: main
 base_sha: 5b51133c1658acec4e09e2994ea49ebd7d00c489
-revision: 21
+revision: 22
 verification_head: none
 verification_source_hash: none
 verified_at: none
-updated_at: 2026-09-08T04:08:10Z
+updated_at: 2026-09-08T04:25:32Z
 ---
 
 # Active Task
@@ -72,7 +72,7 @@ Skip when: The task is unrelated to the current execution context.
 
 - Verification Evidence: pending after checkpoint
 - Delivery Status: deployed
-- Delivery Evidence: GitHub Pages workflow 34183851166 deployed commit 4c3a580; live app shell and recovery UI strings were verified from the published bundle.
+- Delivery Evidence: GitHub Pages workflow 34186773367 deployed commit b0c67a4; the live bundle contains confirmed Flashcard and minimal Quick Review deletion controls.
 - Docs Updated: pending
 - Remaining Risk: Live acceptance with Marvin's original questionnaire remains pending.
 - Memory Promotion Decision: pending

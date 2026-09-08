@@ -11,7 +11,8 @@ Skip when: You only need the active task or current state.
 - Synchronization: The action removes the question from Supabase first, then local IndexedDB and the current card session; test-history snapshots remain unchanged.
 - Session behavior: The next card stays in the current position, deleting the final card ends the session cleanly, and cloud failures leave the card available with an error message.
 - Evidence: ESLint, 24 automated tests, TypeScript production build, PWA generation, and diff validation pass locally.
-- Remaining risk: Marvin must manually accept both review layouts, the confirmation dialog, next-question behavior, and cross-device deletion before deployment.
+- Delivery: GitHub Pages workflow `34186773367` deployed commit `b0c67a4`; the published bundle contains both deletion controls and their confirmation behavior.
+- Remaining risk: Marvin must manually accept both live review layouts, the confirmation dialog, next-question behavior, and cross-device deletion.
 
 ## 2026-09-08 — Add secure password recovery
 
