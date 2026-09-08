@@ -18,6 +18,7 @@
 .auth-screen .button.primary { background: #c62828; border-color: #c62828; }
 .auth-screen .button.primary:hover { background: #a91f1f; border-color: #a91f1f; }
 .auth-screen .text-button { color: #c62828; }
+.auth-screen .auth-secondary-action { justify-self: center; margin: -5px 0 0; }
 * { box-sizing: border-box; }
 html { min-width: 320px; overflow-x: hidden; }
 body { margin: 0; min-width: 320px; min-height: 100vh; overflow-x: hidden; }

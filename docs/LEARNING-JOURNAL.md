@@ -2,6 +2,12 @@
 
 This journal records practical concepts learned while building the project. It intentionally excludes credentials, private student data, and noisy command logs.
 
+## 2026-09-08 — Password recovery is an authenticated handoff
+
+A password-reset email does more than open the website. Supabase verifies the one-time link, creates a temporary recovery session in the browser, and then the app uses that session to update the password. The app should recognize this recovery event before showing the private workspace, ask the user to type the new password twice, and end the temporary session after the change.
+
+Authentication links also need an explicit destination. The application now supplies its own base URL when requesting signup and recovery emails, while the same URL must remain allowlisted in Supabase. This prevents production users from being sent to a development-only `localhost` address.
+
 ## 2026-09-05 — OAuth permission is separate from app login
 
 Reviewer Organizer still uses Supabase to identify the student and protect private study records. Google OAuth grants a separate, temporary read-only permission to fetch Classroom and Drive materials. The access token stays in browser memory, so refreshing or disconnecting removes it; imported PDFs then follow the existing Supabase ownership and storage rules.

@@ -9,11 +9,11 @@ delivery_status: deployed
 owner: codex-root
 branch: main
 base_sha: 5b51133c1658acec4e09e2994ea49ebd7d00c489
-revision: 15
+revision: 17
 verification_head: none
 verification_source_hash: none
 verified_at: none
-updated_at: 2026-09-06T22:44:31Z
+updated_at: 2026-09-08T02:20:37Z
 ---
 
 # Active Task
@@ -66,7 +66,7 @@ Skip when: The task is unrelated to the current execution context.
 - Last Failure: none
 - Failure Class: none
 - Attempted Fix: none
-- Next Concrete Action: Flashcard post-reveal mastery controls are restored and locally verified (lint, 24 tests, build). Marvin can refresh the running local preview and test Previous level, Keep here, and Next level on the target phone.
+- Next Concrete Action: Password recovery is implemented and locally verified; obtain Marvin's visual acceptance, then deploy with confirmation and run a real reset-email recovery test.
 
 ## Record
 

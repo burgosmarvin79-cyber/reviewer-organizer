@@ -4,6 +4,14 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-09-08 — Add secure password recovery
+
+- Change: Added a Forgot Password screen, Supabase reset-email request, recovery-session detection, matching new-password confirmation, password update, and sign-out after recovery.
+- Redirects: Signup confirmation and password-reset requests now explicitly return to the application base URL instead of relying only on the Supabase default Site URL.
+- Security: Recovery uses Supabase's temporary authenticated session and never handles a service-role key or stores a password outside the submitted form state.
+- Evidence: ESLint, 24 automated tests, TypeScript production build, PWA generation, dependency audit, diff validation, and local app-shell HTTP smoke test passed.
+- Remaining risk: A real delivered reset email and the complete recovery link flow require manual acceptance before deployment is considered verified.
+
 ## 2026-09-05 — Google Classroom PDF import foundation
 
 - Change: Added read-only Google OAuth, active-course discovery, Classroom attachment selection, Drive PDF validation, and import into the existing private Supabase PDF workflow.

@@ -27,14 +27,20 @@ import { GoogleClassroomImport } from './GoogleClassroomImport'
 
 const COLORS = ['#a51d25', '#7a171d', '#c74b50', '#d49a28', '#59636f', '#8b5e3c']
 const NOTE_LEVEL_NAMES: Record<NoteLevel, string> = { 1: 'Level 1 · Current', 2: 'Level 2 · Completed', 3: 'Final notes reviewer' }
+type AuthMode = 'sign-in' | 'sign-up' | 'forgot-password' | 'update-password'
+
+function authRedirectUrl() {
+  return new URL(import.meta.env.BASE_URL, window.location.origin).href
+}
 
 // Authentication gate: only a signed-in user can enter the private study workspace.
 function AuthGate() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(Boolean(supabase))
-  const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in')
+  const [mode, setMode] = useState<AuthMode>('sign-in')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [passwordConfirmation, setPasswordConfirmation] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -42,7 +48,16 @@ function AuthGate() {
     if (!supabase) return
     const client = supabase
     void client.auth.getSession().then(({ data }) => { setSession(data.session); setLoading(false) })
-    const { data: listener } = client.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
+    const { data: listener } = client.auth.onAuthStateChange((event, nextSession) => {
+      setSession(nextSession)
+      if (event === 'PASSWORD_RECOVERY') {
+        setMode('update-password')
+        setPassword('')
+        setPasswordConfirmation('')
+        setError('')
+        setMessage('Your reset link is verified. Choose a new password.')
+      }
+    })
     return () => listener.subscription.unsubscribe()
   }, [])
   const userId = session?.user.id
@@ -74,18 +89,55 @@ function AuthGate() {
 
   if (!supabase) return <div className="auth-screen"><section className="auth-card"><div className="brand auth-brand"><span className="brand-mark"><Check /></span><div><strong>Reviewer</strong><small>Organizer</small></div></div><p className="eyebrow">Secure study space</p><h1>Sign in to continue</h1><p>The app is ready for accounts, but the Supabase connection is not configured in this copy yet.</p><div className="notice">Add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> to this folder’s <code>.env.local</code>, then restart the dev server.</div></section></div>
   if (loading) return <div className="auth-screen"><div className="auth-card"><p>Loading your secure study space…</p></div></div>
-  if (session) return <Layout userEmail={session.user.email} />
+  if (session && mode !== 'update-password') return <Layout userEmail={session.user.email} />
 
   async function submit(event: FormEvent) {
     event.preventDefault(); setError(''); setMessage('')
     const client = supabase
     if (!client) return
-    const action = mode === 'sign-in' ? client.auth.signInWithPassword({ email, password }) : client.auth.signUp({ email, password })
+    const action = mode === 'sign-in'
+      ? client.auth.signInWithPassword({ email, password })
+      : client.auth.signUp({ email, password, options: { emailRedirectTo: authRedirectUrl() } })
     const { data, error: authError } = await action
     if (authError) return setError(authError.message)
-    if (!data.session && mode === 'sign-up') setMessage('Account created. You can now sign in.')
+    if (!data.session && mode === 'sign-up') setMessage('Account created. Check your email to confirm your account, then sign in.')
   }
-  return <div className="auth-screen"><section className="auth-card"><div className="brand auth-brand"><span className="brand-mark"><Check /></span><div><strong>Reviewer</strong><small>Organizer</small></div></div><p className="eyebrow">Private study space</p><h1>{mode === 'sign-in' ? 'Welcome back' : 'Create your account'}</h1><p>{mode === 'sign-in' ? 'Sign in to access your subjects and progress.' : 'Your reviewers and notes will be isolated to your account.'}</p><div className="auth-divider"><span>use your account</span></div><form className="form" onSubmit={submit}><label>Email<input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" /></label><label>Password<input type="password" required minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'} /></label>{error && <p className="form-error">{error}</p>}{message && <p className="notice">{message}</p>}<button className="button primary full">{mode === 'sign-in' ? 'Sign in' : 'Sign up'}</button></form><button className="text-button" onClick={() => { setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in'); setError(''); setMessage('') }}>{mode === 'sign-in' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}</button></section></div>
+
+  async function requestPasswordReset(event: FormEvent) {
+    event.preventDefault(); setError(''); setMessage('')
+    const client = supabase
+    if (!client) return
+    const { error: resetError } = await client.auth.resetPasswordForEmail(email, { redirectTo: authRedirectUrl() })
+    if (resetError) return setError(resetError.message)
+    setMessage('Check your email for a password reset link. You can close this page after the email arrives.')
+  }
+
+  async function updatePassword(event: FormEvent) {
+    event.preventDefault(); setError(''); setMessage('')
+    if (password !== passwordConfirmation) return setError('Passwords do not match.')
+    const client = supabase
+    if (!client) return
+    const { error: updateError } = await client.auth.updateUser({ password })
+    if (updateError) return setError(updateError.message)
+    await client.auth.signOut()
+    setPassword('')
+    setPasswordConfirmation('')
+    setMode('sign-in')
+    setMessage('Password updated. Sign in with your new password.')
+  }
+
+  const resetRequest = mode === 'forgot-password'
+  const passwordUpdate = mode === 'update-password'
+  const title = resetRequest ? 'Reset your password' : passwordUpdate ? 'Choose a new password' : mode === 'sign-in' ? 'Welcome back' : 'Create your account'
+  const description = resetRequest
+    ? 'Enter your account email and we’ll send you a secure reset link.'
+    : passwordUpdate
+      ? 'Use at least six characters, then sign in again with your new password.'
+      : mode === 'sign-in'
+        ? 'Sign in to access your subjects and progress.'
+        : 'Your reviewers and notes will be isolated to your account.'
+
+  return <div className="auth-screen"><section className="auth-card"><div className="brand auth-brand"><span className="brand-mark"><Check /></span><div><strong>Reviewer</strong><small>Organizer</small></div></div><p className="eyebrow">Private study space</p><h1>{title}</h1><p>{description}</p><div className="auth-divider"><span>{passwordUpdate ? 'secure password update' : 'use your account'}</span></div>{resetRequest ? <form className="form" onSubmit={requestPasswordReset}><label>Email<input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" /></label>{error && <p className="form-error">{error}</p>}{message && <p className="notice">{message}</p>}<button className="button primary full">Send reset link</button></form> : passwordUpdate ? <form className="form" onSubmit={updatePassword}><label>New password<input type="password" required minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" /></label><label>Confirm new password<input type="password" required minLength={6} value={passwordConfirmation} onChange={(event) => setPasswordConfirmation(event.target.value)} autoComplete="new-password" /></label>{error && <p className="form-error">{error}</p>}{message && <p className="notice">{message}</p>}<button className="button primary full">Update password</button></form> : <form className="form" onSubmit={submit}><label>Email<input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" /></label><label>Password<input type="password" required minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'} /></label>{error && <p className="form-error">{error}</p>}{message && <p className="notice">{message}</p>}<button className="button primary full">{mode === 'sign-in' ? 'Sign in' : 'Sign up'}</button>{mode === 'sign-in' && <button type="button" className="text-button auth-secondary-action" onClick={() => { setMode('forgot-password'); setPassword(''); setError(''); setMessage('') }}>Forgot password?</button>}</form>} {!passwordUpdate && <button className="text-button" onClick={() => { setMode(resetRequest || mode === 'sign-up' ? 'sign-in' : 'sign-up'); setPassword(''); setError(''); setMessage('') }}>{resetRequest ? 'Back to sign in' : mode === 'sign-in' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}</button>}</section></div>
 }
 
 function id() {

@@ -86,7 +86,7 @@ Reuse content already present in the current context; do not reopen an unchanged
 ## Safety Boundaries
 
 - Do not store secrets in files, docs, logs, or chat.
-- This is Marvin's workspace. Before any GitHub read or write, verify that GitHub CLI is using `burgosmarvin79-cyber`; switch to that account if needed. Never publish Marvin's work through `morkmork26`.
+- This is Marvin's workspace. Before any GitHub read or write, verify that GitHub CLI is using `marvmarv08`; switch to that account if needed. Never publish Marvin's work through `morkmork26`.
 - Keep this repository's local Git author identity set to Marvin's GitHub username and GitHub-provided no-reply email.
 - Product boundary: Reviewer Organizer is becoming a multi-user Supabase application. Implement sign-up, sign-in, sign-out, email verification, password recovery, per-user cloud records, private PDF storage, and per-user offline caching. Never weaken Row Level Security or allow one user to access another user's data.
 - Do not delete, migrate, overwrite, publish, charge, message, or change production data without confirmation.
@@ -111,4 +111,4 @@ Reuse content already present in the current context; do not reopen an unchanged
 - Keep README files, product documentation, learning notes, release descriptions, and user-facing text polished, truthful, beginner-readable, and suitable for recruiters or future collaborators.
 - When a change has an important reason, tradeoff, limitation, or verification method, record it in the appropriate project documentation without adding noisy command logs.
 - Never fabricate activity, authorship, features, test results, dates, or engineering experience. Professional presentation must reflect real work and real verification.
-- Preserve Marvin's Git author identity and verify that GitHub CLI is using `burgosmarvin79-cyber` before any GitHub write from this workspace.
+- Preserve Marvin's Git author identity and verify that GitHub CLI is using `marvmarv08` before any GitHub write from this workspace.

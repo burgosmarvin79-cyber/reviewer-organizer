@@ -14,7 +14,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 
 ## Stable Facts
 
-- Repository: public GitHub repository `burgosmarvin79-cyber/reviewer-organizer`.
+- Repository: public GitHub repository `marvmarv08/reviewer-organizer`.
 - Product format: browser-based web application.
 - Development must include beginner-friendly explanations of each important component, its purpose, how it connects to the system, verification steps, and meaningful tradeoffs or risks.
 
@@ -35,6 +35,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 - Manual and bulk question saves now wait for confirmed private Supabase persistence before updating the local question bank, preventing phone uploads from appearing successful before cloud synchronization finishes.
 - Automated mastery-rule tests and production build configuration.
 - Email authentication, per-user Supabase study-data synchronization, deletion synchronization, and realtime subscriptions.
+- Password recovery can send a Supabase reset email to the production app, accept the recovery session, require matching new-password fields, update the password, and sign the temporary recovery session out.
 - Private Supabase PDF upload, cross-device metadata synchronization, signed five-minute open links, cloud deletion, and automatic migration of legacy browser PDFs.
 - Local Google Classroom integration can authorize a test user, list active courses, discover Drive PDF attachments from coursework, classwork materials, and Stream announcements, and import a selected PDF through the existing private Supabase storage workflow.
 - Awaited note persistence, foreground/online resynchronization, and Supabase Realtime publication for subjects, PDF metadata, notes, questions, and test history.
@@ -51,6 +52,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 
 ## Known Issues
 
+- The password-recovery flow passes local code checks but still requires a real reset-email acceptance test after deployment.
 - Complete two-account RLS isolation, live note and PDF cross-device behavior, offline conflict behavior, and recovery paths still require verification.
 - Manual desktop and phone visual acceptance of the BatStateU-inspired interface remains required.
 - An iPhone Safari subject-route crash was reported. A local repair now cleans up Realtime channels, coalesces cloud events, incrementally reconciles IndexedDB, and removes `color-mix()` from subject surfaces; live iPhone verification remains pending deployment.

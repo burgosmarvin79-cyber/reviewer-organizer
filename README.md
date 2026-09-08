@@ -10,7 +10,7 @@ An offline-first study organizer for subjects, PDF reviewers, notes, identificat
 
 ## Live application
 
-Open Reviewer Organizer at <https://burgosmarvin79-cyber.github.io/reviewer-organizer/>.
+Open Reviewer Organizer at <https://marvmarv08.github.io/reviewer-organizer/>.
 
 On a phone, open the link in a browser and choose **Add to Home Screen** or **Install app**. Study data is stored separately on each device; use the built-in backup and restore tools to transfer it.
 
