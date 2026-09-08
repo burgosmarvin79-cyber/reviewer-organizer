@@ -69,13 +69,23 @@ describe('adaptive flashcard scheduling', () => {
     expect(formatReviewInterval(4306)).toBe('3 days')
   })
 
-  it('schedules easy cards later and records progress without changing mastery tier', () => {
+  it('schedules easy cards later and raises the mastery tier by one', () => {
     const updated = scheduleFlashcard(question({ level: 2 }), 'easy', now)
-    expect(updated.level).toBe(2)
+    expect(updated.level).toBe(3)
     expect(updated.reviewState).toBe('review')
     expect(updated.reviewDueAt).toBe('2026-09-09T08:00:00.000Z')
     expect(updated.totalAttempts).toBe(1)
     expect(updated.totalCorrect).toBe(1)
+  })
+
+  it('keeps an easy card at the highest mastery tier', () => {
+    expect(scheduleFlashcard(question({ level: 4 }), 'easy', now).level).toBe(4)
+  })
+
+  it('does not change mastery tier for again, hard, or good', () => {
+    for (const rating of ['again', 'hard', 'good'] as const) {
+      expect(scheduleFlashcard(question({ level: 2 }), rating, now).level).toBe(2)
+    }
   })
 
   it('resets a forgotten card to learning and makes it due in one minute', () => {

@@ -86,6 +86,7 @@ export function scheduleFlashcard(question: Question, rating: ReviewRating, now 
   const due = new Date(now.getTime() + interval * 60_000).toISOString()
   return {
     ...question,
+    level: rating === 'easy' ? Math.min(4, question.level + 1) as MasteryLevel : question.level,
     reviewState: state,
     reviewIntervalMinutes: interval,
     reviewEase: ease,

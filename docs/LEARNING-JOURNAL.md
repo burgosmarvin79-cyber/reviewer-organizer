@@ -130,6 +130,6 @@ For mobile design, the setup follows one decision per section and uses full-widt
 
 ## 2026-09-08 — Spaced repetition schedules memory, not mastery
 
-An Anki-style scheduler answers “when should I see this card again?” while a mastery tier answers “where do I personally classify this question?” Keeping those decisions separate lets automatic timing help without taking away the student's manual control.
+An Anki-style scheduler answers “when should I see this card again?” while a mastery tier answers “where is this question in my learning path?” Most ratings affect only timing; Marvin chose Easy as an explicit signal that a card should also advance by exactly one tier, capped at Tier 4.
 
 The displayed Again, Hard, Good, and Easy times are calculated from the card's current interval and ease. A new card begins at 1 minute, 5 minutes, 45 minutes, or 1 day, then those choices change after every answer. A forgotten card returns quickly; successful cards gradually wait longer. The due date, interval, repetitions, and lapses must be cloud fields—not temporary screen state—so the schedule survives restarts and follows the student to another device.

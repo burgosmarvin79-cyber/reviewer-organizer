@@ -189,6 +189,7 @@ Skip when: You only need the active task or current state.
 
 - Change: Replaced manual post-card tier movement with Again, Hard, Good, and Easy ratings whose displayed intervals adapt to each card's review history.
 - Timing: New cards begin at Again 1 minute, Hard 5 minutes, Good 45 minutes, and Easy 1 day; later intervals remain adaptive.
+- Mastery rule: Easy advances the question by one mastery tier, capped at Tier 4; Again, Hard, and Good keep the current tier.
 - Change: Added due-only sessions, due/learning/mastered summaries, same-session requeue for forgotten cards, and a compact responsive rating layout while preserving manual mastery tiers.
 - Persistence: Added additive question scheduling fields for state, due time, interval, ease, repetitions, and lapses, protected by the existing per-user Row Level Security policy.
 - Evidence: source lint, all 30 automated tests, TypeScript checking, and the production PWA build passed locally.
