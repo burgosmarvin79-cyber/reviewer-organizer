@@ -30,7 +30,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 - Main dashboard now presents subjects only; each subject workspace contains its own PDF, question, mastery, score, and test summary.
 - Question Bank supports selecting visible questions and deleting a confirmed batch from Supabase and local storage.
 - Subject workspaces include Study modes for flashcards, quick review, missed questions, and mixed practice. Flashcards have a separate mobile-friendly setup where students choose mastery tiers, card count, and whether to shuffle the session; Again, Hard, Good, and Easy schedule the next review, while Easy also advances mastery by one tier.
-- During an active flashcard session, Again, Hard, and Good are checked every second and moved ahead of unanswered cards once their selected intervals expire. Easy is removed from the current queue while its one-day due schedule is saved for a future session.
+- During an active flashcard session, Again, Hard, and Good stay queued until rated Easy. They move ahead when their interval expires, or return immediately when no other card remains; Easy removes the card from the activity while preserving its future due schedule.
 - An active Flashcard or Quick Review question can be deleted with confirmation; deletion is synchronized to Supabase and local storage, preserves test-history snapshots, and keeps the remaining session position valid.
 - Authenticated account switches clear the previous account's IndexedDB cache before hydrating the new account, preventing cross-account local-data leakage.
 - Subject workspaces now show mastery progress, last-study date, and a Continue Test action; the sidebar shows offline, syncing, synced, or error status and retries on reconnect/focus.
@@ -51,7 +51,8 @@ Complete and validate the private Supabase workflow while refining the applicati
 - Production output serves the application shell, service worker, and install manifest successfully.
 - Marvin confirmed the real Google consent, course selection, and Classroom PDF discovery flow locally on 2026-09-05.
 - GitHub Pages deploys automatically from `main` and the live HTTPS site returns the app shell, PWA manifest, and service worker successfully.
-- The active-session scheduled-card queue is covered by focused before-due, after-due, simultaneous-retry, all-rating, and Easy-removal tests; the full application suite contains 37 passing tests.
+- The active-session card queue is covered by focused before-due, after-due, simultaneous-retry, non-Easy retention, and Easy-removal tests.
+- All 38 automated tests, ESLint, TypeScript production build, PWA generation, and diff validation pass after the local no-wait queue revision.
 
 ## Known Issues
 
@@ -59,7 +60,7 @@ Complete and validate the private Supabase workflow while refining the applicati
 - Complete two-account RLS isolation, live note and PDF cross-device behavior, offline conflict behavior, and recovery paths still require verification.
 - Manual desktop and phone visual acceptance of the BatStateU-inspired interface remains required.
 - An iPhone Safari subject-route crash was reported. A local repair now cleans up Realtime channels, coalesces cloud events, incrementally reconciles IndexedDB, and removes `color-mix()` from subject surfaces; live iPhone verification remains pending deployment.
-- The timed active-session queue repair is deployed on GitHub Pages and still requires real phone timing acceptance.
+- The revised no-wait active-session queue requires real phone acceptance and deployment.
 
 ## Current Blockers
 

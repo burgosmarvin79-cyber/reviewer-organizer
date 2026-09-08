@@ -14,7 +14,7 @@ Reviewer Organizer is an installable, offline-first web application that helps s
 - Run randomized tests for one subject and one mastery level at a time.
 - Offer subject review modes: configurable flashcards, quick review, missed-question review, and mixed practice across levels.
 - Let students select one or more mastery tiers, choose a card count, and optionally randomize question order before starting flashcards.
-- After revealing a flashcard answer, let the student keep its current mastery tier or move it one tier backward or forward before continuing.
+- After revealing a flashcard answer, let the student rate it Again, Hard, Good, or Easy; Easy moves it forward one mastery tier.
 - Let the student manually keep a question at its current level or move it one level forward or backward after checking an answer.
 - Allow questions to be skipped without changing their level or counting them as answered.
 - Record completed test history and answer snapshots.
@@ -38,6 +38,7 @@ Level changes are manual. Correct and incorrect answers update statistics but ne
 
 - Version 1 uses identification questions. Answer checking ignores capitalization and repeated surrounding/internal spaces, and each question may define multiple accepted answers.
 - Tests contain up to 10 questions by default and never repeat a question in one session.
+- A flashcard activity finishes only after every selected card is rated Easy. Again, Hard, and Good keep a card in the activity; if no other card remains, the card returns immediately instead of forcing the student to wait for its saved review interval.
 - Tests cover one subject and one mastery level.
 - Typed answers lock after the student chooses **Check answer**. The correct answer and explanation appear immediately, followed by the manual level controls.
 - Deleting a subject requires typing its name and removes its related content and history.

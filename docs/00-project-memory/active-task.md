@@ -5,15 +5,15 @@ parent_task_id: none
 task_kind: primary
 execution_status: active
 verification_status: pending
-delivery_status: deployed
+delivery_status: ready
 owner: codex-root
 branch: main
 base_sha: 5b51133c1658acec4e09e2994ea49ebd7d00c489
-revision: 34
+revision: 36
 verification_head: none
 verification_source_hash: none
 verified_at: none
-updated_at: 2026-09-08T14:11:35Z
+updated_at: 2026-09-08T16:24:03Z
 ---
 
 # Active Task
@@ -66,14 +66,14 @@ Skip when: The task is unrelated to the current execution context.
 - Last Failure: none
 - Failure Class: none
 - Attempted Fix: none
-- Next Concrete Action: Have Marvin verify on phone that Easy removes the card from the active queue while Again, Hard, and Good still return after their intervals.
+- Next Concrete Action: Verify that non-Easy cards return immediately after the other cards are exhausted, while Easy is the only rating that removes a card from the activity.
 
 ## Record
 
-- Verification Evidence: pending after checkpoint
-- Delivery Status: deployed
-- Delivery Evidence: GitHub Pages workflow 34236423227 deployed Easy queue exclusion commit c419ab8 successfully.
-- Docs Updated: pending
-- Remaining Risk: Live acceptance with Marvin's original questionnaire remains pending.
+- Verification Evidence: 38 tests, ESLint, TypeScript production build, PWA generation, and diff validation pass locally for the no-wait non-Easy queue checkpoint.
+- Delivery Status: ready
+- Delivery Evidence: The verified no-wait revision is ready to push after GitHub CLI is authenticated as `marvmarv08`.
+- Docs Updated: PRD, current state, change log, and active task.
+- Remaining Risk: Live phone acceptance of the revised no-wait queue remains pending.
 - Memory Promotion Decision: pending
-- Last Updated: 2026-08-30T17:10:59Z
+- Last Updated: 2026-09-09

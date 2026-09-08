@@ -4,6 +4,15 @@ Purpose: Chronological record of durable project behavior, requirement, implemen
 Read when: You need recent durable changes or must record a state-changing task.
 Skip when: You only need the active task or current state.
 
+## 2026-09-09 — Repeat non-Easy cards without an idle countdown
+
+- Product rule: A flashcard activity finishes only when every selected card has been rated Easy.
+- Queue behavior: Again, Hard, and Good remain in the activity. A card returns when its interval expires, or immediately when the other queued cards are finished, so the student never waits on an empty countdown screen.
+- Persistence: The selected 1-minute, 5-minute, 45-minute, or adaptive interval remains saved for future due-card scheduling.
+- UX: Removed the blocking `Next card queued` countdown and clarified the rating guidance beneath the buttons.
+- Evidence: all 38 automated tests, ESLint, TypeScript production build, PWA generation, and diff validation pass locally; phone acceptance remains pending.
+- Delivery: not yet deployed.
+
 ## 2026-09-08 — Keep Easy cards out of the active session
 
 - Change: Choosing Easy now removes the card from the current session instead of scheduling a same-session return.

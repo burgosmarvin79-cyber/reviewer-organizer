@@ -140,6 +140,19 @@ describe('adaptive flashcard scheduling', () => {
     }
   })
 
+  it('keeps every non-Easy card queued until the student marks it Easy', () => {
+    for (const rating of ['again', 'hard', 'good'] as const) {
+      const current = question({ id: `q-${rating}` })
+      const scheduled = scheduleFlashcard(current, rating, now)
+      const session = [current, question({ id: 'next' })]
+
+      const nextSession = updateFlashcardSessionAfterRating(session, 0, scheduled, rating)
+
+      expect(nextSession.map((card) => card.id)).toEqual([current.id, 'next', current.id])
+      expect(isQuestionDue(nextSession[2], now)).toBe(false)
+    }
+  })
+
   it('removes Easy from the active session while preserving its scheduled due time', () => {
     const current = question({ id: 'q1' })
     const updated = scheduleFlashcard(current, 'easy', now)
